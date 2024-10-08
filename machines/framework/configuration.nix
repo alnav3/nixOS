@@ -2,10 +2,10 @@
 
 {
   imports = [
-      "../../modules/gaming.nix"
-      "../../modules/network.nix"
-      "../../modules/desktop.nix"
-      "../../modules/development.nix"
+#      ./../../modules/gaming.nix
+      ./../../modules/network.nix
+      ./../../modules/desktop.nix
+      ./../../modules/development.nix
   ];
 
   # Updating firmware | after first start we need to run fwupdmgr update

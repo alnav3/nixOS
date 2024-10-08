@@ -7,5 +7,5 @@
       psk = "@home_psk@";
     };
   };
-  networking.wireless.userControlled.enable = true;
+  networking.wireless.enable = true;
 }

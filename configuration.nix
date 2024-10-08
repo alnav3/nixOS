@@ -2,10 +2,10 @@
 
 {
   imports =
-    if builtins.substr 0 (builtins.stringLength "homelab") meta.hostname == "homelab" then
-      [ ./machine/homelab/configuration.nix ]
+    if lib.strings.hasPrefix "homelab" meta.hostname then
+      [ ./machines/homelab/configuration.nix ]
     else
-      [ ./machine/${meta.hostname}/configuration.nix ];
+      [ ./machines/${meta.hostname}/configuration.nix ];
 
   nix = {
     package = pkgs.nixFlakes;
@@ -19,9 +19,9 @@
   boot.loader.efi.canTouchEfiVariables = true;
 
   # sops config
-  sops.defaultSopsFile = "./secrets/secrets.yaml";
+  sops.defaultSopsFile = ./secrets/secrets.yaml;
   sops.defaultSopsFormat = "yaml";
-  sops.age.keyFile = "/home/alnav/.config/sops/age/keys.txt";
+  sops.age.keyFile = /home/alnav/.config/sops/age/keys.txt;
 
   # Set your time zone.
   time.timeZone = "Europe/Madrid";

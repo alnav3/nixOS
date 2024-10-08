@@ -37,8 +37,8 @@
     # App launcher
     rofi-wayland
     # Network manager
-    network-manager-applet
-    # Screenshot tool
+    networkmanagerapplet
+    #Screenshot tool
     grim
     slurp
     wl-clipboard
