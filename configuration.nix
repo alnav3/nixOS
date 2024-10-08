@@ -2,10 +2,10 @@
 
 {
   imports =
-  if builtins.hasPrefix "homelab" meta.hostname then
-    [ ./machine/homelab/configuration.nix ]
-  else
-    [ ./machine/${meta.hostname}/configuration.nix ];
+    if builtins.substr 0 (builtins.stringLength "homelab") meta.hostname == "homelab" then
+      [ ./machine/homelab/configuration.nix ]
+    else
+      [ ./machine/${meta.hostname}/configuration.nix ];
 
   nix = {
     package = pkgs.nixFlakes;
