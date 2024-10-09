@@ -1,5 +1,6 @@
 {config, ... }:
 {
+
   sops.secrets."wireless.env" = { };
   networking.wireless.environmentFile = config.sops.secrets."wireless.env".path;
   networking.wireless.networks = {

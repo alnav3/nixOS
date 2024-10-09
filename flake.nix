@@ -41,6 +41,7 @@
 	  name = host.name;
 	  value = nixpkgs.lib.nixosSystem {
         specialArgs = {
+          inherit inputs;
           meta = { hostname = host.name; };
         };
         system = host.system;

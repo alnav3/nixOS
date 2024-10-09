@@ -1,4 +1,4 @@
-{ config, lib, pkgs, meta, ... }:
+{ config, inputs, lib, pkgs, meta, ... }:
 
 {
   imports =
@@ -13,6 +13,7 @@
       experimental-features = nix-command flakes
     '';
   };
+  services.openssh.enable = true;
 
   # Use the systemd-boot EFI boot loader.
   boot.loader.systemd-boot.enable = true;
@@ -58,6 +59,7 @@
 
   environment.systemPackages = with pkgs; [
     age
+    inputs.zen-browser.packages."${system}".default
   ];
 
 }

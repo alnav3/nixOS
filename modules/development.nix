@@ -18,35 +18,38 @@
 
   # packages needed for development
   environment.systemPackages = with pkgs; [
-    fzf
-    ripgrep
-    bat
-    tmux
-    zoxide
-    git
-    gcc
-    go
-    templ
-    lsof
     air
+    bat
+    eza
+    fzf
+    gcc
+    git
+    go
+    helmfile
+    kaf
     kubernetes
     kubernetes-helm
-    helmfile
-    oh-my-posh
-    temurin-bin-17
+    lsof
     maven
-    python3
-    kaf
-    nodejs_22
     neovim
-    eza
+    nodejs_22
+    oh-my-posh
+    python3
+    ripgrep
+    templ
+    temurin-bin-17
+    tmux
+    unzip
+    zoxide
+    zsh-autosuggestions
+    zsh-fzf-history-search
+    zsh-vi-mode
   ];
   # zsh minimal configuration
   programs.zsh = {
     enable = true;
     enableCompletion = true;
     enableAutosuggestions = true;
-    enableSyntaxHighlighting = true;
     syntaxHighlighting.enable = true;
     shellAliases = {
       cl = "clear";
