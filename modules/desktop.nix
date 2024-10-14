@@ -1,5 +1,9 @@
-{pkgs, ...}:
+{ pkgs, pkgs-stable, inputs, ...}:
 {
+    imports = [
+      ./login.nix
+    ];
+
     programs.hyprland = {
         enable = true;
         xwayland.enable = true;
@@ -10,7 +14,7 @@
     };
 
     hardware = {
-        opengl.enable = true;
+        graphics.enable = true;
     };
 
     # change default font
@@ -31,7 +35,6 @@
     };
 
     # enable sound with pipewire
-    sound.enable = true;
     security.rtkit.enable = true;
     services.pipewire = {
         enable = true;
@@ -41,31 +44,40 @@
         jack.enable = true;
     };
 
-  environment.systemPackages = with pkgs; [
+  environment.systemPackages = (with pkgs; [
     # terminal needed for hyprland
-    kitty
-    # temporal browser
-    firefox
+    #kitty
+    # File manager and icon theme needed for gtk apps
+    nautilus
+    adwaita-icon-theme
+    # mouse fix for hyprland
+    hyprcursor
     # topbar for hyprland
     (waybar.overrideAttrs (oldAttrs: {
       mesonFlags = oldAttrs.mesonFlags ++ [ "-Dexperimental=true" ];
     }))
     # notification system for wayland
-    mako
+    swaynotificationcenter
     libnotify
     # wallpaper plugin for hyprland
     hyprpaper
-    # lock screen
-    hyprlock
     # App launcher
     rofi-wayland
+    transmission_4-gtk
     # Network manager
     networkmanagerapplet
+    bc
     #Screenshot tool
     grim
     slurp
     wl-clipboard
-  ];
+    imv
+    # lock screen
+    hyprlock
+  ])
+  ++
+  (with pkgs-stable; [
+  ]);
 
   # add support for screensharing and other stuff
   xdg.portal.enable = true;

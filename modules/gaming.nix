@@ -1,4 +1,4 @@
-{ config, lib, pkgs, ... }:
+{ lib, pkgs, ... }:
 
 {
   hardware.graphics = {
@@ -8,10 +8,6 @@
   # hardware.opengl has beed changed to hardware.graphics
 
   services.xserver.videoDrivers = ["amdgpu"];
-
-  # Enable Steam
-  programs.steam.enable = true;
-  programs.steam.gamescopeSession.enable = true;
 
   environment.systemPackages = with pkgs; [
     mangohud
@@ -24,18 +20,26 @@
     bottles
   ];
 
-  # allow steam as it's an unfree package
-  config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
-    "steam"
-    "steam-original"
-    "steam-run"
-  ];
-  programs.gamemode.enable = true;
-
+  boot.kernelPackages = pkgs.linuxPackages; # (this is the default) some amdgpu issues on 6.10
+  programs = {
+    gamescope = {
+      enable = true;
+      capSysNice = true;
+    };
+    steam = {
+      enable = true;
+      gamescopeSession.enable = true;
+    };
+  };
 
   environment.sessionVariables = {
     STEAM_EXTRA_COMPAT_TOOLS_PATHS =
       "\${HOME}/.steam/root/compatibilitytools.d";
   };
 
+  nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
+    "steam"
+    "steam-original"
+    "steam-run"
+  ];
 }

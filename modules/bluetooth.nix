@@ -9,12 +9,6 @@
     };
   };
 
-  # Needed for headset bluetooth support
-  hardware.pulseaudio = {
-    enable = true;
-    package = pkgs.pulseaudioFull;
-  };
-
   # Activate hardware buttons for bluetooth headsets
   systemd.user.services.mpris-proxy = {
     description = "Mpris proxy";
@@ -22,5 +16,11 @@
     wantedBy = [ "default.target" ];
     serviceConfig.ExecStart = "${pkgs.bluez}/bin/mpris-proxy";
   };
+
+  environment.systemPackages = [
+    pkgs.rofi-bluetooth
+    pkgs.alsa-utils
+    pkgs.pavucontrol
+  ];
 }
 

@@ -2,10 +2,10 @@
   description = "Framework NixOS configuration | WIP to be generic";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
     # Unstable Packages
-    nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-24.05";
 
     # Disko
     disko.url = "github:nix-community/disko";
@@ -15,18 +15,42 @@
     home-manager.url = "github:nix-community/home-manager";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
+    hyprland.url = "github:hyprwm/Hyprland";
+
     # Zen browser
-    zen-browser.url = "github:MarceColl/zen-browser-flake";
+    zen-browser.url = "github:alnav3/zen-browser-flake";
 
     # nixos hardware presets
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
 
+    stylix.url = "github:danth/stylix";
     # Sops-nix for encryption
     sops-nix.url = "github:Mic92/sops-nix";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
+    # mouse theme
+    rose-pine-hyprcursor.url = "github:ndom91/rose-pine-hyprcursor";
+
+    # deck experience on NixOS
+    jovian-nixos.url = "github:Jovian-Experiments/Jovian-NixOS";
+
+    dotfiles = {
+        url = "github:alnav3/dotfiles";
+        flake = false;
+    };
+
+    tpm = {
+        url = "github:tmux-plugins/tpm";
+        flake = false;
+    };
+
+    rofi-wifi = {
+        url = "github:zbaylin/rofi-wifi-menu";
+        flake = false;
+    };
+
   };
 
-  outputs = { self, nixpkgs, disko, home-manager, nixos-hardware, sops-nix, ... }@inputs: let
+  outputs = { self, nixpkgs, disko, home-manager, dotfiles, nixos-hardware, sops-nix, ... }@inputs: let
 
     hosts = [
       {
@@ -42,7 +66,9 @@
 	  value = nixpkgs.lib.nixosSystem {
         specialArgs = {
           inherit inputs;
+          inherit dotfiles;
           meta = { hostname = host.name; };
+          pkgs-stable = inputs.nixpkgs-stable.legacyPackages.${host.system};
         };
         system = host.system;
         modules = [
@@ -50,6 +76,11 @@
           sops-nix.nixosModules.sops
           # disko
 	      disko.nixosModules.disko
+          # Deck SteamOS experience
+          inputs.jovian-nixos.nixosModules.jovian
+
+          # Ricing the nixOS way
+          inputs.stylix.nixosModules.stylix
 
           # System Specific
           ./machines/${host.name}/hardware-configuration.nix
@@ -65,6 +96,7 @@
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
             home-manager.users.alnav = import ./home.nix;
+            home-manager.backupFileExtension = "bak";
             home-manager.extraSpecialArgs = {
               inherit inputs;
               meta = host;

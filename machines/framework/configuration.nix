@@ -2,10 +2,27 @@
 
 {
   imports = [
-#      ./../../modules/gaming.nix
-      ./../../modules/network.nix
+      #./../../modules/gaming.nix
+      ./../../modules/steamos.nix
+      ./../../modules/networking.nix
+      ./../../modules/bluetooth.nix
+      ./../../modules/battery.nix
+      ./../../modules/social.nix
+      ./../../modules/android.nix
       ./../../modules/desktop.nix
       ./../../modules/development.nix
+      ./../../modules/ricing.nix
+  ];
+
+  networking.networkmanager.enable = true;
+  hardware.amdgpu.initrd.enable = true;
+
+  nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
+    "steam"
+    "steam-original"
+    "steam-run"
+    "steam-jupiter-original"
+    "steamdeck-hw-theme"
   ];
 
   # Updating firmware | after first start we need to run fwupdmgr update

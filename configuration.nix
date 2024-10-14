@@ -7,6 +7,7 @@
     else
       [ ./machines/${meta.hostname}/configuration.nix ];
 
+
   nix = {
     package = pkgs.nixFlakes;
     extraOptions = ''
@@ -36,6 +37,7 @@
     extraGroups = [
       "wheel"
       "docker"
+      "libvirtd"
     ];
 
     hashedPassword = "$6$Ld6VVI/GPx3tS3HO$pAjCdjWroN88QoCPCER7UdXq1XTbC1C8linCar7/ykEsgtya4JesK1ILX5ffoRqgMkTR/NPN10NfYsvI2yHzE.";
@@ -60,7 +62,9 @@
   environment.systemPackages = with pkgs; [
     age
     inputs.zen-browser.packages."${system}".default
+    killall
   ];
 
+  system.stateVersion = "24.11";
 }
 
