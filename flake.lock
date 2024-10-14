@@ -122,11 +122,11 @@
     "dotfiles": {
       "flake": false,
       "locked": {
-        "lastModified": 1728824543,
-        "narHash": "sha256-/+dOPOF0LeHBs7pqBJQm/zlYXEwo6wEU22ElI5/udWs=",
+        "lastModified": 1728918846,
+        "narHash": "sha256-BGxUWoSNf06lRYJzcJRAQIeP+XJy6nrk1QaLJwd6hTI=",
         "owner": "alnav3",
         "repo": "dotfiles",
-        "rev": "f4230fb4b9693408a9c34e5b4336c93c5b8aac5e",
+        "rev": "459ab226a327de0481c5d8838eeca8a4dde0aecc",
         "type": "github"
       },
       "original": {
