@@ -1,15 +1,27 @@
-{pkgs, lib, ...}:
 {
+  pkgs,
+  lib,
+  ...
+}: {
   hardware.graphics = {
     enable = true;
     enable32Bit = true;
   };
-  jovian.steam.enable = true;
-  jovian.steam.desktopSession = "Hyprland";
+  services.xserver.enable = true;
+  jovian.steam = {
+    enable = true;
+    user = "alnav";
+    #desktopSession = "Hyprland";
+  };
   jovian.decky-loader.enable = true;
   jovian.hardware.has.amd.gpu = true;
 
   environment.systemPackages = with pkgs; [
+    (
+      pkgs.writeShellScriptBin "steamos-session-select" ''
+        steam -shutdown
+      ''
+    )
     mangohud
     protonup
     # General non-steam games
@@ -18,12 +30,6 @@
     heroic
     # just in case neither of the above work
     bottles
-  ];
-  nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
-    "steam"
-    "steam-original"
-    "steam-run"
-    "steam-jupiter-original"
-    "steamdeck-hw-theme"
+    decky-loader
   ];
 }

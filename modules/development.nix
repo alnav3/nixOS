@@ -1,14 +1,18 @@
-{pkgs, inputs, ...}:
 {
-    # Needed for OSX-KVM
-    virtualisation.libvirtd.enable = true;
-    boot.extraModprobeConfig = ''
-        options kvm_intel nested=1
-        options kvm_intel emulate_invalid_guest_state=0
-        options kvm ignore_msrs=1
-        '';
+  pkgs,
+  inputs,
+  ...
+}: {
+  # Needed for OSX-KVM
+  virtualisation.libvirtd.enable = true;
+  boot.extraModprobeConfig = ''
+    options kvm_intel nested=1
+    options kvm_intel emulate_invalid_guest_state=0
+    options kvm ignore_msrs=1
+  '';
 
   # nix-ld libraries needed for language-servers to work on neovim
+  programs.nix-ld.enable = true;
   programs.nix-ld.libraries = with pkgs; [
     stdenv.cc.cc
     zlib
@@ -19,18 +23,21 @@
     curl
     expat
   ];
+  nix.nixPath = ["nixpkgs=${inputs.nixpkgs}"];
 
   systemd.tmpfiles.rules = [
     "L+ /usr/local/bin - - - - /run/current-system/sw/bin"
   ];
 
   # packages needed for development
-  environment.systemPackages = (with pkgs; [
+  environment.systemPackages = with pkgs; [
     air
+    alejandra
     bat
     eza
     fzf
     gcc
+    # Git will be configured by home-manager
     git
     go
     helmfile
@@ -39,27 +46,29 @@
     kubernetes-helm
     lsof
     maven
+    neovim
+    nixd
     nodejs_22
     oh-my-posh
     python3
+    qemu
     ripgrep
     templ
     temurin-bin-17
     tmux
     unzip
+    wl-clipboard
     zoxide
     zsh-autosuggestions
     zsh-fzf-history-search
     zsh-vi-mode
-    neovim
-    qemu
-  ]);
+  ];
 
   # zsh minimal configuration
   programs.zsh = {
     enable = true;
     enableCompletion = true;
-    autosuggestions.enable= true;
+    autosuggestions.enable = true;
     syntaxHighlighting.enable = true;
     shellAliases = {
       cl = "clear";
@@ -71,12 +80,11 @@
   };
   users.defaultUserShell = pkgs.zsh;
   services = {
-      gnome.gnome-keyring.enable = true;
+    gnome.gnome-keyring.enable = true;
   };
 
   # docker config
   virtualisation.docker = {
     enable = true;
   };
-
 }

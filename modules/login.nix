@@ -11,15 +11,11 @@
 #    };
 #  };
 #}
-{ pkgs, ... }:
-
-let
+{pkgs, ...}: let
   tuigreet = "${pkgs.greetd.tuigreet}/bin/tuigreet";
   session = "${pkgs.hyprland}/bin/Hyprland";
   username = "alnav";
-in
-
-{
+in {
   services.greetd = {
     enable = true;
     settings = {
@@ -28,8 +24,8 @@ in
         user = "${username}";
       };
       default_session = {
-        command = "${tuigreet} --greeting 'Welcome to NixOS!' --asterisks --remember --remember-user-session --time -cmd ${session}";
-        user = "greeter";
+        command = "${tuigreet} --greeting 'Welcome to NixOS!' --asterisks --remember --remember-user-session --time ";
+        user = "${username}";
       };
     };
   };

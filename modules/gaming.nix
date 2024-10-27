@@ -1,6 +1,8 @@
-{ lib, pkgs, ... }:
-
 {
+  lib,
+  pkgs,
+  ...
+}: {
   hardware.graphics = {
     enable = true;
     enable32Bit = true;
@@ -18,6 +20,11 @@
     heroic
     # just in case neither of the above work
     bottles
+    (
+      pkgs.writeShellScriptBin "steamos-session-select" ''
+        steam -shutdown & exec Hyprland
+      ''
+    )
   ];
 
   boot.kernelPackages = pkgs.linuxPackages; # (this is the default) some amdgpu issues on 6.10
@@ -33,13 +40,13 @@
   };
 
   environment.sessionVariables = {
-    STEAM_EXTRA_COMPAT_TOOLS_PATHS =
-      "\${HOME}/.steam/root/compatibilitytools.d";
+    STEAM_EXTRA_COMPAT_TOOLS_PATHS = "\${HOME}/.steam/root/compatibilitytools.d";
   };
 
-  nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
-    "steam"
-    "steam-original"
-    "steam-run"
-  ];
+  nixpkgs.config.allowUnfreePredicate = pkg:
+    builtins.elem (lib.getName pkg) [
+      "steam"
+      "steam-original"
+      "steam-run"
+    ];
 }

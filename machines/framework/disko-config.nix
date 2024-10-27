@@ -21,7 +21,7 @@
               };
             };
             swap = {
-              size = "42G";  # Recommended size for 32 GB of RAM
+              size = "42G"; # Recommended size for 32 GB of RAM
               content = {
                 type = "swap";
                 discardPolicy = "both";
@@ -36,18 +36,18 @@
                 passwordFile = "/tmp/secret.key";
                 content = {
                   type = "btrfs";
-                  extraArgs = [ "-f" ]; # Override existing partition
+                  extraArgs = ["-f"]; # Override existing partition
                   subvolumes = {
                     "/rootfs" = {
                       mountpoint = "/";
                     };
                     "/home" = {
-                      mountOptions = [ "compress=zstd" ];
+                      mountOptions = ["compress=zstd"];
                       mountpoint = "/home";
                     };
-                    "/home/alnav" = { };
+                    "/home/alnav" = {};
                     "/nix" = {
-                      mountOptions = [ "compress=zstd" "noatime" ];
+                      mountOptions = ["compress=zstd" "noatime"];
                       mountpoint = "/nix";
                     };
                   };

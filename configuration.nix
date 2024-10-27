@@ -1,15 +1,26 @@
-{ config, inputs, lib, pkgs, meta, ... }:
-
 {
+  inputs,
+  lib,
+  pkgs,
+  meta,
+  overlays,
+  ...
+}: {
+  # Add overlays
+  nixpkgs = {
+    # You can add overlays here
+    overlays = [
+      # Add overlays your own flake exports (from overlays and pkgs dir):
+      overlays.additions
+    ];
+  };
   imports =
-    if lib.strings.hasPrefix "homelab" meta.hostname then
-      [ ./machines/homelab/configuration.nix ]
-    else
-      [ ./machines/${meta.hostname}/configuration.nix ];
-
+    if lib.strings.hasPrefix "homelab" meta.hostname
+    then [./machines/homelab/configuration.nix]
+    else [./machines/${meta.hostname}/configuration.nix];
 
   nix = {
-    package = pkgs.nixFlakes;
+    package = pkgs.nixVersions.stable;
     extraOptions = ''
       experimental-features = nix-command flakes
     '';
@@ -23,7 +34,8 @@
   # sops config
   sops.defaultSopsFile = ./secrets/secrets.yaml;
   sops.defaultSopsFormat = "yaml";
-  sops.age.keyFile = /home/alnav/.config/sops/age/keys.txt;
+  sops.age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
+  #sops.age.keyFile = "/home/alnav/.config/sops/age/keys.txt";
 
   # Set your time zone.
   time.timeZone = "Europe/Madrid";
@@ -35,8 +47,10 @@
   users.users.alnav = {
     isNormalUser = true;
     extraGroups = [
+      "uinput"
       "wheel"
       "docker"
+      "audio"
       "libvirtd"
     ];
 
@@ -50,12 +64,14 @@
   #'';
 
   security.sudo.extraRules = [
-    { users = [ "alnav" ];
-       commands = [
-         { command = "ALL" ;
-             options= [ "NOPASSWD" ];
-         }
-       ];
+    {
+      users = ["alnav"];
+      commands = [
+        {
+          command = "ALL";
+          options = ["NOPASSWD"];
+        }
+      ];
     }
   ];
 
@@ -67,4 +83,3 @@
 
   system.stateVersion = "24.11";
 }
-
