@@ -63,68 +63,72 @@
         system = "x86_64-linux";
         useHomeManager = true;
       }
+      {
+        name = "node0";
+        system = "x86_64-linux";
+        useHomeManager = false;
+      }
+
     ];
   in {
-    nixosConfigurations =
-      builtins.listToAttrs (
-        map (host: {
-          name = host.name;
-          value = nixpkgs.lib.nixosSystem {
-            specialArgs = {
-              inherit inputs;
-              inherit dotfiles;
-              meta = {hostname = host.name;};
-              pkgs-stable = inputs.nixpkgs-stable.legacyPackages.${host.system};
-            };
-            system = host.system;
-            modules =
-              [
-                # NixOS encryption module
-                sops-nix.nixosModules.sops
-                # disko
-                disko.nixosModules.disko
+    nixosConfigurations = builtins.listToAttrs (map (host: {
+        name = host.name;
+        value = nixpkgs.lib.nixosSystem {
+          specialArgs = {
+            overlays = import ./overlays;
+            inherit inputs dotfiles;
+            meta = {hostname = host.name;};
+            pkgs-stable = inputs.nixpkgs-stable.legacyPackages.${host.system};
+          };
+          system = host.system;
+          modules =
+            [
+              # NixOS encryption module
+              sops-nix.nixosModules.sops
+              # disko
+              disko.nixosModules.disko
+
+              # System Specific
+              ./machines/${host.name}/hardware-configuration.nix
+              ./machines/${host.name}/disko-config.nix
+
+              # General
+              ./configuration.nix
+
+              # home-manager
+            ]
+            ++ (
+              if host.useHomeManager
+              then [
+                home-manager.nixosModules.home-manager
+                {
+                  home-manager.useGlobalPkgs = true;
+                  home-manager.useUserPackages = true;
+                  home-manager.users.alnav = import ./home.nix;
+                  home-manager.backupFileExtension = "bak";
+                  home-manager.extraSpecialArgs = {
+                    inherit inputs;
+                    meta = host;
+                  };
+                }
+              ]
+              else []
+            )
+            ++ (
+              if host.name == "framework"
+              then [
                 # Deck SteamOS experience
                 inputs.jovian-nixos.nixosModules.jovian
 
                 # Ricing the nixOS way
                 inputs.stylix.nixosModules.stylix
-
-                # System Specific
-                ./machines/${host.name}/hardware-configuration.nix
-                ./machines/${host.name}/disko-config.nix
-
-                # General
-                ./configuration.nix
-
-                # home-manager
+                nixos-hardware.nixosModules.framework-13-7040-amd
               ]
-              ++ (
-                if host.useHomeManager
-                then [
-                  home-manager.nixosModules.home-manager
-                  {
-                    home-manager.useGlobalPkgs = true;
-                    home-manager.useUserPackages = true;
-                    home-manager.users.alnav = import ./home.nix;
-                    home-manager.backupFileExtension = "bak";
-                    home-manager.extraSpecialArgs = {
-                      inherit inputs;
-                      meta = host;
-                    };
-                  }
-                ]
-                else []
-              )
-              ++ (
-                if host.name == "framework"
-                then [
-                  nixos-hardware.nixosModules.framework-13-7040-amd
-                ]
-                else []
-              );
-          };
-        })
-        hosts
+              else []
+            );
+        };
+      })
+      hosts
       ++ [
         {
           name = "isoInstaller";

@@ -64,6 +64,7 @@
         ${hyprland}/bin/hyprctl dispatch exit
         ${systemd}/bin/loginctl terminate-user "alnav"
       '')
+      inputs.zen-browser.packages."${system}".default
     ])
     ++ (with pkgs-stable; [
       ]);

@@ -42,7 +42,7 @@
     go
     helmfile
     kaf
-    kubernetes
+    kubectl
     kubernetes-helm
     lsof
     maven

@@ -18,6 +18,9 @@
     ./../../modules/ricing.nix
   ];
 
+  # using latest linux kernel for network issues
+  boot.kernelPackages = pkgs.linuxPackages_latest;
+
   hardware.amdgpu.initrd.enable = true;
 
   nixpkgs.config.allowUnfreePredicate = pkg:
@@ -73,4 +76,7 @@
       })
     .fwupd;
   # for complete guide on fingerprint workaround, read https://github.com/NixOS/nixos-hardware/tree/master/framework/13-inch/7040-amd#suspendwake-workaround
+  environment.systemPackages = with pkgs; [
+    fw-ectool
+  ];
 }

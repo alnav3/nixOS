@@ -22,6 +22,7 @@
       castero
       yt-dlp
       ytfzf
+      gparted
     ]
     ++
     [
