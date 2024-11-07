@@ -17,17 +17,17 @@
     open = true;
   };
 
-  fileSystems."/media/HDD1" = {
-    device = "/dev/disk/by-uuid/36dc8995-4637-4ac7-bf87-93ca08bb7913";
-    fsType = "btrfs";
-    options = [ "defaults" ];
-  };
+  #fileSystems."/mnt/HDD1" = {
+  #  device = "/dev/disk/by-uuid/b74eb042-a941-405e-9544-ed4f1834875b";
+  #  fsType = "auto";
+  #  options = [ "defaults" ];
+  #};
 
-  fileSystems."/media/Jellifyin" = {
-    device = "/dev/disk/by-uuid/0affb6bd-11dc-4d98-827c-0ac175d73bc5";
-    fsType = "ext4";
-    options = [ "defaults" ];
-  };
+  #fileSystems."/mnt/Jellifyin" = {
+  #  device = "/dev/disk/by-uuid/0affb6bd-11dc-4d98-827c-0ac175d73bc5";
+  #  fsType = "auto";
+  #  options = [ "defaults" ];
+  #};
 
   # Networking configuration
   networking = {

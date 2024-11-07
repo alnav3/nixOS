@@ -58,6 +58,8 @@
       #Screenshot tool
       hyprshot
       imv
+      # mail
+      protonmail-desktop
       # lock screen
       hyprlock
       (pkgs.writeShellScriptBin "hyprexit" ''

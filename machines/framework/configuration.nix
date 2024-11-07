@@ -38,6 +38,7 @@
 
   # Suspend/wake workaround, keyboard will not wake up the system
   hardware.framework.amd-7040.preventWakeOnAC = true;
+
   services.kanata = {
     enable = true;
     keyboards = {

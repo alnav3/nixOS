@@ -20,5 +20,6 @@
     pkgs.rofi-bluetooth
     pkgs.alsa-utils
     pkgs.pavucontrol
+    pkgs.easyeffects
   ];
 }
