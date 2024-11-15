@@ -8,7 +8,7 @@
   stylix.image = "${inputs.dotfiles}/wallpapers/comfy-home.png";
   stylix.cursor = {
     package = pkgs.rose-pine-cursor;
-    name = "breezex-rosepine-linux";
+    name = "BreezeX-RosePine-Linux";
     size = 24;
   };
   stylix.fonts = {
