@@ -15,6 +15,7 @@
     ./../../modules/android.nix
     ./../../modules/desktop.nix
     ./../../modules/development.nix
+    ./../../modules/freelance.nix
     ./../../modules/ricing.nix
   ];
 
@@ -64,7 +65,7 @@
   };
   networking.firewall = {
     enable = true;
-    allowedTCPPorts = [80];
+    allowedTCPPorts = [80 4200];
   };
 
   # fingerprint reader support
