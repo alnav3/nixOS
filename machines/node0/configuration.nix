@@ -2,20 +2,19 @@
 
 {
 
-  # allow unfree for nvidia drivers
-  nixpkgs.config.allowUnfree = true;
-
   # enable docker
   virtualisation.docker.enable = true;
 
-  # NVIDIA configuration
-  hardware.opengl.enable = true;
-  services.xserver.videoDrivers = [ "nvidia" ];
-  hardware.nvidia = {
-    modesetting.enable = true;
-    package = config.boot.kernelPackages.nvidiaPackages.stable;
-    open = true;
+  boot.kernelParams = [ "i915.force_probe=46d1" ];
+  hardware.opengl = {
+    enable = true;
+    extraPackages = with pkgs; [
+      vpl-gpu-rt          # for newer GPUs on NixOS >24.05 or unstable
+      # onevpl-intel-gpu  # for newer GPUs on NixOS <= 24.05
+      # intel-media-sdk   # for older GPUs
+    ];
   };
+  nix.settings.require-sigs = false;
 
   #fileSystems."/mnt/HDD1" = {
   #  device = "/dev/disk/by-uuid/b74eb042-a941-405e-9544-ed4f1834875b";

@@ -20,6 +20,7 @@
     heroic
     # just in case neither of the above work
     bottles
+    ryujinx
     (
       pkgs.writeShellScriptBin "steamos-session-select" ''
         steam -shutdown & exec Hyprland

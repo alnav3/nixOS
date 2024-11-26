@@ -31,5 +31,6 @@
     # just in case neither of the above work
     bottles
     decky-loader
+    ryujinx
   ];
 }
