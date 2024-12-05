@@ -13,7 +13,7 @@
 #}
 {pkgs, ...}: let
   tuigreet = "${pkgs.greetd.tuigreet}/bin/tuigreet";
-  session = "${pkgs.hyprland}/bin/Hyprland";
+  session = "dbus-run-session ${pkgs.hyprland}/bin/Hyprland";
   username = "alnav";
 in {
   services.greetd = {

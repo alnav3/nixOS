@@ -5,18 +5,19 @@
   ...
 }: {
   imports = [
-    ./../../modules/media.nix
-    ./../../modules/work.nix
-    ./../../modules/steamos.nix
-    ./../../modules/networking.nix
-    ./../../modules/bluetooth.nix
-    ./../../modules/battery.nix
-    ./../../modules/social.nix
     ./../../modules/android.nix
+    ./../../modules/backup.nix
+    ./../../modules/battery.nix
+    ./../../modules/bluetooth.nix
     ./../../modules/desktop.nix
     ./../../modules/development.nix
     ./../../modules/freelance.nix
+    ./../../modules/media.nix
+    ./../../modules/networking.nix
     ./../../modules/ricing.nix
+    ./../../modules/social.nix
+    ./../../modules/steamos.nix
+    ./../../modules/work.nix
   ];
 
   # using latest linux kernel for network issues

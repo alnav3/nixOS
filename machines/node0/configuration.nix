@@ -1,19 +1,29 @@
-{ config, lib, pkgs, meta, ... }:
+{ config, pkgs, pkgs-stable, meta, ... }:
 
 {
+  imports = [
+    ./../../modules/jellyfin.nix
+  ];
 
   # enable docker
   virtualisation.docker.enable = true;
 
-  boot.kernelParams = [ "i915.force_probe=46d1" ];
-  hardware.opengl = {
+  hardware.graphics = {
     enable = true;
     extraPackages = with pkgs; [
-      vpl-gpu-rt          # for newer GPUs on NixOS >24.05 or unstable
-      # onevpl-intel-gpu  # for newer GPUs on NixOS <= 24.05
-      # intel-media-sdk   # for older GPUs
+        intel-media-driver
+        libva-vdpau-driver
+        pkgs-stable.intel-compute-runtime
+        vpl-gpu-rt # QSV on 11th gen or newer
+        intel-media-sdk # QSV up to 11th gen
     ];
   };
+
+  nixpkgs.config.packageOverrides = pkgs: {
+    vaapiIntel = pkgs.vaapiIntel.override { enableHybridCodec = true; };
+  };
+
+  boot.kernelParams = [ "i915.force_probe=46d1" ];
   nix.settings.require-sigs = false;
 
   #fileSystems."/mnt/HDD1" = {
@@ -22,11 +32,11 @@
   #  options = [ "defaults" ];
   #};
 
-  #fileSystems."/mnt/Jellifyin" = {
-  #  device = "/dev/disk/by-uuid/0affb6bd-11dc-4d98-827c-0ac175d73bc5";
-  #  fsType = "auto";
-  #  options = [ "defaults" ];
-  #};
+  fileSystems."/media/Jellyfin" = {
+    device = "/dev/disk/by-uuid/0affb6bd-11dc-4d98-827c-0ac175d73bc5";
+    fsType = "auto";
+    options = [ "defaults" ];
+  };
 
   # Networking configuration
   networking = {

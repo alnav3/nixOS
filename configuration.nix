@@ -75,6 +75,7 @@
   ];
 
   environment.systemPackages = with pkgs; [
+    cifs-utils
     age
     sops
     killall
