@@ -12,6 +12,7 @@
     ./../../modules/desktop.nix
     ./../../modules/development.nix
     ./../../modules/freelance.nix
+    ./../../modules/llms.nix
     ./../../modules/media.nix
     ./../../modules/networking.nix
     ./../../modules/ricing.nix
@@ -41,30 +42,34 @@
   # Suspend/wake workaround, keyboard will not wake up the system
   hardware.framework.amd-7040.preventWakeOnAC = true;
 
-  services.kanata = {
-    enable = true;
-    keyboards = {
-      internalKeyboard = {
-        devices = [
-          "/dev/input/by-path/platform-i8042-serio-0-event-kbd"
-        ];
-        extraDefCfg = "process-unmapped-keys yes";
-        config = ''
-          (defsrc
-           caps
-          )
-          (defalias
-           caps (tap-hold 175 175 esc lctl)
-          )
+services.kanata = {
+  enable = true;
+  keyboards = {
+    internalKeyboard = {
+      devices = [
+        "/dev/input/by-path/platform-i8042-serio-0-event-kbd"
+      ];
+      extraDefCfg = "process-unmapped-keys yes";
+      config = ''
+        (defsrc
+         caps
+         n
+        )
+        (defalias
+         caps (tap-hold 175 175 esc lctl)
+         n (tap-hold 200 200 n (unicode ñ))
+        )
 
-          (deflayer base
-           @caps
-          )
-        '';
-      };
+        (deflayer base
+         @caps
+         @n
+        )
+      '';
     };
   };
-  networking.firewall = {
+};
+
+networking.firewall = {
     enable = true;
     allowedTCPPorts = [80 4200];
   };

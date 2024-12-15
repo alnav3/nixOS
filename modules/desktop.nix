@@ -58,6 +58,8 @@
       #Screenshot tool
       hyprshot
       imv
+      # screen management
+      kanshi
       # mail
       protonmail-desktop
       # lock screen

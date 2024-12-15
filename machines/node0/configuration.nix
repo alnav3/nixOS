@@ -5,6 +5,8 @@
     ./../../modules/jellyfin.nix
   ];
 
+  services.netbird.enable = true;
+
   # enable docker
   virtualisation.docker.enable = true;
 
@@ -103,6 +105,7 @@
      cifs-utils
      nfs-utils
      git
+     netbird
   ];
 
 }

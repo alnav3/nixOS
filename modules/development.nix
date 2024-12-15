@@ -56,6 +56,7 @@
     templ
     temurin-bin-17
     tmux
+    tree-sitter
     unzip
     wl-clipboard
     zoxide
@@ -73,6 +74,7 @@
     shellAliases = {
       cl = "clear";
       update = "sudo nixos-rebuild switch --flake '/home/alnav/nixOS#framework'";
+      clean-disk = "nix profile wipe-history --profile /nix/var/nix/profiles/system --older-than 1d";
       rofi-wifi = "${inputs.rofi-wifi}/rofi-wifi-menu.sh";
       update-flake = "nix flake lock --update-input";
       hibernate = "hyprlock & systemctl hibernate";

@@ -33,7 +33,6 @@
               content = {
                 type = "luks";
                 name = "luks_btrfs";
-                passwordFile = "/tmp/secret.key";
                 content = {
                   type = "btrfs";
                   extraArgs = ["-f"]; # Override existing partition

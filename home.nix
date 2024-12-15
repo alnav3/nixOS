@@ -7,11 +7,76 @@
     temurin-bin-11
     temurin-bin-17
   ];
+
+  # Convertir archivos estáticos en una lista explícita
+  staticFiles = [
+    {
+      name = ".local/share/zsh/zsh-autosuggestions";
+      value.source = "${pkgs.zsh-autosuggestions}/share/zsh/zsh-autosuggestions";
+    }
+    {
+      name = ".local/share/zsh/zsh-syntax-highlighting";
+      value.source = "${pkgs.zsh-syntax-highlighting}/share/zsh/site-functions";
+    }
+    {
+      name = ".local/share/zsh/nix-zsh-completions";
+      value.source = "${pkgs.nix-zsh-completions}/share/zsh/plugins/nix";
+    }
+    {
+      name = ".zshrc";
+      value.source = "${inputs.dotfiles}/zsh/.zshrc";
+    }
+    {
+      name = ".config/oh-my-posh/zen.toml";
+      value.source = "${inputs.dotfiles}/zsh/.config/oh-my-posh/zen.toml";
+    }
+    {
+      name = ".config/kanshi/config";
+      value.source = "${inputs.dotfiles}/kanshi/config";
+    }
+
+    # nvim config
+    {
+      name = ".config/nvim";
+      value.source = "${inputs.dotfiles}/nvim";
+    }
+
+    # desktop config
+    {
+      name = ".config/hypr";
+      value.source = "${inputs.dotfiles}/hypr";
+    }
+    {
+      name = "wallpapers";
+      value.source = "${inputs.dotfiles}/wallpapers";
+    }
+
+    # tmux config
+    {
+      name = ".tmux.conf";
+      value.source = "${inputs.dotfiles}/tmux/.tmux.conf";
+    }
+    {
+      name = "/.tmux/plugins/tpm";
+      value.source = "${inputs.tpm}";
+    }
+  ];
+
+  # Generar configuraciones dinámicas para JDKs con nombres únicos
+  generatedFiles =
+    builtins.map (jdk: {
+      name = ".jdks/${jdk.version}";
+      value.source = jdk;
+    })
+    additionalJDKs;
 in {
   programs.home-manager.enable = true;
   programs.kitty = {
     enable = true;
     settings = {
+      map = ''
+        ctrl+shift+u no_op
+      '';
       confirm_os_window_close = 0;
     };
   };
@@ -24,35 +89,12 @@ in {
     enable = true;
     extraConfig = {
       credential.helper = "${
-          pkgs.git.override { withLibsecret = true; }
-        }/bin/git-credential-libsecret";
-      push = { autoSetupRemote = true; };
+        pkgs.git.override {withLibsecret = true;}
+      }/bin/git-credential-libsecret";
+      push = {autoSetupRemote = true;};
     };
   };
 
-
-  home.file = {
-    # zsh plugins & config
-    ".local/share/zsh/zsh-autosuggestions".source = "${pkgs.zsh-autosuggestions}/share/zsh/zsh-autosuggestions";
-    ".local/share/zsh/zsh-syntax-highlighting".source = "${pkgs.zsh-syntax-highlighting}/share/zsh/site-functions";
-    ".local/share/zsh/nix-zsh-completions".source = "${pkgs.nix-zsh-completions}/share/zsh/plugins/nix";
-    ".zshrc".source = "${inputs.dotfiles}/zsh/.zshrc";
-    ".config/oh-my-posh/zen.toml".source = "${inputs.dotfiles}/zsh/.config/oh-my-posh/zen.toml";
-
-    # nvim config
-    ".config/nvim".source = "${inputs.dotfiles}/nvim";
-
-    # desktop config
-    ".config/hypr.bak".source = "${inputs.dotfiles}/hypr";
-    "wallpapers".source = "${inputs.dotfiles}/wallpapers";
-
-    # tmux config
-    ".tmux.conf".source = "${inputs.dotfiles}/tmux/.tmux.conf";
-    "/.tmux/plugins/tpm".source = "${inputs.tpm}";
-  };
-
-  #(builtins.listToAttrs (builtins.map(jdk: {
-  #    name = ".jdks/jdk.version";
-  #    value = { source = jdk; };
-  #}) additionalJDKs));
+  # Concatenar las listas de archivos estáticos y generados
+  home.file = builtins.listToAttrs (staticFiles ++ generatedFiles);
 }
