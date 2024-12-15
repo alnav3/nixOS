@@ -43,6 +43,10 @@
 
     # desktop config
     {
+      name = ".config/waybar";
+      value.source = "${inputs.dotfiles}/waybar";
+    }
+    {
       name = ".config/hypr";
       value.source = "${inputs.dotfiles}/hypr";
     }
