@@ -82,7 +82,7 @@ in {
   };
   home.username = "alnav";
   home.homeDirectory = "/home/alnav";
-  home.stateVersion = "24.05";
+  home.stateVersion = "24.11";
 
   # Git config
   programs.git = {

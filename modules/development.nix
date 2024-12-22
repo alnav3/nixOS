@@ -1,5 +1,6 @@
 {
   pkgs,
+  pkgs-unstable,
   inputs,
   ...
 }: {
@@ -49,7 +50,7 @@
     neovim
     nixd
     nodejs_22
-    oh-my-posh
+    pkgs-unstable.oh-my-posh
     python3
     qemu
     ripgrep

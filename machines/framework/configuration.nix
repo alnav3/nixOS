@@ -22,7 +22,7 @@
   ];
 
   # using latest linux kernel for network issues
-  boot.kernelPackages = pkgs.linuxPackages_latest;
+  boot.kernelPackages = pkgs.linuxPackages_6_11;
 
   hardware.amdgpu.initrd.enable = true;
 

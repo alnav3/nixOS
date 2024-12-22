@@ -2,10 +2,10 @@
   description = "Framework NixOS configuration | WIP to be generic";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
 
     # Unstable Packages
-    nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-24.05";
+    nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
 
     # Disko
     disko.url = "github:nix-community/disko";
@@ -81,7 +81,8 @@
             overlays = import ./overlays;
             inherit inputs dotfiles;
             meta = {hostname = host.name;};
-            pkgs-stable = inputs.nixpkgs-stable.legacyPackages.${host.system};
+            pkgs-stable = inputs.nixpkgs.legacyPackages.${host.system};
+            pkgs-unstable = inputs.nixpkgs-unstable.legacyPackages.${host.system};
           };
           system = host.system;
           modules =
