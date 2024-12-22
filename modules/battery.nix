@@ -4,7 +4,7 @@
   ...
 }: let
   hibernateEnvironment = {
-    HIBERNATE_SECONDS = "1800";
+    HIBERNATE_SECONDS = "18000";
     HIBERNATE_LOCK = "/var/run/autohibernate.lock";
   };
 in {

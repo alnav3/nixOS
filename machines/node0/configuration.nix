@@ -2,24 +2,13 @@
 
 {
   imports = [
-    ./../../modules/jellyfin.nix
+    #./../../modules/jellyfin.nix
   ];
 
   services.netbird.enable = true;
 
   # enable docker
   virtualisation.docker.enable = true;
-
-  hardware.graphics = {
-    enable = true;
-    extraPackages = with pkgs; [
-        intel-media-driver
-        libva-vdpau-driver
-        pkgs-stable.intel-compute-runtime
-        vpl-gpu-rt # QSV on 11th gen or newer
-        intel-media-sdk # QSV up to 11th gen
-    ];
-  };
 
   nixpkgs.config.packageOverrides = pkgs: {
     vaapiIntel = pkgs.vaapiIntel.override { enableHybridCodec = true; };

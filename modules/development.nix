@@ -77,7 +77,6 @@
       clean-disk = "nix profile wipe-history --profile /nix/var/nix/profiles/system --older-than 1d";
       rofi-wifi = "${inputs.rofi-wifi}/rofi-wifi-menu.sh";
       update-flake = "nix flake lock --update-input";
-      hibernate = "hyprlock & systemctl hibernate";
     };
   };
   users.defaultUserShell = pkgs.zsh;

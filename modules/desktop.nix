@@ -31,6 +31,8 @@
     jack.enable = true;
   };
 
+  programs.localsend.enable = true;
+
   environment.systemPackages =
     (with pkgs; [
       # terminal needed for hyprland
@@ -71,7 +73,7 @@
       inputs.zen-browser.packages."${system}".default
     ])
     ++ (with pkgs-stable; [
-      ]);
+    ]);
 
   # add support for screensharing and other stuff
   xdg.portal.enable = true;

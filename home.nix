@@ -43,11 +43,7 @@
 
     # desktop config
     {
-      name = ".config/waybar";
-      value.source = "${inputs.dotfiles}/waybar";
-    }
-    {
-      name = ".config/hypr";
+      name = ".config/hypr.bak";
       value.source = "${inputs.dotfiles}/hypr";
     }
     {
@@ -57,7 +53,7 @@
 
     # tmux config
     {
-      name = ".tmux.conf";
+      name = ".tmux.conf.bak";
       value.source = "${inputs.dotfiles}/tmux/.tmux.conf";
     }
     {
