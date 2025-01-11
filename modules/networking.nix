@@ -1,7 +1,9 @@
-{pkgs, ...}: {
+{pkgs, pkgs-unstable, ...}: {
   services.netbird.enable = true;
-  environment.systemPackages = with pkgs; [
+  services.netbird.package = pkgs-unstable.netbird;
+  environment.systemPackages = with pkgs-unstable; [
     netbird-ui
+    nfs-utils
   ];
   networking.networkmanager.enable = true;
   boot.kernelParams = ["ipv6.disable=1"];

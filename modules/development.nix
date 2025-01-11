@@ -37,6 +37,7 @@
     bat
     eza
     fzf
+    android-tools
     gcc
     # Git will be configured by home-manager
     git

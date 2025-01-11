@@ -32,7 +32,10 @@
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
 
     # deck experience on NixOS
-    jovian-nixos.url = "github:Jovian-Experiments/Jovian-NixOS";
+    jovian-nixos = {
+      url = "github:Jovian-Experiments/Jovian-NixOS";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     dotfiles = {
       url = "github:alnav3/dotfiles";
