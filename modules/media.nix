@@ -8,7 +8,6 @@
     # youtube but without google
     yt-dlp
     ytfzf
-    grayjay
     # netflix but good
     jellyfin-media-player
     # jellyfin but without a server

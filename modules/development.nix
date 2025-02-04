@@ -2,6 +2,7 @@
   pkgs,
   pkgs-unstable,
   inputs,
+  postingPkg,
   ...
 }: {
   # Needed for OSX-KVM
@@ -34,10 +35,10 @@
   environment.systemPackages = with pkgs; [
     air
     alejandra
+    android-tools
     bat
     eza
     fzf
-    android-tools
     gcc
     # Git will be configured by home-manager
     git
@@ -52,6 +53,7 @@
     nixd
     nodejs_22
     pkgs-unstable.oh-my-posh
+    postingPkg
     python3
     qemu
     ripgrep

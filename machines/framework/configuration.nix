@@ -28,6 +28,7 @@
 
   nixpkgs.config.allowUnfreePredicate = pkg:
     builtins.elem (lib.getName pkg) [
+      "lunatask"
       "steam"
       "steam-original"
       "steam-run"

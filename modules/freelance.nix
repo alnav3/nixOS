@@ -1,5 +1,6 @@
 {  pkgs,
   inputs,
+  lib,
   ...
 }:
 {
@@ -10,5 +11,6 @@
     postgresql
     bruno
     dbeaver-bin
+    lunatask
   ];
 }

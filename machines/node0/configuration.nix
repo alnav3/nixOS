@@ -23,11 +23,11 @@
   #  options = [ "defaults" ];
   #};
 
-  fileSystems."/media/Jellyfin" = {
-    device = "/dev/disk/by-uuid/0affb6bd-11dc-4d98-827c-0ac175d73bc5";
-    fsType = "auto";
-    options = [ "defaults" ];
-  };
+  #fileSystems."/media/Jellyfin" = {
+  #  device = "/dev/disk/by-uuid/0affb6bd-11dc-4d98-827c-0ac175d73bc5";
+  #  fsType = "auto";
+  #  options = [ "defaults" ];
+  #};
 
   # Networking configuration
   networking = {

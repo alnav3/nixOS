@@ -5,6 +5,7 @@
     netbird-ui
     nfs-utils
   ];
+  services.resolved.enable = true;
   networking.networkmanager.enable = true;
   boot.kernelParams = ["ipv6.disable=1"];
   environment.etc.openvpn.source = "${pkgs.update-resolv-conf}/libexec/openvpn";
