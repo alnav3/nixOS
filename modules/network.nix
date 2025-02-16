@@ -28,4 +28,8 @@
       updateResolvConf = true;
     };
   };
+  # /etc/hosts config
+  networking.hosts = {
+      "127.0.0.1" = ["user1.local" "user2.local" "users.local" "usernew.local"];
+  };
 }

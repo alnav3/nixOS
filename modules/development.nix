@@ -31,18 +31,20 @@
     "L+ /usr/local/bin - - - - /run/current-system/sw/bin"
   ];
 
-  # packages needed for development
   environment.systemPackages = with pkgs; [
     air
     alejandra
     android-tools
     bat
+    direnv
     eza
     fzf
     gcc
     # Git will be configured by home-manager
     git
+    glab
     go
+    goose
     helmfile
     kaf
     kubectl
@@ -54,13 +56,19 @@
     nodejs_22
     pkgs-unstable.oh-my-posh
     postingPkg
-    python3
+    (pkgs.python3.withPackages (ps: with ps; [
+      ollama
+      pygls
+    ]))
     qemu
     ripgrep
+    sqlc
+    tailwindcss
     templ
     temurin-bin-17
     tmux
     tree-sitter
+    turso-cli
     unzip
     wl-clipboard
     zoxide

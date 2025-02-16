@@ -11,6 +11,15 @@ in {
     brightnessctl
     hypridle
   ];
+  systemd.services."battery-threshold" = {
+    description = "Battery threshold script";
+    wantedBy = ["multi-user.target"];
+    script = ''
+        echo 70 | tee /sys/class/power_supply/BAT1/charge_control_end_threshold
+    '';
+    serviceConfig.Type = "oneshot";
+    serviceConfig.User = "root";
+  };
   systemd.services."awake-after-suspend-for-a-time" = {
     description = "Sets up the suspend so that it'll wake for hibernation only if not on AC power";
     wantedBy = ["suspend.target"];

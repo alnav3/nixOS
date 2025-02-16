@@ -1,7 +1,5 @@
 {pkgs, ...}:
 {
-
-    environment.systemPackages = with pkgs; [
-        jan
-    ];
+    services.open-webui.enable = true;
+    services.ollama.enable = true;
 }

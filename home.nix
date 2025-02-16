@@ -37,7 +37,7 @@
 
     # nvim config
     {
-      name = ".config/nvim";
+      name = ".config/nvim.bak";
       value.source = "${inputs.dotfiles}/nvim";
     }
 
@@ -60,6 +60,16 @@
       name = "/.tmux/plugins/tpm";
       value.source = "${inputs.tpm}";
     }
+    # lua-language-server for mason and nvim
+    {
+      name = ".local/share/nvim/mason/bin/lua-language-server";
+      value.source = "${pkgs.lua-language-server}/bin/lua-language-server";
+    }
+    {
+      name = ".local/share/llm-ls/llm-ls";
+      value.source = "${pkgs.llm-ls}/bin/llm-ls";
+    }
+
   ];
 
   # Generar configuraciones dinámicas para JDKs con nombres únicos

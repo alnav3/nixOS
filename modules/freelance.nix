@@ -1,7 +1,6 @@
 {  pkgs,
-  inputs,
-  lib,
-  ...
+   pkgs-unstable,
+   ...
 }:
 {
 
@@ -10,7 +9,7 @@
     go-migrate
     postgresql
     bruno
-    dbeaver-bin
+    pkgs-unstable.dbeaver-bin
     lunatask
   ];
 }

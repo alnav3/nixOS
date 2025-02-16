@@ -3,6 +3,7 @@
 {
   imports = [
     #./../../modules/jellyfin.nix
+    ./../../modules/llms.nix
   ];
 
   services.netbird.enable = true;
