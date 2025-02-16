@@ -2,7 +2,7 @@
   description = "Framework NixOS configuration | WIP to be generic";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
     # Unstable Packages
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
@@ -112,7 +112,6 @@
               then [
                 home-manager.nixosModules.home-manager
                 {
-                  home-manager.useGlobalPkgs = true;
                   home-manager.useUserPackages = true;
                   home-manager.users.alnav = import ./home.nix;
                   home-manager.backupFileExtension = "bak";

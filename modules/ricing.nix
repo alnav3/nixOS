@@ -1,6 +1,5 @@
 {
   pkgs,
-  pkgs-stable,
   inputs,
   ...
 }: {
@@ -20,7 +19,7 @@
       popups = 10;
     };
     monospace = {
-      package = pkgs-stable.nerdfonts.override {fonts = ["FiraCode"];};
+      package = pkgs.nerd-fonts.fira-code;
       name = "FiraCode Nerd Font Mono";
     };
     sansSerif = {

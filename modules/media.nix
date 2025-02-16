@@ -4,7 +4,6 @@
     mpv
     # music and podcast
     cmus
-    castero
     # youtube but without google
     yt-dlp
     ytfzf
