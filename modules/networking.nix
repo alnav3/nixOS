@@ -1,24 +1,19 @@
 {pkgs, pkgs-unstable, ...}: {
-  services.netbird.enable = true;
-  services.netbird.package = pkgs-unstable.netbird;
   environment.systemPackages = with pkgs-unstable; [
-    netbird-ui
     nfs-utils
+    ethtool
   ];
   services.resolved.enable = true;
   networking.networkmanager.enable = true;
   boot.kernelParams = ["ipv6.disable=1"];
-  environment.etc.openvpn.source = "${pkgs.update-resolv-conf}/libexec/openvpn";
-  sops.secrets."secure.ovpn" = {};
-  sops.secrets."protoncreds.conf" = {};
-  services.openvpn.servers = {
-    protonSecure = {
-      config = ''config /run/secrets/secure.ovpn '';
-      updateResolvConf = true;
-    };
-  };
-  # /etc/hosts config
-  networking.hosts = {
-      "127.0.0.1" = ["user1.local" "user2.local" "users.local" "usernew.local"];
-  };
 }
+
+#environment.etc.openvpn.source = "${pkgs.update-resolv-conf}/libexec/openvpn";
+#sops.secrets."secure.ovpn" = {};
+#sops.secrets."protoncreds.conf" = {};
+#services.openvpn.servers = {
+#  protonSecure = {
+#    config = ''config /run/secrets/secure.ovpn '';
+#    updateResolvConf = true;
+#  };
+#};

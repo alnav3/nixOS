@@ -19,5 +19,5 @@ sudo cat /etc/ssh/ssh_host_ed25519_key > "$temp/etc/ssh/ssh_host_ed25519_key"
 chmod 600 "$temp/etc/ssh/ssh_host_ed25519_key"
 
 # Install NixOS to the host system with our secrets
-nixos-anywhere --extra-files "$temp" --flake '.#framework' nixos@192.168.1.143
+nixos-anywhere --extra-files "$temp" --flake '.#mjolnir' nixos@10.71.71.13
 

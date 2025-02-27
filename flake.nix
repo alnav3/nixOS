@@ -5,7 +5,7 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
     # Unstable Packages
-    nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-24.11";
 
     # Disko
     disko.url = "github:nix-community/disko";
@@ -72,6 +72,11 @@
         useHomeManager = true;
       }
       {
+        name = "mjolnir";
+        system = "x86_64-linux";
+        useHomeManager = false;
+      }
+      {
         name = "node0";
         system = "x86_64-linux";
         useHomeManager = false;
@@ -86,9 +91,9 @@
             overlays = import ./overlays;
             inherit inputs dotfiles;
             meta = {hostname = host.name;};
-            pkgs-stable = inputs.nixpkgs.legacyPackages.${host.system};
+            pkgs-stable = inputs.nixpkgs-stable.legacyPackages.${host.system};
             postingPkg = inputs.posting-flake.packages.${host.system}.posting;
-            pkgs-unstable = inputs.nixpkgs-unstable.legacyPackages.${host.system};
+            pkgs-unstable = inputs.nixpkgs.legacyPackages.${host.system};
           };
           system = host.system;
           modules =

@@ -6,6 +6,7 @@
   additionalJDKs = with pkgs; [
     temurin-bin-11
     temurin-bin-17
+    temurin-bin-21
   ];
 
   # Convertir archivos estáticos en una lista explícita

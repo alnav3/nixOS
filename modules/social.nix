@@ -1,9 +1,9 @@
-{pkgs, pkgs-stable, ...}: {
+{pkgs, ...}: {
   environment.systemPackages = with pkgs; [
     vesktop
     signal-desktop
   ]
   ++
-  [pkgs-stable._64gram];
+  [_64gram];
 
 }

@@ -32,6 +32,7 @@
 
   # Networking configuration
   networking = {
+    nameservers = [ "9.9.9.9" ];
     hostName = meta.hostname;
     networkmanager.enable = true;
 
@@ -43,7 +44,6 @@
     }];
 
     defaultGateway = "10.71.71.1";
-    nameservers = [ "9.9.9.9" "1.1.1.1" ];
 
     firewall.enable = false;
   };

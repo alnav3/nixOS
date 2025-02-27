@@ -19,6 +19,7 @@
     ./../../modules/social.nix
     ./../../modules/steamos.nix
     ./../../modules/work.nix
+    ./../../modules/mail.nix
   ];
 
   # using latest linux kernel for network issues
@@ -29,12 +30,14 @@
   nixpkgs.config.allowUnfreePredicate = pkg:
     builtins.elem (lib.getName pkg) [
       "lunatask"
+      "anydesk"
       "steam"
       "steam-original"
       "steam-run"
       "steam-jupiter-original"
       "steam-jupiter-unwrapped"
       "steamdeck-hw-theme"
+      "slack"
     ];
 
   # Updating firmware | after first start we need to run fwupdmgr update
@@ -42,6 +45,7 @@
 
   # Suspend/wake workaround, keyboard will not wake up the system
   hardware.framework.amd-7040.preventWakeOnAC = true;
+  hardware.framework.enableKmod = true;
 
 services.kanata = {
   enable = true;

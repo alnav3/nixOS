@@ -1,6 +1,6 @@
 {
+  config,
   pkgs,
-  lib,
   ...
 }: {
   hardware.graphics = {
@@ -8,13 +8,16 @@
     enable32Bit = true;
   };
   services.xserver.enable = true;
-  jovian.steam = {
-    enable = true;
-    user = "alnav";
-    #desktopSession = "Hyprland";
+  jovian = {
+      steam = {
+          autoStart = config.networking.hostName == "mjolnir";
+          enable = true;
+          user = "alnav";
+          #desktopSession = "Hyprland";
+      };
+      decky-loader.enable = true;
+      hardware.has.amd.gpu = true;
   };
-  jovian.decky-loader.enable = true;
-  jovian.hardware.has.amd.gpu = true;
 
   environment.systemPackages = with pkgs; [
     (
@@ -30,7 +33,6 @@
     heroic
     # just in case neither of the above work
     bottles
-    decky-loader
     ryujinx
   ];
 }

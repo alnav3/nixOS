@@ -35,6 +35,7 @@
 
   environment.systemPackages =
     (with pkgs; [
+     gnome-multi-writer
       # terminal needed for hyprland
       #kitty
       # File manager and icon theme needed for gtk apps

@@ -15,6 +15,8 @@
   };
   imports =
     [./machines/${meta.hostname}/configuration.nix];
+  networking.hostName = meta.hostname;
+
 
   nix = {
     package = pkgs.nixVersions.stable;

@@ -11,5 +11,7 @@
     bruno
     pkgs-unstable.dbeaver-bin
     lunatask
+    slack
+    anydesk
   ];
 }
