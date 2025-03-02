@@ -129,7 +129,7 @@
               else []
             )
             ++ (
-              if host.name == "framework"
+              if host.name == "framework" || host.name == "mjolnir"
               then [
                 # Deck SteamOS experience
                 inputs.jovian-nixos.nixosModules.jovian

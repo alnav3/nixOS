@@ -1,9 +1,12 @@
 { config, lib, pkgs, ... }: {
   imports = [
     # SteamOS module brings in gaming optimizations.
-    ./../../modules/steamos.nix
+    #./../../modules/steamos.nix
     ./../../modules/networking.nix
     ./../../modules/bluetooth.nix
+    ./../../modules/desktop.nix
+    #./../../modules/loginSteam.nix
+    #./../../modules/login.nix
   ];
 
   # Use a recent kernel version (6.11) which can improve hardware performance.
@@ -25,5 +28,10 @@
       "steam-jupiter-unwrapped"
       "steamdeck-hw-theme"
     ];
+  environment.systemPackages = with pkgs; [
+    tmux
+    neovim
+    steamtinkerlaunch
+  ];
 }
 

@@ -1,19 +1,6 @@
-#{pkgs, ...}:
-#{
-#  services.greetd = {
-#    enable = true;
-#    settings = rec {
-#      initial_session = {
-#        command = "${pkgs.hyprland}/bin/Hyprland";
-#        user = "alnav";
-#      };
-#      default_session = initial_session;
-#    };
-#  };
-#}
 { pkgs, lib, ... }: let
   tuigreet = "${pkgs.greetd.tuigreet}/bin/tuigreet";
-  session = "dbus-run-session ${pkgs.hyprland}/bin/Hyprland";
+  session = "start-gamescope-session";
   username = "alnav";
 in {
   services.greetd = {
@@ -30,4 +17,5 @@ in {
     };
   };
 }
+
 

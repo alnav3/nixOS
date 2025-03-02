@@ -13,7 +13,7 @@
           autoStart = config.networking.hostName == "mjolnir";
           enable = true;
           user = "alnav";
-          #desktopSession = "Hyprland";
+          desktopSession = "hyprland";
       };
       decky-loader.enable = true;
       hardware.has.amd.gpu = true;

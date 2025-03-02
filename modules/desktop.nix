@@ -4,9 +4,6 @@
   inputs,
   ...
 }: {
-  imports = [
-    ./login.nix
-  ];
 
   programs.hyprland = {
     enable = true;
@@ -37,7 +34,7 @@
     (with pkgs; [
      gnome-multi-writer
       # terminal needed for hyprland
-      #kitty
+      kitty
       # File manager and icon theme needed for gtk apps
       nautilus
       adwaita-icon-theme
