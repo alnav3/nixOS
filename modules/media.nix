@@ -1,5 +1,8 @@
 {pkgs, ...}: {
   environment.systemPackages = with pkgs; [
+    grayjay
+    finamp
+    streamrip
     #vlc but good
     mpv
     # music and podcast

@@ -20,12 +20,12 @@ in {
     enable = true;
     settings = {
       initial_session = {
-        command = lib.mkDefault session;
-        user = lib.mkDefault username;
+        command = session;
+        user = username;
       };
       default_session = {
-        command = lib.mkDefault "${tuigreet} --greeting 'Welcome to NixOS!' --asterisks --remember --remember-user-session --time ";
-        user = lib.mkDefault username;
+        command = "${tuigreet} --greeting 'Welcome to NixOS!' --asterisks --remember --remember-user-session --time ";
+        user = username;
       };
     };
   };

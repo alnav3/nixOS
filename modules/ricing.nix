@@ -1,10 +1,11 @@
 {
   pkgs,
+  pkgs-stable,
   inputs,
   ...
 }: {
   stylix.enable = true;
-  stylix.base16Scheme = "${pkgs.base16-schemes}/share/themes/catppuccin-mocha.yaml";
+  stylix.base16Scheme = "${pkgs-stable.base16-schemes}/share/themes/catppuccin-mocha.yaml";
   stylix.image = "${inputs.dotfiles}/wallpapers/comfy-home.png";
   stylix.cursor = {
     package = pkgs.rose-pine-cursor;

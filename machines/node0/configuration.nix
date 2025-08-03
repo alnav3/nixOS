@@ -4,6 +4,7 @@
   imports = [
     #./../../modules/jellyfin.nix
     ./../../modules/llms.nix
+    #./../../modules/zigbee2mqtt.nix
   ];
 
   services.netbird.enable = true;

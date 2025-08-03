@@ -26,7 +26,13 @@
     # nixos hardware presets
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
 
+    # losless-frame generation
+    lsfg-vk-flake.url = "github:pabloaul/lsfg-vk-flake/main";
+    lsfg-vk-flake.inputs.nixpkgs.follows = "nixpkgs";
+
+    # stylix
     stylix.url = "github:danth/stylix";
+
     # Sops-nix for encryption
     sops-nix.url = "github:Mic92/sops-nix/a4c33bfecb93458d90f9eb26f1cf695b47285243";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
@@ -38,6 +44,9 @@
       url = "github:Jovian-Experiments/Jovian-NixOS";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # flatpak packages installed declaratively
+    nix-flatpak.url = "github:gmodena/nix-flatpak/?ref=v0.6.0";
 
     dotfiles = {
       url = "github:alnav3/dotfiles";
@@ -63,6 +72,7 @@
     dotfiles,
     nixos-hardware,
     sops-nix,
+    nix-flatpak,
     ...
   } @ inputs: let
     hosts = [
@@ -102,6 +112,7 @@
               sops-nix.nixosModules.sops
               # disko
               disko.nixosModules.disko
+              nix-flatpak.nixosModules.nix-flatpak
 
               # System Specific
               ./machines/${host.name}/hardware-configuration.nix
@@ -133,6 +144,7 @@
               then [
                 # Deck SteamOS experience
                 inputs.jovian-nixos.nixosModules.jovian
+                inputs.lsfg-vk-flake.nixosModules.default
 
                 # Ricing the nixOS way
                 inputs.stylix.nixosModules.stylix

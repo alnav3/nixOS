@@ -1,5 +1,6 @@
 {  pkgs,
    pkgs-unstable,
+   pkgs-stable,
    ...
 }:
 {
@@ -13,5 +14,6 @@
     lunatask
     slack
     anydesk
+    google-cloud-sdk
   ];
 }

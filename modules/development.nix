@@ -46,6 +46,7 @@
     go
     goose
     helmfile
+    jq
     kaf
     kubectl
     kubernetes-helm

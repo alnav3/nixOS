@@ -106,6 +106,9 @@ in {
     };
   };
 
+  # opensnitch running in the background
+  #services.opensnitch-ui.enable = true;
+
   # Concatenar las listas de archivos estáticos y generados
   home.file = builtins.listToAttrs (staticFiles ++ generatedFiles);
 }

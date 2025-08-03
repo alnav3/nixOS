@@ -2,8 +2,9 @@
   environment.systemPackages = with pkgs; [
     vesktop
     signal-desktop
-  ]
-  ++
-  [_64gram];
+    tg
+    revolt-desktop
+    _64gram
+  ];
 
 }

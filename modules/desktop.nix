@@ -64,11 +64,13 @@
       protonmail-desktop
       # lock screen
       hyprlock
+      ungoogled-chromium
       (pkgs.writeShellScriptBin "hyprexit" ''
         ${hyprland}/bin/hyprctl dispatch exit
         ${systemd}/bin/loginctl terminate-user "alnav"
       '')
       inputs.zen-browser.packages."${system}".default
+      firefox
     ])
     ++ (with pkgs-stable; [
     ]);

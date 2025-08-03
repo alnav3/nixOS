@@ -2,6 +2,8 @@
   config,
   lib,
   pkgs,
+  pkgs-stable,
+  inputs,
   ...
 }: {
   imports = [
@@ -9,10 +11,11 @@
     ./../../modules/backup.nix
     ./../../modules/battery.nix
     ./../../modules/bluetooth.nix
+    ./../../modules/3dprint.nix
     ./../../modules/desktop.nix
     ./../../modules/development.nix
     ./../../modules/freelance.nix
-    ./../../modules/llms.nix
+    ./../../modules/login.nix
     ./../../modules/media.nix
     ./../../modules/networking.nix
     ./../../modules/ricing.nix
@@ -23,22 +26,28 @@
   ];
 
   # using latest linux kernel for network issues
-  boot.kernelPackages = pkgs.linuxPackages_6_11;
+  boot.kernelPackages = pkgs.linuxPackages_latest;
+
 
   hardware.amdgpu.initrd.enable = true;
 
-  nixpkgs.config.allowUnfreePredicate = pkg:
-    builtins.elem (lib.getName pkg) [
-      "lunatask"
-      "anydesk"
-      "steam"
-      "steam-original"
-      "steam-run"
-      "steam-jupiter-original"
-      "steam-jupiter-unwrapped"
-      "steamdeck-hw-theme"
-      "slack"
-    ];
+  nixpkgs.config.allowUnfree = true;
+
+  #Predicate = pkg:
+  #  let
+  #    pkgName = lib.getName pkg;
+  #  in
+  #  builtins.elem pkgName [
+  #    "lunatask"
+  #    "anydesk"
+  #    "steam"
+  #    "steam-original"
+  #    "steam-run"
+  #    "steam-jupiter-original"
+  #    "steam-jupiter-unwrapped"
+  #    "steamdeck-hw-theme"
+  #    "slack"
+  #  ] || (pkgName == "anydesk" && builtins.elem pkgName (builtins.attrNames pkgs-stable));
 
   # Updating firmware | after first start we need to run fwupdmgr update
   services.fwupd.enable = true;
@@ -75,8 +84,8 @@ services.kanata = {
 };
 
 networking.firewall = {
-    enable = true;
-    allowedTCPPorts = [80 4200];
+    enable = false;
+    allowedTCPPorts = [80 4200 1338];
   };
 
   # fingerprint reader support
@@ -88,8 +97,13 @@ networking.firewall = {
         inherit (pkgs) system;
       })
     .fwupd;
+  virtualisation.spiceUSBRedirection.enable = true;
   # for complete guide on fingerprint workaround, read https://github.com/NixOS/nixos-hardware/tree/master/framework/13-inch/7040-amd#suspendwake-workaround
   environment.systemPackages = with pkgs; [
     fw-ectool
+    distrobox
+    podman-compose
+    spice-gtk
+    spice-vdagent
   ];
 }

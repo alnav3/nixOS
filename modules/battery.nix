@@ -7,19 +7,13 @@
     HIBERNATE_LOCK = "/var/run/autohibernate.lock";
   };
 in {
+  boot.kernelParams = [ "amd_pstate=passive" ];
+
   environment.systemPackages = with pkgs; [
     brightnessctl
+    powertop
     hypridle
   ];
-  systemd.services."battery-threshold" = {
-    description = "Battery threshold script";
-    wantedBy = ["multi-user.target"];
-    script = ''
-        echo 70 | tee /sys/class/power_supply/BAT1/charge_control_end_threshold
-    '';
-    serviceConfig.Type = "oneshot";
-    serviceConfig.User = "root";
-  };
   systemd.services."awake-after-suspend-for-a-time" = {
     description = "Sets up the suspend so that it'll wake for hibernation only if not on AC power";
     wantedBy = ["suspend.target"];
@@ -57,25 +51,5 @@ in {
   };
 
   # power save modes
-  services.power-profiles-daemon.enable = false;
-  services.tlp = {
-    enable = true;
-    settings = {
-      CPU_SCALING_GOVERNOR_ON_AC = "performance";
-      CPU_SCALING_GOVERNOR_ON_BAT = "powersave";
-
-      CPU_ENERGY_PERF_POLICY_ON_BAT = "power";
-      CPU_ENERGY_PERF_POLICY_ON_AC = "balance_performance";
-      PLATFORM_PROFILE_ON_BAT = "low-power";
-
-      CPU_MIN_PERF_ON_AC = 0;
-      CPU_MAX_PERF_ON_AC = 100;
-      CPU_MIN_PERF_ON_BAT = 0;
-      CPU_MAX_PERF_ON_BAT = 5;
-
-      #Optional helps save long term battery health
-      START_CHARGE_THRESH_BAT1 = 40;
-      STOP_CHARGE_THRESH_BAT1 = 80;
-    };
-  };
+  services.power-profiles-daemon.enable = true;
 }

@@ -50,7 +50,12 @@
       "wheel"
       "docker"
       "audio"
+      "input"
+      "disk"
       "libvirtd"
+      "qemu-libvirtd"
+      "libvirt"
+      "dialout"
     ];
 
     hashedPassword = "$6$Ld6VVI/GPx3tS3HO$pAjCdjWroN88QoCPCER7UdXq1XTbC1C8linCar7/ykEsgtya4JesK1ILX5ffoRqgMkTR/NPN10NfYsvI2yHzE.";
@@ -77,6 +82,8 @@
   environment.systemPackages = with pkgs; [
     cifs-utils
     age
+    qemu
+    quickemu
     sops
     killall
   ];
