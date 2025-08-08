@@ -13,6 +13,9 @@
     options kvm ignore_msrs=1
   '';
 
+  # nix-direnv improvement of direnv for nixos
+  programs.direnv.enable = true;
+
   # nix-ld libraries needed for language-servers to work on neovim
   programs.nix-ld.enable = true;
   programs.nix-ld.libraries = with pkgs; [
@@ -36,7 +39,6 @@
     alejandra
     android-tools
     bat
-    direnv
     eza
     fzf
     gcc
@@ -97,8 +99,4 @@
     gnome.gnome-keyring.enable = true;
   };
 
-  # docker config
-  virtualisation.docker = {
-    enable = true;
-  };
 }

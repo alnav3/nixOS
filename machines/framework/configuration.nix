@@ -1,9 +1,6 @@
 {
-  config,
-  lib,
-  pkgs,
-  pkgs-stable,
   inputs,
+  pkgs,
   ...
 }: {
   imports = [
@@ -23,7 +20,19 @@
     ./../../modules/steamos.nix
     ./../../modules/work.nix
     ./../../modules/mail.nix
+    ./../../modules/llms.nix
+
+    # testing server stuff
+    ./../../modules/virtualisation.nix
+    #./../../containers/n8n.nix
+    #./../../containers/immich.nix
+    #./../../modules/jellyfin.nix
+    #./../../containers/nginx.nix
+    #./../../containers/calibre-web.nix
+
   ];
+
+
 
   # using latest linux kernel for network issues
   boot.kernelPackages = pkgs.linuxPackages_latest;
@@ -33,22 +42,6 @@
 
   nixpkgs.config.allowUnfree = true;
 
-  #Predicate = pkg:
-  #  let
-  #    pkgName = lib.getName pkg;
-  #  in
-  #  builtins.elem pkgName [
-  #    "lunatask"
-  #    "anydesk"
-  #    "steam"
-  #    "steam-original"
-  #    "steam-run"
-  #    "steam-jupiter-original"
-  #    "steam-jupiter-unwrapped"
-  #    "steamdeck-hw-theme"
-  #    "slack"
-  #  ] || (pkgName == "anydesk" && builtins.elem pkgName (builtins.attrNames pkgs-stable));
-
   # Updating firmware | after first start we need to run fwupdmgr update
   services.fwupd.enable = true;
 
@@ -56,34 +49,34 @@
   hardware.framework.amd-7040.preventWakeOnAC = true;
   hardware.framework.enableKmod = true;
 
-services.kanata = {
-  enable = true;
-  keyboards = {
-    internalKeyboard = {
-      devices = [
-        "/dev/input/by-path/platform-i8042-serio-0-event-kbd"
-      ];
-      extraDefCfg = "process-unmapped-keys yes";
-      config = ''
-        (defsrc
-         caps
-         n
-        )
-        (defalias
-         caps (tap-hold 175 175 esc lctl)
-         n (tap-hold 200 200 n (unicode ñ))
-        )
+  services.kanata = {
+    enable = true;
+    keyboards = {
+      internalKeyboard = {
+        devices = [
+          "/dev/input/by-path/platform-i8042-serio-0-event-kbd"
+        ];
+        extraDefCfg = "process-unmapped-keys yes";
+        config = ''
+          (defsrc
+           caps
+           n
+          )
+          (defalias
+           caps (tap-hold 175 175 esc lctl)
+           n (tap-hold 200 200 n (unicode ñ))
+          )
 
-        (deflayer base
-         @caps
-         @n
-        )
-      '';
+          (deflayer base
+           @caps
+           @n
+          )
+        '';
+      };
     };
   };
-};
 
-networking.firewall = {
+  networking.firewall = {
     enable = false;
     allowedTCPPorts = [80 4200 1338];
   };

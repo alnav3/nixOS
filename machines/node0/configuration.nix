@@ -1,57 +1,66 @@
-{ config, pkgs, pkgs-stable, meta, ... }:
+{
+    pkgs,
+    meta,
+    lib,
+    modulesPath,
+    ...
+}:
 
 {
   imports = [
     #./../../modules/jellyfin.nix
-    ./../../modules/llms.nix
+    #./../../modules/llms.nix
+    #./services.nix
     #./../../modules/zigbee2mqtt.nix
+    ./../../modules/virtualisation.nix
+    ./../../containers/nginx.nix
+    ./../../containers/searx.nix
+    #./../../containers/n8n.nix #TODO: search for a FOSS alternative
+    #./../../containers/sonarr.nix
+    #./../../containers/radarr.nix
+    #./../../containers/prowlarr.nix
+    "${modulesPath}/virtualisation/lxc-container.nix"
+
   ];
-
-  services.netbird.enable = true;
-
-  # enable docker
-  virtualisation.docker.enable = true;
 
   nixpkgs.config.packageOverrides = pkgs: {
     vaapiIntel = pkgs.vaapiIntel.override { enableHybridCodec = true; };
   };
 
-  boot.kernelParams = [ "i915.force_probe=46d1" ];
-  nix.settings.require-sigs = false;
+  boot = {
+      enableContainers = true;
+      isContainer = true;
+      loader.grub.enable = lib.mkForce false;
+      loader.systemd-boot.enable = lib.mkForce false;
+      loader.generic-extlinux-compatible.enable = lib.mkForce false;
+  };
 
-  #fileSystems."/mnt/HDD1" = {
-  #  device = "/dev/disk/by-uuid/b74eb042-a941-405e-9544-ed4f1834875b";
-  #  fsType = "auto";
-  #  options = [ "defaults" ];
-  #};
 
-  #fileSystems."/media/Jellyfin" = {
-  #  device = "/dev/disk/by-uuid/0affb6bd-11dc-4d98-827c-0ac175d73bc5";
-  #  fsType = "auto";
-  #  options = [ "defaults" ];
-  #};
 
   # Networking configuration
   networking = {
-    nameservers = [ "9.9.9.9" ];
-    hostName = meta.hostname;
+    nameservers = [ "10.71.71.1" ];
+    # TODO: check this after migration:
+    hostName = lib.mkForce "node-0"; #meta.hostname;
     networkmanager.enable = true;
 
     useDHCP = false;
 
-    interfaces.eth0.ipv4.addresses = [{
-      address = "10.71.71.60";
+    interfaces.eth0.ipv4.addresses = [
+    {
+      address = "10.71.71.10";
       prefixLength = 24;
-    }];
+    }
+    {
+      address = "10.71.71.75";
+      prefixLength = 24;
+    }
+    ];
 
     defaultGateway = "10.71.71.1";
 
     firewall.enable = false;
   };
-
-  # Configure network proxy if necessary
-  # networking.proxy.default = "http://user:password@proxy:port/";
-  # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
 
   # Select internationalisation properties.
   console = {
@@ -60,43 +69,21 @@
     #useXkbConfig = true; # use xkb.options in tty.
   };
 
-  # Fixes for longhorn
-  systemd.tmpfiles.rules = [
-    "L+ /usr/local/bin - - - - /run/current-system/sw/bin/"
+  # Supress systemd units that don't work because of LXC.
+  # https://blog.xirion.net/posts/nixos-proxmox-lxc/#configurationnix-tweak
+  systemd.suppressedSystemUnits = [
+    "dev-mqueue.mount"
+    "sys-kernel-debug.mount"
+    "sys-fs-fuse-connections.mount"
   ];
-  #virtualisation.docker.logDriver = "json-file";
-
-
-  sops.secrets."token" = {};
-  services.k3s = {
-    enable = true;
-    role = "server";
-    tokenFile = config.sops.secrets."token".path;
-    extraFlags = toString [
-	    "--write-kubeconfig-mode \"0644\""
-	    "--cluster-init"
-	    "--disable servicelb"
-	    "--disable traefik"
-	    "--disable local-storage"
-    ];
-    clusterInit = true;
-  };
-
-  services.openiscsi = {
-    enable = true;
-    name = "iqn.2016-04.com.open-iscsi:${meta.hostname}";
-  };
-
 
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
      neovim
-     k3s
      cifs-utils
      nfs-utils
      git
-     netbird
   ];
 
 }

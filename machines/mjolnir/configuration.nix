@@ -57,6 +57,7 @@
       "steam-jupiter-original"
       "steam-jupiter-unwrapped"
       "steamdeck-hw-theme"
+      "n8n"
     ];
   environment.systemPackages = with pkgs; [
     tmux

@@ -2,6 +2,7 @@ keys:
   - &primary age1gtvjq4r4l7kkx444q9w6ca35ewh37sl5gtfepa77gfnfyp5xgu8stg9yt6
   - &secondary age1pwnnnkx6dpk7vqnsxv56zzhstgmgynhsnenwd2xlhqh0jculu3xsyclvev
   - &node0 age1ss8h5z6wru6n3dut5fdh6fhxknq28rp38eeqy8njmsaj7alexsxsay2xxf
+  - &newnode0 age1kd7utmxkd5k6l82xyaq2jupkgzsmpxjqqesp8m044gkz4dh57eeqdsl7cw
 creation_rules:
   - path_regex: secrets/secrets.yaml$
     key_groups:
@@ -9,3 +10,4 @@ creation_rules:
           - *primary
           - *secondary
           - *node0
+          - *newnode0

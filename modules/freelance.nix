@@ -12,8 +12,6 @@
     bruno
     pkgs-unstable.dbeaver-bin
     lunatask
-    slack
-    anydesk
     google-cloud-sdk
   ];
 }
