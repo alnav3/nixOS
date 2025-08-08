@@ -33,11 +33,4 @@
     backend = "docker";
   };
 
-  # TEST
-  networking.nat = {
-      enable = true;
-      internalInterfaces = ["ve-+"];
-      externalInterface = "eth0";
-      enableIPv6 = false;
-  };
 }

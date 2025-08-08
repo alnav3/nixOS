@@ -13,8 +13,9 @@
     #./services.nix
     #./../../modules/zigbee2mqtt.nix
     ./../../modules/virtualisation.nix
+    ./../../modules/networking.nix
     ./../../containers/nginx.nix
-    ./../../containers/searx.nix
+    #./../../containers/searx.nix
     #./../../containers/n8n.nix #TODO: search for a FOSS alternative
     #./../../containers/sonarr.nix
     #./../../containers/radarr.nix
@@ -60,6 +61,12 @@
     defaultGateway = "10.71.71.1";
 
     firewall.enable = false;
+    nat = {
+        enable = true;
+        internalInterfaces = ["ve-+"];
+        externalInterface = "eth0";
+        enableIPv6 = false;
+    };
   };
 
   # Select internationalisation properties.
