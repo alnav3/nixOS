@@ -13,19 +13,30 @@ in
         PGID = "1000";
         TZ = "Etc/UTC";
       };
-      extraOptions = [ "--net" "my-custom-net" "--ip" "${myContainerIPs.transmission}" ];
+      extraOptions = [ "--net" "custom-net" "--ip" "${myContainerIPs.transmission}" ];
       volumes = [
-        "/home/alnav/transmission/config:/config"
-        "/home/alnav/transmission/downloads:/downloads"
-        "/home/alnav/transmission/watch:/watch"
+        "/var/containers-data/transmission/config:/config"
+        "/mnt/things:/downloads"
+        "/var/containers-data/transmission/watch:/watch"
       ];
       ports = [ "51413:51413/tcp" "51413:51413/udp" ];
     };
   };
 
-  # Join the list with newlines to create a single string
-  networking.extraHosts = lib.concatStrings (
-    lib.mapAttrsToList (ip: name: "${name} ${ip}\n") myContainerIPs
-  );
+  containers.nginx-internal.config.services.nginx.virtualHosts."transmission" = {
+      serverName = "torrent.home";
+      listen = [{ addr = "10.71.71.75"; port = 80; }];
+      locations."/" = {
+          proxyPass = "http://${myContainerIPs.transmission}:9091";
+          extraConfig = ''
+              proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-Proto $scheme;
+          '';
+      };
+    };
+
+
 }
 

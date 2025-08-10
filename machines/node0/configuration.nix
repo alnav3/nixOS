@@ -1,6 +1,5 @@
 {
     pkgs,
-    meta,
     lib,
     modulesPath,
     ...
@@ -13,16 +12,23 @@
     #./services.nix
     #./../../modules/zigbee2mqtt.nix
     ./../../modules/virtualisation.nix
-    ./../../modules/networking.nix
+    ./../../modules/jellyfin.nix
     ./../../containers/nginx.nix
-    #./../../containers/searx.nix
+    ./../../containers/searx.nix
     #./../../containers/n8n.nix #TODO: search for a FOSS alternative
-    #./../../containers/sonarr.nix
-    #./../../containers/radarr.nix
-    #./../../containers/prowlarr.nix
+    ./../../containers/sonarr.nix
+    ./../../containers/radarr.nix
+    ./../../containers/prowlarr.nix
+    ./../../containers/transmission.nix
     "${modulesPath}/virtualisation/lxc-container.nix"
-
   ];
+  users.groups.transcoding= {
+    gid = 104;
+  };
+
+  users.users.alnav = {
+    extraGroups = [ "transcoding" ];
+  };
 
   nixpkgs.config.packageOverrides = pkgs: {
     vaapiIntel = pkgs.vaapiIntel.override { enableHybridCodec = true; };
@@ -30,7 +36,6 @@
 
   boot = {
       enableContainers = true;
-      isContainer = true;
       loader.grub.enable = lib.mkForce false;
       loader.systemd-boot.enable = lib.mkForce false;
       loader.generic-extlinux-compatible.enable = lib.mkForce false;
@@ -54,6 +59,10 @@
     }
     {
       address = "10.71.71.75";
+      prefixLength = 24;
+    }
+    {
+      address = "10.71.71.193";
       prefixLength = 24;
     }
     ];

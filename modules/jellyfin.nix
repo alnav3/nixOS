@@ -1,56 +1,177 @@
-{ pkgs, ... }: {
-  # Enable OpenGL and hardware acceleration (crucial for transcoding)
-  hardware.opengl = {
-    enable = true;
-    extraPackages = with pkgs; [
-      intel-media-driver  # For Broadwell (5th gen) or newer; enables QSV/VA-API
-      intel-vaapi-driver  # For older Intel chips (set LIBVA_DRIVER_NAME = "i965" if needed)
-      intel-compute-runtime  # OpenCL for tone mapping and advanced features
-      vpl-gpu-rt  # QSV for 11th gen+ Intel
-      intel-media-sdk  # QSV for up to 11th gen
-      vaapiVdpau  # Additional VA-API support
-    ];
-  };
+{ pkgs, lib, ... }: {
 
-  # Optional: Kernel params for better Intel QSV performance
-  boot.kernelParams = [ "i915.enable_guc=2" ];
+    ## rsync backup solution for data
+    systemd.services.jellyfin-backup = {
+        description = "Backup Jellyfin data to SMB (/mnt/containers/jellyfin)";
+        wantedBy = [ "timers.target" ];
+        serviceConfig = {
+            Type = "oneshot";
+            StandardOutput = "journal";
+            StandardError  = "journal";
 
-  # Jellyfin service
-  services.jellyfin = {
-    enable = true;
-    openFirewall = true;
-  };
+            # Ensure mount is available before starting.
+            ExecStart = ''
+                ${pkgs.rsync}/bin/rsync -aHAX --delete --partial --progress \
+                --exclude='cache/*' --exclude='log/*' \
+                                  /var/lib/jellyfin/ /mnt/containers/jellyfin/
+                                  '';
+          };
 
-  # Packages
-  environment.systemPackages = with pkgs; [
-    jellyfin
-    jellyfin-web
-    jellyfin-ffmpeg  # Customized FFmpeg for Jellyfin transcoding
-    libva-utils  # For testing VA-API (run vainfo to verify)
-  ];
+        unitConfig = {
+            RequiresMountsFor = [ "/mnt/containers" ];
+            After = "network-online.target mnt-containers.mount";
+            Wants = [ "network-online.target" ];
+        };
+    };
 
-  # Environment variable for Intel driver
-  environment.sessionVariables = { LIBVA_DRIVER_NAME = "iHD"; };
+    systemd.timers.jellyfin-backup = {
+        wantedBy = [ "timers.target" ];
+        timerConfig = {
+            # Run daily at 03:00
+            OnCalendar = "03:00";
+            Persistent = true;
+            RandomizedDelaySec = "1h";
+        };
+    };
 
-  # Override for hybrid codec support (optional but recommended)
-  nixpkgs.config.packageOverrides = pkgs: {
-    vaapiIntel = pkgs.vaapiIntel.override { enableHybridCodec = true; };
-  };
-
-  containers.nginx-internal.config.services.nginx.virtualHosts."tv.home" = {
-      serverName = "tv.home";
-      listen = [{ addr = "10.71.71.13"; port = 80; }];
-      locations."/" = {
-          proxyPass = "http://127.0.0.1:8096";
-          extraConfig = ''
-              proxy_set_header Host $host;
-              proxy_set_header X-Real-IP $remote_addr;
-              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-              proxy_set_header X-Forwarded-Proto $scheme;
-          '';
+    # Modern graphics stack with Intel iHD VA-API driver (Broadwell+)
+    hardware = {
+      enableRedistributableFirmware = true;
+      intel-gpu-tools.enable = true;
+      graphics = {
+        enable = true;
+        extraPackages = with pkgs; [
+          intel-media-driver
+          vaapiVdpau
+          intel-compute-runtime # OpenCL filter support (hardware tonemapping and subtitle burn-in)
+          intel-ocl
+          vpl-gpu-rt # QSV on 11th gen or newer
+        ];
+        extraPackages32 = with pkgs.pkgsi686Linux; [
+          intel-media-driver
+        ];
       };
-  };
-  networking.extraHosts = "10.71.71.13 tv.home";
+    };
+    nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
+        "intel-ocl"
+    ];
+    # mount configuration for shows/movies/jellyfin configuration
+    sops.secrets."smb-things-secrets" = { };
 
+    fileSystems."/mnt/things" = {
+        device = "//10.71.71.19/things";
+        fsType = "cifs";  # Corrected from fstype to fsType (standard NixOS option name)
+        options = [
+            "credentials=/run/secrets/smb-things-secrets"
+            "uid=jellyfin"
+            "gid=transcoding"
+            "file_mode=0777"  # Changed to allow execute bit on files for full permissiveness
+            "dir_mode=0777"
+            "noperm"  # Added: Disables client-side permission checks, deferring fully to server
+            "x-systemd.idle-timeout=60"
+            "x-systemd.device-timeout=5s"
+            "x-systemd.mount-timeout=5s"
+            "_netdev"
+            "vers=3.0"
+        ];
+    };
+
+
+    fileSystems."/mnt/media" = {
+        device = "//10.71.71.19/media";
+        fsType = "cifs";
+        options = [
+            "credentials=/run/secrets/smb-things-secrets"
+                "uid=jellyfin"
+                "gid=transcoding"
+                "file_mode=0666"
+                "dir_mode=0777"
+                "x-systemd.idle-timeout=60"
+                "x-systemd.device-timeout=5s"
+                "x-systemd.mount-timeout=5s"
+                "_netdev"
+                "vers=3.0"
+        ];
+    };
+
+    fileSystems."/mnt/containers" = {
+        device = "//10.71.71.19/podvolumes";
+        fsType = "cifs";
+        options = [
+            "credentials=/run/secrets/smb-things-secrets"
+                "uid=jellyfin"
+                "gid=transcoding"
+                "file_mode=0666"
+                "dir_mode=0777"
+                "x-systemd.idle-timeout=60"
+                "x-systemd.device-timeout=5s"
+                "x-systemd.mount-timeout=5s"
+                "_netdev"
+                "vers=3.0"
+        ];
+    };
+
+    # Set VA-API driver globally; Jellyfin inherits this
+    environment.sessionVariables = {
+        LIBVA_DRIVER_NAME = "iHD";
+    };
+    systemd.services.jellyfin.environment.LIBVA_DRIVER_NAME = "iHD";
+
+    # Jellyfin service
+    services.jellyfin = {
+        enable = true;
+        openFirewall = true;
+
+        user  = "jellyfin";
+        group = "transcoding";
+    };
+    # Jellyfin FFmpeg package
+    environment.systemPackages = with pkgs; [
+            rsync
+            jellyfin
+            jellyfin-web
+            jellyfin-ffmpeg            # Uses ffmpeg configured for Jellyfin HA
+            libva-utils
+            intel-gpu-tools
+            cifs-utils
+    ];
+
+# i915.enable_guc no longer relevant for new xe driver paths on newer GPUs,
+# but ADL-N typically still uses i915; you can omit unless troubleshooting.[2][6]
+# boot.kernelParams = [ "i915.enable_guc=2" ];
+
+    containers = {
+      nginx-internal.config.services.nginx.virtualHosts."tv.home" = {
+        serverName = "tv.home";
+        listen = [{ addr = "10.71.71.75"; port = 80; }];
+        locations."/" = {
+            proxyPass = "http://127.0.0.1:8096";
+            extraConfig = ''
+                proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            '';
+        };
+      };
+      nginx-external.config.services.nginx.virtualHosts."tv.alnav.dev" = {
+          forceSSL = true;
+          useACMEHost = "alnav.dev";
+          serverName = "tv.alnav.dev";
+          listen = [
+              { addr = "10.71.71.193"; port = 80; }
+              { addr = "10.71.71.193"; port = 443; ssl = true; }
+          ];
+          locations."/" = {
+              proxyPass = "http://127.0.0.1:8096";
+              extraConfig = ''
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+              '';
+          };
+      };
+    };
 }
 

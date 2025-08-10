@@ -18,6 +18,7 @@
     graphics.enable = true;
   };
 
+
   ## enable sound with pipewire
   #security.rtkit.enable = true;
   #services.pipewire = {
@@ -30,8 +31,11 @@
 
   programs.localsend.enable = true;
 
+  services.upower.enable = true;
   environment.systemPackages =
     (with pkgs; [
+      hyprpanel
+      hyprsunset
      gnome-multi-writer
       # terminal needed for hyprland
       kitty
@@ -60,6 +64,7 @@
       imv
       # screen management
       kanshi
+      shikane
       # mail
       protonmail-desktop
       # lock screen

@@ -10,6 +10,42 @@
             RemainAfterExit = true;
         };
     };
+
+    systemd.services.bidirectional-sync = {
+        description = "Bidirectional sync between /mnt/containers and /var/containers-data";
+        wantedBy = [ "timers.target" ];
+        serviceConfig = {
+            Type = "oneshot";
+            StandardOutput = "journal";
+            StandardError  = "journal";
+            Environment = "HOME=/root";
+
+            # Ensure mount is available before starting.
+            ExecStart = ''
+                ${pkgs.unison}/bin/unison /mnt/containers /var/containers-data \
+                -auto -batch -times -prefer newer -copyonconflict -perms 0 \
+                -logfile /var/log/unison/containers.log -silent
+            '';
+        };
+
+        unitConfig = {
+            RequiresMountsFor = [ "/mnt/containers" "/var/containers-data" ];
+            After = "network-online.target mnt-containers.mount";
+            Wants = [ "network-online.target" ];
+        };
+    };
+
+    systemd.timers.bidirectional-sync = {
+        wantedBy = [ "timers.target" ];
+        timerConfig = {
+            # Run daily at 04:00
+            OnCalendar = "04:00";
+            Persistent = true;
+            RandomizedDelaySec = "1h";
+        };
+    };
+
+    boot.enableContainers = true;
   # docker config
   virtualisation = {
 
