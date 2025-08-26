@@ -11,6 +11,7 @@ in {
 
   environment.systemPackages = with pkgs; [
     brightnessctl
+    btop
     powertop
     hypridle
   ];
@@ -51,5 +52,22 @@ in {
   };
 
   # power save modes
-  services.power-profiles-daemon.enable = true;
+  services.power-profiles-daemon.enable = false;
+  services.auto-cpufreq = {
+      enable = true;
+      settings = {
+          battery = {
+              governor = "powersave";
+              scaling_min_freq = "500000";
+              scaling_max_freq = "500000";
+              turbo = "never";
+          };
+          charger = {
+              governor = "performance";
+              scaling_min_freq = "1000000";
+              scaling_max_freq = "3501000";
+              turbo = "auto";
+          };
+      };
+  };
 }

@@ -11,27 +11,27 @@
   sops.secrets."home.ovpn" = {};
   sops.secrets."homecreds.conf" = {};
 
-  networking.networkmanager = {
-      enable = true;  # Ensure NetworkManager is enabled
-          ensureProfiles.profiles = {
-              "wired-connection-1" = {  # Internal key for the profile (can be anything unique)
-                  connection = {
-                      id = "Wired connection 1";  # Display name in NetworkManager
-                      type = "ethernet";
-                      interface-name = "eth0";  # Bind to specific interface
-                  };
-                  ipv4 = {
-                      method = "manual";
-                      address1 = "10.71.71.85/24";  # First IP with prefix
-                      address2 = "10.71.71.75/24";  # Second IP with prefix
-                      dns = "10.71.71.1;";  # DNS servers (semicolon-separated)
-                  };
-                  ipv6 = {
-                      method = "disabled";  # Optional: Disable IPv6 if not needed
-                  };
-              };
-          };
-  };
+  #networking.networkmanager = {
+  #    enable = true;  # Ensure NetworkManager is enabled
+  #        ensureProfiles.profiles = {
+  #            "wired-connection-1" = {  # Internal key for the profile (can be anything unique)
+  #                connection = {
+  #                    id = "Wired connection 1";  # Display name in NetworkManager
+  #                    type = "ethernet";
+  #                    interface-name = "eth0";  # Bind to specific interface
+  #                };
+  #                ipv4 = {
+  #                    method = "manual";
+  #                    address1 = "10.71.71.85/24";  # First IP with prefix
+  #                    address2 = "10.71.71.75/24";  # Second IP with prefix
+  #                    dns = "10.71.71.1;";  # DNS servers (semicolon-separated)
+  #                };
+  #                ipv6 = {
+  #                    method = "disabled";  # Optional: Disable IPv6 if not needed
+  #                };
+  #            };
+  #        };
+  #};
 
   #services.openvpn.servers = {
   #    home = {

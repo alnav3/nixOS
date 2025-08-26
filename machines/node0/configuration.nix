@@ -17,8 +17,10 @@
     ./../../containers/searx.nix
     #./../../containers/n8n.nix #TODO: search for a FOSS alternative
     ./../../containers/sonarr.nix
+    ./../../containers/immich.nix
     ./../../containers/radarr.nix
     ./../../containers/prowlarr.nix
+    ./../../containers/calibre-web.nix
     ./../../containers/transmission.nix
     "${modulesPath}/virtualisation/lxc-container.nix"
   ];

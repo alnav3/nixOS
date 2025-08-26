@@ -57,6 +57,7 @@
     neovim
     nixd
     nodejs_22
+    opencode
     pkgs-unstable.oh-my-posh
     postingPkg
     (pkgs.python3.withPackages (ps: with ps; [
@@ -92,6 +93,17 @@
       clean-disk = "sudo nix profile wipe-history --profile /nix/var/nix/profiles/system --older-than 1d";
       rofi-wifi = "${inputs.rofi-wifi}/rofi-wifi-menu.sh";
       update-flake = "nix flake lock --update-input";
+      kill-battery = ''
+          sudo systemctl stop auto-cpufreq.service && \
+          for cpu in /sys/devices/system/cpu/cpu[0-9]*; do
+              echo performance | sudo tee $cpu/cpufreq/scaling_governor > /dev/null;
+          done && \
+          echo 3501000 | sudo tee /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq > /dev/null
+      '';
+      unkill-battery = ''
+          sudo systemctl start auto-cpufreq.service
+          sudo powertop --auto-tune
+      '';
     };
   };
   users.defaultUserShell = pkgs.zsh;

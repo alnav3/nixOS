@@ -13,5 +13,6 @@
     pkgs-unstable.dbeaver-bin
     lunatask
     google-cloud-sdk
+    anydesk
   ];
 }

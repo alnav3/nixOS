@@ -20,15 +20,10 @@
     ./../../modules/steamos.nix
     ./../../modules/work.nix
     ./../../modules/mail.nix
-    ./../../modules/llms.nix
-
-    # testing server stuff
-    ./../../modules/virtualisation.nix
-    #./../../containers/n8n.nix
-    #./../../containers/immich.nix
-    #./../../modules/jellyfin.nix
-    #./../../containers/nginx.nix
-    #./../../containers/calibre-web.nix
+    #./../../modules/llms.nix
+    #./../../modules/virtualisation.nix
+    # testing bootloader stuff
+    ./../../modules/bootloader.nix
 
   ];
 
@@ -48,6 +43,18 @@
   # Suspend/wake workaround, keyboard will not wake up the system
   hardware.framework.amd-7040.preventWakeOnAC = true;
   hardware.framework.enableKmod = true;
+    # Networking configuration
+  networking = {
+      nameservers = [ "10.71.71.1" ];
+      networkmanager.enable = true;
+
+      useDHCP = false;
+
+
+      defaultGateway = "10.71.71.1";
+
+  };
+
 
   services.kanata = {
     enable = true;

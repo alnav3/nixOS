@@ -1,61 +1,68 @@
-{ config, lib, pkgs, ... }:
+{ lib, pkgs, ... }:
 
 let
-  nginxInternalAddr = "10.71.71.13";  # Address from your nginx-internal listen config
-  calibreIp = "172.69.0.5";  # Calibre container's localAddress
+  myContainerIPs = {
+    calibre = "172.42.0.22";
+  };
 in
 {
-  options = {
-    services.calibre-web = {
-      proxyEnable = lib.mkEnableOption "Enable nginx-internal reverse proxy for calibre-web";
+  virtualisation.oci-containers.containers = {
+    calibre = {
+      image = "lscr.io/linuxserver/calibre-web:latest";
+      environment = {
+        TZ  = "Etc/UTC";
+        PUID = "994";
+        PGID = "104";
+        # Optional extras:
+        # DOCKER_MODS = "linuxserver/mods:universal-calibre"; # optional: ebook conversion layer
+        # OAUTHLIB_RELAX_TOKEN_SCOPE = "1";                  # optional for Google OAUTH
+      };
+      extraOptions = [ "--net" "custom-net" "--ip" "${myContainerIPs.calibre}" ];
+      volumes = [
+        "/var/containers-data/calibre/config:/config"
+        "/var/containers-data/calibre/books:/books"
+      ];
+      ports = [ "8083:443" ];
     };
   };
 
-  config = lib.mkIf config.services.calibre-web.proxyEnable {
-    containers.calibreweb = {
-      autoStart = true;
-      ephemeral = false;
-      privateNetwork = true;
-      hostAddress = "172.69.0.1";  # Host side of the bridge
-      localAddress = calibreIp;
-      config = {
-        services.calibre-web.enable = true;
-        services.calibre-web.group = "media";
-        services.calibre-web.listen.ip = "0.0.0.0";
-        services.calibre-web.listen.port = 8083;
-        #services.calibre-web.options.calibreLibrary = "/path/to/calibre/library";  # Update to your actual path
-        services.calibre-web.options.enableBookUploading = true;
-        services.calibre-web.options.enableBookConversion = true;
-
-        users.users.calibre = {
-          isSystemUser = true;
-          group = "media";
-          extraGroups = [ "network" ];
-        };
-
-        users.groups.media = {
-          gid = 999;
-        };
-
-        networking.firewall.allowedTCPPorts = [ 8083 ];
+  containers = {
+      nginx-internal.config.services.nginx.virtualHosts."books.home" = {
+          serverName = "books.home";
+          listen = [{ addr = "10.71.71.75"; port = 80; }];
+          locations."/" = {
+              proxyPass = "http://${myContainerIPs.calibre}:443";
+              extraConfig = ''
+                  proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto $scheme;
+              '';
+          };
       };
-    };
-
-    # Extend your existing nginx-internal container with the proxy config
-    containers.nginx-internal.config.services.nginx.virtualHosts."books.home" = {
-      serverName = "books.home";
-      listen = [{ addr = nginxInternalAddr; port = 80; }];
-      locations."/" = {
-        proxyPass = "http://${calibreIp}:8083";
-        extraConfig = ''
-          proxy_set_header Host $host;
-          proxy_set_header X-Real-IP $remote_addr;
-          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-          proxy_set_header X-Forwarded-Proto $scheme;
-        '';
+      nginx-external.config.services.nginx.virtualHosts."books.alnav.dev" = {
+          forceSSL = true;
+          useACMEHost = "alnav.dev";
+          serverName = "books.alnav.dev";
+          listen = [
+              { addr = "10.71.71.193"; port = 80; }
+              { addr = "10.71.71.193"; port = 443; ssl = true; }
+          ];
+          locations."/" = {
+              proxyPass = "http://${myContainerIPs.calibre}:443";
+              extraConfig = ''
+                  proxy_busy_buffers_size   1024k;
+                  proxy_buffers   4 512k;
+                  proxy_buffer_size   1024k;
+                  client_max_body_size 1G;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+              '';
+          };
       };
-    };
+
   };
-
 }
 
