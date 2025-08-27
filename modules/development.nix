@@ -60,10 +60,6 @@
     opencode
     pkgs-unstable.oh-my-posh
     postingPkg
-    (pkgs.python3.withPackages (ps: with ps; [
-      ollama
-      pygls
-    ]))
     qemu
     ripgrep
     sqlc
