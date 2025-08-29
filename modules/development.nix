@@ -63,7 +63,7 @@
     qemu
     ripgrep
     sqlc
-    tailwindcss
+    tailwindcss_4
     templ
     temurin-bin-17
     tmux
