@@ -101,10 +101,12 @@
   virtualisation.spiceUSBRedirection.enable = true;
   # for complete guide on fingerprint workaround, read https://github.com/NixOS/nixos-hardware/tree/master/framework/13-inch/7040-amd#suspendwake-workaround
   environment.systemPackages = with pkgs; [
+    ledger-live-desktop
     fw-ectool
     distrobox
     podman-compose
     spice-gtk
+    universal-android-debloater
     spice-vdagent
   ];
 }

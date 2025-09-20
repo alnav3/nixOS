@@ -39,6 +39,7 @@
     alejandra
     android-tools
     bat
+    carapace
     eza
     fzf
     gcc
@@ -48,6 +49,8 @@
     go
     goose
     helmfile
+    # Secret management
+    infisical
     jq
     kaf
     kubectl

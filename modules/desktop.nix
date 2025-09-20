@@ -51,6 +51,7 @@
       # notification system for wayland
       swaynotificationcenter
       libnotify
+      element-desktop
       # wallpaper plugin for hyprland
       hyprpaper
       # App launcher

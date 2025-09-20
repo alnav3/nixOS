@@ -15,13 +15,23 @@
     ./../../modules/jellyfin.nix
     ./../../containers/nginx.nix
     ./../../containers/searx.nix
-    #./../../containers/n8n.nix #TODO: search for a FOSS alternative
+    ./../../containers/windmill.nix
     ./../../containers/sonarr.nix
     ./../../containers/immich.nix
     ./../../containers/radarr.nix
     ./../../containers/prowlarr.nix
     ./../../containers/calibre-web.nix
     ./../../containers/transmission.nix
+    ./../../containers/infisical.nix
+    ./../../containers/suggestarr.nix
+    ./../../containers/jellyseerr.nix
+    ./../../containers/synapse.nix
+    ./../../containers/mautrix-whatsapp.nix
+    ./../../containers/mautrix-telegram.nix
+    ./../../containers/mautrix-signal.nix
+    ./../../containers/ntfy.nix
+    #./../../containers/traefik.nix
+    #./../../containers/dokploy.nix
     "${modulesPath}/virtualisation/lxc-container.nix"
   ];
   users.groups.transcoding= {

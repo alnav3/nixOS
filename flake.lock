@@ -123,11 +123,11 @@
     "dotfiles": {
       "flake": false,
       "locked": {
-        "lastModified": 1755445628,
-        "narHash": "sha256-wdAUqctRu6WaQen63k+ABqxTqhyR5xbuZd0XuS4p4cY=",
+        "lastModified": 1757717158,
+        "narHash": "sha256-vVyVXbMFc6gmExj+CZqpRcugFUERV5STv9ITNxB083k=",
         "owner": "alnav3",
         "repo": "dotfiles",
-        "rev": "ebccbe0392cdbb36e6399bc7ef3bc6f10568503c",
+        "rev": "01826f93dc532576e57d8e99a4e1215f721594e5",
         "type": "github"
       },
       "original": {
@@ -572,11 +572,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1753938292,
-        "narHash": "sha256-akeUWgvIIi163s/femzvTOuqqOiOB/8US5ioHsNqhYY=",
+        "lastModified": 1756367273,
+        "narHash": "sha256-u7/qG5xQxW+o51R2lBPj0NxU3oFrUwj78UlCKKNHGAc=",
         "owner": "pabloaul",
         "repo": "lsfg-vk-flake",
-        "rev": "081cd66b1369188777ea146a759d35e99ea6b031",
+        "rev": "62aadfc844b2002abe47cbbc9dfd028033376248",
         "type": "github"
       },
       "original": {

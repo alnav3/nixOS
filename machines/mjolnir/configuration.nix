@@ -9,6 +9,7 @@
     ./../../modules/ricing.nix
     ./../../modules/steamos.nix
   ];
+  networking.networkmanager.enable = true;
 
   # Use a recent kernel version (6.11) which can improve hardware performance.
   boot = {

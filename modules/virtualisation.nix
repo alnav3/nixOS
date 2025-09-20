@@ -3,7 +3,7 @@
     systemd.services.docker-custom-net = {
         description = "Create custom Docker network";
         wantedBy = [ "multi-user.target" ];
-        before = [ "docker-n8n.service" ];
+        before = [ "docker-windmill-db.service" "docker-windmill-server.service" ];
         serviceConfig = {
             Type = "oneshot";
             ExecStart = "${pkgs.bash}/bin/sh -c '${pkgs.docker}/bin/docker network inspect custom-net >/dev/null 2>&1 || ${pkgs.docker}/bin/docker network create --subnet=172.42.0.0/24 custom-net'";

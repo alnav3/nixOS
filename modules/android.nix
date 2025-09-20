@@ -4,6 +4,7 @@
   environment.systemPackages = with pkgs; [
     scrcpy
     wlr-randr
+    universal-android-debloater
     cage
   ];
 }

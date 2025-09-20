@@ -58,6 +58,28 @@
     # mount configuration for shows/movies/jellyfin configuration
     sops.secrets."smb-things-secrets" = { };
 
+    # jellyfin's skip intro plugin
+    nixpkgs.overlays = with pkgs; [
+      (
+        final: prev:
+          {
+            jellyfin-web = prev.jellyfin-web.overrideAttrs (finalAttrs: previousAttrs: {
+              installPhase = ''
+                runHook preInstall
+
+                # this is the important line
+                sed -i "s#</head>#<script src=\"configurationpage?name=skip-intro-button.js\"></script></head>#" dist/index.html
+
+                mkdir -p $out/share
+                cp -a dist $out/share/jellyfin-web
+
+                runHook postInstall
+              '';
+            });
+          }
+      )
+    ];
+
     fileSystems."/mnt/things" = {
         device = "//10.71.71.19/things";
         fsType = "cifs";  # Corrected from fstype to fsType (standard NixOS option name)
