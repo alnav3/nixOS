@@ -17,10 +17,9 @@
     ./../../modules/llms.nix
     ./../../modules/networking.nix
     ./../../modules/ricing.nix
-    ./../../modules/social.nix
     ./../../modules/steamos.nix
     ./../../modules/work.nix
-    ./../../modules/mail.nix
+    ./../../modules/misc.nix
     #./../../modules/llms.nix
     #./../../modules/virtualisation.nix
     # testing bootloader stuff

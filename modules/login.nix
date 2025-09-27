@@ -12,7 +12,7 @@
 #  };
 #}
 { pkgs, lib, ... }: let
-  tuigreet = "${pkgs.greetd.tuigreet}/bin/tuigreet";
+  tuigreet = "${pkgs.tuigreet}/bin/tuigreet";
   session = "dbus-run-session ${pkgs.hyprland}/bin/Hyprland";
   username = "alnav";
 in {

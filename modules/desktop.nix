@@ -51,11 +51,10 @@
       # notification system for wayland
       swaynotificationcenter
       libnotify
-      element-desktop
       # wallpaper plugin for hyprland
       hyprpaper
       # App launcher
-      rofi-wayland
+      rofi
       transmission_4-gtk
       # Network manager
       networkmanagerapplet
@@ -66,8 +65,8 @@
       # screen management
       kanshi
       shikane
+      proton-pass
       # mail
-      protonmail-desktop
       # lock screen
       hyprlock
       ungoogled-chromium

@@ -93,15 +93,10 @@
       rofi-wifi = "${inputs.rofi-wifi}/rofi-wifi-menu.sh";
       update-flake = "nix flake lock --update-input";
       kill-battery = ''
-          sudo systemctl stop auto-cpufreq.service && \
-          for cpu in /sys/devices/system/cpu/cpu[0-9]*; do
-              echo performance | sudo tee $cpu/cpufreq/scaling_governor > /dev/null;
-          done && \
-          echo 3501000 | sudo tee /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq > /dev/null
+          sudo ryzenadj --stapm-limit=15000 --fast-limit=20000 --slow-limit=15000
       '';
       unkill-battery = ''
-          sudo systemctl start auto-cpufreq.service
-          sudo powertop --auto-tune
+          sudo ryzenadj --stapm-limit=2000 --fast-limit=2000 --slow-limit=2000
       '';
     };
   };

@@ -11,6 +11,7 @@ in {
 
   environment.systemPackages = with pkgs; [
     brightnessctl
+    ryzenadj
     btop
     powertop
     hypridle
@@ -52,22 +53,24 @@ in {
   };
 
   # power save modes
-  services.power-profiles-daemon.enable = false;
-  services.auto-cpufreq = {
-      enable = true;
-      settings = {
-          battery = {
-              governor = "powersave";
-              scaling_min_freq = "500000";
-              scaling_max_freq = "500000";
-              turbo = "never";
-          };
-          charger = {
-              governor = "performance";
-              scaling_min_freq = "1000000";
-              scaling_max_freq = "3501000";
-              turbo = "auto";
-          };
-      };
-  };
+  services.power-profiles-daemon.enable = true;
+
+  # TODO: check how to do this with power-profiles-daemon activated
+  #services.auto-cpufreq = {
+  #    enable = true;
+  #    settings = {
+  #        battery = {
+  #            governor = "powersave";
+  #            scaling_min_freq = "500000";
+  #            scaling_max_freq = "500000";
+  #            turbo = "never";
+  #        };
+  #        charger = {
+  #            governor = "performance";
+  #            scaling_min_freq = "1000000";
+  #            scaling_max_freq = "3501000";
+  #            turbo = "auto";
+  #        };
+  #    };
+  #};
 }

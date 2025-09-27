@@ -1,5 +1,5 @@
 { pkgs, lib, ... }: let
-  tuigreet = "${pkgs.greetd.tuigreet}/bin/tuigreet";
+  tuigreet = "${pkgs.tuigreet}/bin/tuigreet";
   session = "start-gamescope-session";
   username = "alnav";
 in {

@@ -10,10 +10,12 @@
     # youtube but without google
     yt-dlp
     ytfzf
-    # netflix but good
-    jellyfin-media-player
-    # jellyfin but without a server
-    stremio
+    # media control
+    playerctl
+    ## netflix but good
+    #jellyfin-media-player
+    ## jellyfin but without a server
+    #stremio
     # pdf reader
     zathura
   ];

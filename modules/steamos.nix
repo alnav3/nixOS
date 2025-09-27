@@ -21,7 +21,10 @@
       steamos = {
           useSteamOSConfig = true;
       };
-      decky-loader.enable = true;
+      decky-loader = {
+          enable = true;
+          extraPackages = [pkgs.wget pkgs.p7zip ];
+      };
       hardware.has.amd.gpu = true;
   };
 
@@ -31,6 +34,13 @@
         steam -shutdown
       ''
     )
+    # required for junkStore
+    python3
+    wget
+
+    # required for decky framegen
+    p7zip
+
     mangohud
     protonup
     # General non-steam games

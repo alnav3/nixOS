@@ -11,8 +11,10 @@
     postgresql
     bruno
     pkgs-unstable.dbeaver-bin
-    lunatask
-    google-cloud-sdk
-    anydesk
+    #lunatask
+    #google-cloud-sdk
+    # Game development
+    love
+    #anydesk
   ];
 }
