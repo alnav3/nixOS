@@ -30,6 +30,7 @@
     ./../../containers/mautrix-telegram.nix
     ./../../containers/mautrix-signal.nix
     ./../../containers/ntfy.nix
+    ./../../containers/lancache.nix
     #./../../containers/traefik.nix
     #./../../containers/dokploy.nix
     "${modulesPath}/virtualisation/lxc-container.nix"

@@ -39,6 +39,12 @@
 
     posting-flake.url = "github:jorikvanveen/posting-flake";
 
+    # system-bridge
+    system-bridge-nix = {
+        url = "github:alnav3/system-bridge-nix";
+        inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # deck experience on NixOS
     jovian-nixos = {
       url = "github:Jovian-Experiments/Jovian-NixOS";
@@ -149,6 +155,8 @@
                 # Ricing the nixOS way
                 inputs.stylix.nixosModules.stylix
                 nixos-hardware.nixosModules.framework-13-7040-amd
+                #inputs.system-bridge-nix.nixosModules.x86_64-linux
+                inputs.system-bridge-nix.nixosModules.${host.system}.default
               ]
               else []
             );

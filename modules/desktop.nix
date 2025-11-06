@@ -66,7 +66,10 @@
       kanshi
       shikane
       proton-pass
-      # mail
+      vesktop
+
+      # recording tool
+      wf-recorder
       # lock screen
       hyprlock
       ungoogled-chromium

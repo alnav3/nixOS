@@ -1,4 +1,4 @@
-{ config, lib, pkgs, ... }: {
+{ config, lib, pkgs, inputs, ... }: {
   imports = [
     # SteamOS module brings in gaming optimizations.
     ./../../modules/android.nix
@@ -10,6 +10,9 @@
     ./../../modules/steamos.nix
   ];
   networking.networkmanager.enable = true;
+  # enable system-bridge port
+  networking.firewall.allowedTCPPorts = [ 9170 ];
+
 
   # Use a recent kernel version (6.11) which can improve hardware performance.
   boot = {
@@ -64,6 +67,7 @@
     tmux
     neovim
     steamtinkerlaunch
+    inputs.system-bridge-nix.packages.x86_64-linux.system-bridge
   ];
 
   systemd.services.usb-wake = {

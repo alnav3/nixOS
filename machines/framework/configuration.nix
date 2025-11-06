@@ -43,16 +43,10 @@
   # Suspend/wake workaround, keyboard will not wake up the system
   hardware.framework.amd-7040.preventWakeOnAC = true;
   hardware.framework.enableKmod = true;
-    # Networking configuration
+  # Networking configuration
   networking = {
-      nameservers = [ "10.71.71.1" ];
-      networkmanager.enable = true;
-
-      useDHCP = false;
-
-
-      defaultGateway = "10.71.71.1";
-
+    networkmanager.enable = true;
+    useDHCP = false;
   };
 
 

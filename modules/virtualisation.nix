@@ -11,6 +11,17 @@
         };
     };
 
+    systemd.services.docker-lancache-net = {
+        description = "Create lancache Docker network";
+        wantedBy = [ "multi-user.target" ];
+        before = [ "docker-lancache-dns.service" "docker-lancache-monolithic.service" ];
+        serviceConfig = {
+            Type = "oneshot";
+            ExecStart = "${pkgs.bash}/bin/sh -c '${pkgs.docker}/bin/docker network inspect lancache-net >/dev/null 2>&1 || ${pkgs.docker}/bin/docker network create --subnet=10.0.39.0/24 lancache-net'";
+            RemainAfterExit = true;
+        };
+    };
+
     #systemd.services.bidirectional-sync = {
     #    description = "Bidirectional sync between /mnt/containers and /var/containers-data";
     #    wantedBy = [ "timers.target" ];

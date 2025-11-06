@@ -44,7 +44,6 @@
           intel-media-driver
           vaapiVdpau
           intel-compute-runtime # OpenCL filter support (hardware tonemapping and subtitle burn-in)
-          intel-ocl
           vpl-gpu-rt # QSV on 11th gen or newer
         ];
         extraPackages32 = with pkgs.pkgsi686Linux; [
