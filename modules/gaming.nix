@@ -13,7 +13,7 @@
 
   environment.systemPackages = with pkgs; [
     mangohud
-    protonup
+    protonup-ng
     # General non-steam games
     lutris
     # Epic, GOG, etc.

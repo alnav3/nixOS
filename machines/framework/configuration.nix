@@ -82,6 +82,17 @@
     allowedTCPPorts = [80 4200 1338];
   };
 
+  # docker setup
+  virtualisation.docker = {
+    enable = true;
+
+    autoPrune = {
+      enable = true;
+      dates = "weekly";
+    };
+  };
+  users.users.alnav.extraGroups = [ "docker" ];
+
   # fingerprint reader support
   services.fwupd.package =
     (import (builtins.fetchTarball {
@@ -95,6 +106,7 @@
   # for complete guide on fingerprint workaround, read https://github.com/NixOS/nixos-hardware/tree/master/framework/13-inch/7040-amd#suspendwake-workaround
   environment.systemPackages = with pkgs; [
     ledger-live-desktop
+    docker-compose
     fw-ectool
     distrobox
     podman-compose

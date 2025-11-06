@@ -72,7 +72,7 @@
       wf-recorder
       # lock screen
       hyprlock
-      ungoogled-chromium
+      #ungoogled-chromium
       (pkgs.writeShellScriptBin "hyprexit" ''
         ${hyprland}/bin/hyprctl dispatch exit
         ${systemd}/bin/loginctl terminate-user "alnav"

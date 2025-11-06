@@ -42,7 +42,7 @@
     p7zip
 
     mangohud
-    protonup
+    protonup-ng
     # General non-steam games
     lutris
     # Epic, GOG, etc.
