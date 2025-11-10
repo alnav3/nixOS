@@ -20,7 +20,7 @@
     heroic
     # just in case neither of the above work
     bottles
-    ryujinx
+    ryubing
     (
       pkgs.writeShellScriptBin "steamos-session-select" ''
         steam -shutdown & exec Hyprland
@@ -28,7 +28,6 @@
     )
   ];
 
-  boot.kernelPackages = pkgs.linuxPackages; # (this is the default) some amdgpu issues on 6.10
   programs = {
     gamescope = {
       enable = true;

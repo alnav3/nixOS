@@ -17,7 +17,7 @@
     ./../../modules/llms.nix
     ./../../modules/networking.nix
     ./../../modules/ricing.nix
-    ./../../modules/steamos.nix
+    ./../../modules/gaming.nix
     ./../../modules/work.nix
     ./../../modules/misc.nix
     #./../../modules/llms.nix

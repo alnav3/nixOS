@@ -15,7 +15,7 @@
     ./../../modules/jellyfin.nix
     ./../../containers/nginx.nix
     ./../../containers/searx.nix
-    ./../../containers/windmill.nix
+    #./../../containers/windmill.nix
     ./../../containers/sonarr.nix
     ./../../containers/immich.nix
     ./../../containers/radarr.nix
@@ -31,6 +31,8 @@
     ./../../containers/mautrix-signal.nix
     ./../../containers/ntfy.nix
     ./../../containers/lancache.nix
+    ./../../containers/deemix.nix
+    ./../../containers/metube.nix
     #./../../containers/traefik.nix
     #./../../containers/dokploy.nix
     "${modulesPath}/virtualisation/lxc-container.nix"
@@ -47,6 +49,7 @@
     vaapiIntel = pkgs.vaapiIntel.override { enableHybridCodec = true; };
   };
 
+  nix.settings.trusted-users = [ "root" "@wheel" "alnav" ];
   boot = {
       enableContainers = true;
       loader.grub.enable = lib.mkForce false;
@@ -112,6 +115,7 @@
      neovim
      cifs-utils
      nfs-utils
+     yt-dlp
      git
   ];
 

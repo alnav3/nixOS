@@ -1,6 +1,6 @@
 {
   pkgs,
-  pkgs-unstable,
+  pkgs-stable,
   inputs,
   postingPkg,
   ...
@@ -61,7 +61,7 @@
     nixd
     nodejs_22
     opencode
-    pkgs-unstable.oh-my-posh
+    oh-my-posh
     postingPkg
     qemu
     ripgrep
