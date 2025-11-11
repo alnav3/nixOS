@@ -7,6 +7,7 @@
     mpv
     # music and podcast
     cmus
+    kcc
     # youtube but without google
     yt-dlp
     ytfzf

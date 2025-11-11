@@ -34,9 +34,10 @@ in
               proxyPass = "http://${myContainerIPs.calibre}:443";
               extraConfig = ''
                   proxy_set_header Host $host;
-              proxy_set_header X-Real-IP $remote_addr;
-              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-              proxy_set_header X-Forwarded-Proto $scheme;
+                  client_max_body_size 10G;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
               '';
           };
       };
@@ -54,7 +55,7 @@ in
                   proxy_busy_buffers_size   1024k;
                   proxy_buffers   4 512k;
                   proxy_buffer_size   1024k;
-                  client_max_body_size 1G;
+                  client_max_body_size 10G;
                   proxy_set_header Host $host;
                   proxy_set_header X-Real-IP $remote_addr;
                   proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
