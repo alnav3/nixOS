@@ -30,9 +30,14 @@
     ./../../containers/mautrix-telegram.nix
     ./../../containers/mautrix-signal.nix
     ./../../containers/ntfy.nix
-    ./../../containers/lancache.nix
     ./../../containers/deemix.nix
     ./../../containers/metube.nix
+    #./../../containers/splitweb.nix
+    ./../../containers/slskd.nix
+    ./../../containers/pihole.nix
+    ./../../containers/headscale.nix
+    ./../../containers/n8n.nix
+    ./../../containers/etesync.nix
     #./../../containers/traefik.nix
     #./../../containers/dokploy.nix
     "${modulesPath}/virtualisation/lxc-container.nix"

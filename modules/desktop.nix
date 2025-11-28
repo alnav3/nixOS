@@ -41,6 +41,8 @@
       kitty
       # File manager and icon theme needed for gtk apps
       nautilus
+      # possible replacement
+      yazi
       adwaita-icon-theme
       # mouse fix for hyprland
       hyprcursor

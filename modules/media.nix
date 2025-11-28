@@ -7,7 +7,11 @@
     mpv
     # music and podcast
     cmus
+    # comic conversion to kobo format
     kcc
+    # ipod rockbox installation
+    rockbox-utility
+    slskd
     # youtube but without google
     yt-dlp
     ytfzf

@@ -13,13 +13,10 @@ NOTIFICATION_ID=12345  # Persistent notification ID
 SCRIPT_NOTIFICATION_IDS="/tmp/ip-monitor-notification-ids.tmp"  # Track all notification IDs used
 
 # State tracking
-LAST_STATE=""  # "safe", "unsafe", or ""
 STATE_FILE="/tmp/ip-monitor-state.tmp"
-NOTIFICATION_REFRESH_INTERVAL=10  # Refresh persistent notification every 8 seconds (before Hyprpanel timeout)
-LAST_NOTIFICATION_TIME=0
 
 # Hyprpanel specific settings
-HYPRPANEL_NOTIFICATION_TIMEOUT=10  # Hyprpanel typically times out after 10 seconds
+# HYPRPANEL_NOTIFICATION_TIMEOUT=10  # Hyprpanel typically times out after 10 seconds (unused)
 
 # Colors for terminal output
 RED='\033[0;31m'
@@ -41,7 +38,7 @@ get_public_ip() {
 
     # Try multiple services in case one is down
     for service in "curl -s https://ipinfo.io/ip" "curl -s https://icanhazip.com" "curl -s https://ipecho.net/plain" "dig +short myip.opendns.com @resolver1.opendns.com"; do
-        ip=$(eval $service 2>/dev/null | tr -d '[:space:]')
+        ip=$(eval "$service" 2>/dev/null | tr -d '[:space:]')
 
         # Validate IP format
         if [[ $ip =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
@@ -76,7 +73,8 @@ show_notification() {
     local message="$2"
     local urgency="$3"
     local persistent="$4"  # "true" for persistent notifications
-    local daemon=$(detect_notification_daemon)
+    local daemon
+    daemon=$(detect_notification_daemon)
 
     # Don't clear automatically - only clear when explicitly requested
     
@@ -108,22 +106,14 @@ show_notification() {
 
         notify_cmd="$notify_cmd \"$title\" \"$message\""
         log_message "DEBUG: Sending notification: $notify_cmd"
-        eval $notify_cmd
+        eval "$notify_cmd"
         
         # Track the notification ID
         track_notification_id "$NOTIFICATION_ID"
         
-        # Store notification details for refreshing
+        # Store notification details for cleanup purposes
         if [[ "$persistent" == "true" ]]; then
             echo "$title|$message|$urgency|$daemon" > "/tmp/ip-monitor-notification.tmp"
-            LAST_NOTIFICATION_TIME=$(date +%s)
-            
-            # For Hyprpanel, don't start background maintenance since we refresh manually
-            if [[ "$daemon" != "hyprpanel" ]]; then
-                # Kill any existing maintenance process and start a new one
-                pkill -f "maintain_notification" 2>/dev/null || true
-                maintain_notification &
-            fi
         fi
     fi
 
@@ -141,93 +131,28 @@ show_notification() {
     esac
 }
 
-# Function to refresh persistent notification
-refresh_notification() {
-    local notification_file="/tmp/ip-monitor-notification.tmp"
-    local current_time=$(date +%s)
 
-    # Only refresh if we have a persistent notification and enough time has passed
-    if [[ -f "$notification_file" ]] && [[ $((current_time - LAST_NOTIFICATION_TIME)) -gt $NOTIFICATION_REFRESH_INTERVAL ]]; then
-        local notification_data
-        notification_data=$(cat "$notification_file")
-
-        if [[ -n "$notification_data" ]]; then
-            # Parse notification data
-            IFS='|' read -r title message urgency daemon <<< "$notification_data"
-
-            # Refresh the notification without logging to console - be more aggressive
-            if command -v notify-send >/dev/null 2>&1; then
-                # Force refresh by sending the notification again with same ID to replace it
-                notify-send -u "$urgency" -i dialog-warning -r "$NOTIFICATION_ID" "$title" "$message" >/dev/null 2>&1
-                LAST_NOTIFICATION_TIME=$current_time
-            fi
-        fi
-    fi
-}
-
-# Function to continuously maintain persistent notification (background process)
-maintain_notification() {
-    local notification_file="/tmp/ip-monitor-notification.tmp"
-    local daemon=$(detect_notification_daemon)
-    
-    # For Hyprpanel, don't refresh notifications to prevent stacking
-    if [[ "$daemon" == "hyprpanel" ]]; then
-        # Just keep the process alive but don't refresh
-        while [[ -f "$notification_file" ]]; do
-            sleep 15
-        done
-        return
-    fi
-    
-    # For other notification daemons, refresh as normal
-    while [[ -f "$notification_file" ]]; do
-        if [[ -f "$notification_file" ]]; then
-            local notification_data
-            notification_data=$(cat "$notification_file" 2>/dev/null)
-            
-            if [[ -n "$notification_data" ]]; then
-                # Parse notification data
-                IFS='|' read -r title message urgency daemon <<< "$notification_data"
-                
-                # Continuously refresh notification to keep it visible
-                if command -v notify-send >/dev/null 2>&1; then
-                    notify-send -u "$urgency" -i dialog-warning -r "$NOTIFICATION_ID" "$title" "$message" >/dev/null 2>&1
-                fi
-            fi
-        fi
-        sleep 15  # Refresh every 15 seconds
-    done
-}
 
 # Function to clear all script notifications
 clear_all_script_notifications() {
-    # Stop maintenance process first
-    pkill -f "maintain_notification" 2>/dev/null || true
-    
-    local daemon=$(detect_notification_daemon)
-    
-    # For Hyprpanel, don't send empty notifications as they create unwanted entries
-    # Just rely on the -r (replace) flag when sending the new notification
-    if [[ "$daemon" != "hyprpanel" ]]; then
-        if command -v notify-send >/dev/null 2>&1; then
-            # Clear the main notification ID
-            notify-send -r "$NOTIFICATION_ID" "" "" 2>/dev/null || true
-            
-            # Clear all tracked notifications
-            if [[ -f "$SCRIPT_NOTIFICATION_IDS" ]]; then
-                while IFS= read -r notification_id; do
-                    [[ -n "$notification_id" ]] && notify-send -r "$notification_id" "" "" 2>/dev/null || true
-                done < "$SCRIPT_NOTIFICATION_IDS"
-            fi
+    if command -v notify-send >/dev/null 2>&1; then
+        # Clear the main notification ID
+        notify-send -r "$NOTIFICATION_ID" "" "" 2>/dev/null || true
+        
+        # Clear all tracked notifications
+        if [[ -f "$SCRIPT_NOTIFICATION_IDS" ]]; then
+            while IFS= read -r notification_id; do
+                [[ -n "$notification_id" ]] && notify-send -r "$notification_id" "" "" 2>/dev/null || true
+            done < "$SCRIPT_NOTIFICATION_IDS"
         fi
     fi
     
-    # Remove tracking files - but DON'T remove the state file
+    # Remove tracking files
     [[ -f "$SCRIPT_NOTIFICATION_IDS" ]] && rm -f "$SCRIPT_NOTIFICATION_IDS"
     local notification_file="/tmp/ip-monitor-notification.tmp"
     [[ -f "$notification_file" ]] && rm -f "$notification_file"
     
-    log_message "DEBUG: Cleared notifications and tracking files (daemon: $daemon)"
+    log_message "DEBUG: Cleared notifications and tracking files"
 }
 
 # Function to clear notification (alias for backward compatibility)
@@ -287,7 +212,7 @@ check_ip() {
             log_message "DEBUG: State change to safe from '$last_state'"
             clear_notification
             if [[ "$last_state" == "unsafe" || "$last_state" == "error" ]]; then
-                show_notification "IP Monitor" "IP is now safe: $current_ip" "normal"
+                show_notification "IP Monitor" "IP is now safe: $current_ip" "normal" "false"
                 log_message "INFO: IP is now safe - $current_ip"
             fi
         fi
@@ -298,11 +223,14 @@ check_ip() {
     else
         current_state="unsafe"
 
-        # IP is unsafe - show notification (rely on -r flag to replace previous one)
-        log_message "DEBUG: IP is unsafe, showing notification"
-        # Show persistent warning every time - the -r flag should replace the previous notification
-        show_notification "IP UNSAFE!" "Current IP: $current_ip (Expected: $EXPECTED_IP)" "critical" "true"
-        log_message "WARNING: IP mismatch detected - Current: $current_ip, Expected: $EXPECTED_IP"
+        # IP is unsafe
+        if [[ "$last_state" != "unsafe" ]]; then
+            # State changed from safe/error to unsafe - show persistent warning
+            log_message "DEBUG: State change to unsafe from '$last_state'"
+            show_notification "IP UNSAFE!" "Current IP: $current_ip (Expected: $EXPECTED_IP)" "critical" "true"
+            log_message "WARNING: IP mismatch detected - Current: $current_ip, Expected: $EXPECTED_IP"
+        fi
+        # If already unsafe, don't send new notification - the persistent one should still be there
         # If already unsafe, don't send new notification - the persistent one should still be there
 
         save_state "$current_state"
@@ -349,20 +277,10 @@ main() {
                 ;;
             1)
                 # IP is unsafe - check again in 10 seconds
-                # Don't refresh notification for Hyprpanel to prevent stacking
-                local daemon=$(detect_notification_daemon)
-                if [[ "$daemon" != "hyprpanel" ]]; then
-                    refresh_notification
-                fi
                 sleep "$UNSAFE_INTERVAL"
                 ;;
             2)
                 # Error retrieving IP - check again in 10 seconds
-                # Don't refresh notification for Hyprpanel to prevent stacking
-                local daemon=$(detect_notification_daemon)
-                if [[ "$daemon" != "hyprpanel" ]]; then
-                    refresh_notification
-                fi
                 sleep "$UNSAFE_INTERVAL"
                 ;;
         esac

@@ -1,7 +1,11 @@
 { config, pkgs, ... }:
 let
-  # Read the script from the flake's scripts directory
-  ip-monitor-script = pkgs.writeScriptBin "ip-monitor" (builtins.readFile ./scripts/ip-monitor.sh);
+  # Create a proper script with dependencies and fixed paths
+  ip-monitor-script = pkgs.writeShellApplication {
+    name = "ip-monitor";
+    runtimeInputs = with pkgs; [ curl dnsutils libnotify coreutils ];
+    text = builtins.readFile ../scripts/ip-monitor.sh;
+  };
 in
 {
 

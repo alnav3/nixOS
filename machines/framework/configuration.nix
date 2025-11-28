@@ -24,6 +24,7 @@
     #./../../modules/virtualisation.nix
     # testing bootloader stuff
     ./../../modules/bootloader.nix
+    ./../../modules/ip-monitor.nix
 
   ];
 
@@ -78,8 +79,8 @@
   };
 
   networking.firewall = {
-    enable = false;
-    allowedTCPPorts = [80 4200 1338];
+    enable = true;
+    allowedTCPPorts = [80 4200 1338 5300];
   };
 
   # docker setup
@@ -102,14 +103,17 @@
         inherit (pkgs) system;
       })
     .fwupd;
+
+
   virtualisation.spiceUSBRedirection.enable = true;
+  # enable the tailscale service
+  services.tailscale.enable = true;
   # for complete guide on fingerprint workaround, read https://github.com/NixOS/nixos-hardware/tree/master/framework/13-inch/7040-amd#suspendwake-workaround
   environment.systemPackages = with pkgs; [
-    ledger-live-desktop
+    tailscale
     docker-compose
     fw-ectool
     distrobox
-    podman-compose
     spice-gtk
     universal-android-debloater
     spice-vdagent

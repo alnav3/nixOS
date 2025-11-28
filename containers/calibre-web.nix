@@ -55,8 +55,8 @@ in
                   proxy_busy_buffers_size   1024k;
                   proxy_buffers   4 512k;
                   proxy_buffer_size   1024k;
-                  client_max_body_size 10G;
                   proxy_set_header Host $host;
+                  client_max_body_size 10G;
                   proxy_set_header X-Real-IP $remote_addr;
                   proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
                   proxy_set_header X-Forwarded-Proto $scheme;

@@ -2,7 +2,7 @@
 
 let
   myContainerIPs = {
-    slskd = "172.42.0.50";
+    slskd = "172.42.0.41";
   };
 in
 {
@@ -15,12 +15,14 @@ in
         PGID = "1000";
         SLSKD_HTTP_PORT = "5030";
         SLSKD_HTTPS_PORT = "5031";
+        SLSKD_REMOTE_CONFIGURATION = "true";
       };
       extraOptions = [ "--net" "custom-net" "--ip" "${myContainerIPs.slskd}" ];
       volumes = [
         "/var/containers-data/slskd:/app"
-        "/mnt/things:/downloads"
-        "/mnt/media:/music"
+        "/mnt/things/slskd:/slskd-downloads"
+        "/mnt/things/slskd-incomplete:/slskd-incomplete"
+        "/mnt/media/media/Music:/music"
       ];
       ports = [ ];
     };

@@ -6,13 +6,16 @@ let
   };
 in
 {
+  # Ensure data directory exists with correct permissions
+  systemd.tmpfiles.rules = [
+    "d /var/containers-data/etesync 0755 373 373 -"
+  ];
   virtualisation.oci-containers.containers = {
     etesync = {
       image = "victorrds/etesync:latest";
       environment = {
         TZ = "Etc/UTC";
-        PUID = "1000";
-        PGID = "1000";
+        ALLOWED_HOSTS = "etesync.home,172.42.0.44,localhost,127.0.0.1";
       };
       extraOptions = [ "--net" "custom-net" "--ip" "${myContainerIPs.etesync}" ];
       volumes = [

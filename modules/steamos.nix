@@ -34,6 +34,7 @@
         steam -shutdown
       ''
     )
+    protontricks
     # required for junkStore
     python3
     wget

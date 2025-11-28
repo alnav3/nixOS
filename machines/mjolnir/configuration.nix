@@ -8,10 +8,11 @@
     ./../../modules/networking.nix
     ./../../modules/ricing.nix
     ./../../modules/steamos.nix
+    ./../../modules/launch-game.nix
   ];
   networking.networkmanager.enable = true;
   # enable system-bridge port
-  networking.firewall.allowedTCPPorts = [ 9170 ];
+  networking.firewall.allowedTCPPorts = [ 9170 8088 ];
 
 
   # Use a recent kernel version (6.11) which can improve hardware performance.
@@ -37,6 +38,14 @@
   networking.interfaces.enp13s0.wakeOnLan = {
     enable = true;
   };
+  # ssh config
+  services.openssh = {
+    enable = true;
+    settings = {
+      X11Forwarding = true;
+    };
+  };
+  programs.ssh.setXAuthLocation = true;
 
   # Activate ollama for llm usage
   services.ollama ={

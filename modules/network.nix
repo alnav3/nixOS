@@ -17,6 +17,8 @@
   networking.wireless.enable = true;
   environment.systemPackages = with pkgs; [
     iw
+    # tailscale package
+    tailscale
   ];
 
   # openvpn config
