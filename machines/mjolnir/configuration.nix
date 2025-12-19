@@ -5,6 +5,7 @@
     ./../../modules/bluetooth.nix
     ./../../modules/desktop.nix
     ./../../modules/loginSteam.nix
+    ./../../modules/tvMedia.nix
     ./../../modules/networking.nix
     ./../../modules/ricing.nix
     ./../../modules/steamos.nix
@@ -13,6 +14,16 @@
   networking.networkmanager.enable = true;
   # enable system-bridge port
   networking.firewall.allowedTCPPorts = [ 9170 8088 ];
+
+  virtualisation.docker = {
+    enable = true;
+
+    autoPrune = {
+      enable = true;
+      dates = "weekly";
+    };
+  };
+  users.users.alnav.extraGroups = [ "docker" ];
 
 
   # Use a recent kernel version (6.11) which can improve hardware performance.
@@ -79,26 +90,26 @@
     inputs.system-bridge-nix.packages.x86_64-linux.system-bridge
   ];
 
-  systemd.services.usb-wake = {
-      description = "Enables wakeup for all usb devices";
-      wantedBy = [ "multi-user.target" ];
-      serviceConfig = {
-          Type = "oneshot";
-          ExecStart = [ "/etc/usb-wake.sh" ];
-      };
-  };
+  #systemd.services.usb-wake = {
+  #    description = "Enables wakeup for all usb devices";
+  #    wantedBy = [ "multi-user.target" ];
+  #    serviceConfig = {
+  #        Type = "oneshot";
+  #        ExecStart = [ "/etc/usb-wake.sh" ];
+  #    };
+  #};
 
-  environment.etc."usb-wake.sh".source = pkgs.writeScript "enable-wakeup" ''
-    #!${pkgs.runtimeShell}
+  #environment.etc."usb-wake.sh".source = pkgs.writeScript "enable-wakeup" ''
+  #  #!${pkgs.runtimeShell}
 
-    # Disable all USB wakeups first
-    for device in /sys/bus/usb/devices/usb[0-9]*; do
-      echo disabled > "$device/power/wakeup"
-    done
+  #  # Disable all USB wakeups first
+  #  for device in /sys/bus/usb/devices/usb[0-9]*; do
+  #    echo disabled > "$device/power/wakeup"
+  #  done
 
-    # Only enable USB3 and USB5 (used by 8BitDo)
-    echo enabled > /sys/bus/usb/devices/usb3/power/wakeup
-    echo enabled > /sys/bus/usb/devices/usb5/power/wakeup
-  '';
+  #  # Only enable USB3 and USB5 (used by 8BitDo)
+  #  echo enabled > /sys/bus/usb/devices/usb3/power/wakeup
+  #  echo enabled > /sys/bus/usb/devices/usb5/power/wakeup
+  #'';
 }
 

@@ -1,7 +1,9 @@
 {
   pkgs,
   meta,
+  lib,
   overlays,
+  config,
   ...
 }: {
     security.polkit.enable = true;
@@ -23,6 +25,12 @@
     extraOptions = ''
       experimental-features = nix-command flakes
     '';
+    settings = {
+        secret-key-files = "/etc/nix/signing-key";
+        # Ensure SSL certificates are available in sandbox
+        trusted-substituters = [ "ssh://mjolnir.home" ];
+        trusted-public-keys = [ "mjolnir.home:AE24oIg+8t8NWRQcjOHZuwHQiQG2QAzIcheHA/bliIY=" ];
+    };
   };
   services.openssh.enable = true;
 
@@ -91,9 +99,23 @@
     age
     qemu
     quickemu
+    qemu
     sops
     killall
   ];
 
+  virtualisation.vmVariant = {
+# Disable disko/swap for VM
+      swapDevices = lib.mkForce [];
+
+# Give the VM some memory instead
+
+      virtualisation = {
+          memorySize =  8192; # Use 2048MiB memory.
+              cores = 6;
+      };
+  };
+# Disable sops if you're using it
+# sops.enabled = false;
   system.stateVersion = "24.11";
 }

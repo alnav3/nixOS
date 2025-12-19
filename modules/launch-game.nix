@@ -2,7 +2,7 @@
 let
   # Path to the launch-game binary
   launch-game-binary = ../scripts/launch-game;
-  
+
   # Create a wrapper script that sets up the environment
   launch-game-wrapper = pkgs.writeShellApplication {
     name = "launch-game-wrapper";

@@ -38,6 +38,7 @@
     ./../../containers/headscale.nix
     ./../../containers/n8n.nix
     ./../../containers/etesync.nix
+    ./../../containers/trmnl.nix
     #./../../containers/traefik.nix
     #./../../containers/dokploy.nix
     "${modulesPath}/virtualisation/lxc-container.nix"

@@ -4,8 +4,22 @@
     ethtool
     opensnitch-ui
   ];
-  services.resolved.enable = true;
-  boot.kernelParams = ["ipv6.disable=1"];
+  services.resolved = {
+    enable = true;
+    dnssec = "true";
+    domains = [ "~." ];
+    fallbackDns = [ "9.9.9.9" "149.112.112.112" ];
+    extraConfig = ''
+      DNSStubListener=no
+    '';
+  };
+  # Disable IPv6 on physical interfaces but allow for virtual ones like waydroid
+  boot.kernel.sysctl = {
+    "net.ipv6.conf.wlp1s0.disable_ipv6" = 1;  # WiFi
+    "net.ipv6.conf.enp0s3.disable_ipv6" = 1;  # Ethernet (if exists)
+    "net.ipv6.conf.enp13s0.disable_ipv6" = 1;  # Ethernet (if exists)
+    # Keep IPv6 enabled for virtual interfaces like waydroid0
+  };
 
   environment.etc.openvpn.source = "${pkgs.update-resolv-conf}/libexec/openvpn";
   sops.secrets."home.ovpn" = {};

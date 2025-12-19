@@ -11,10 +11,12 @@
     kcc
     # ipod rockbox installation
     rockbox-utility
+    idevicerestore
     slskd
     # youtube but without google
     yt-dlp
     ytfzf
+    youtube-tui
     # media control
     playerctl
     ## netflix but good

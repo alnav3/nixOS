@@ -80,7 +80,7 @@
 
   networking.firewall = {
     enable = true;
-    allowedTCPPorts = [80 4200 1338 5300];
+    allowedTCPPorts = [80 4200 1338 2300];
   };
 
   # docker setup
