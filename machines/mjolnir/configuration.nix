@@ -15,6 +15,8 @@
   # enable system-bridge port
   networking.firewall.allowedTCPPorts = [ 9170 8088 ];
 
+  # required to rebuild duet
+  boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
   virtualisation.docker = {
     enable = true;
 
@@ -61,7 +63,6 @@
   # Activate ollama for llm usage
   services.ollama ={
       enable = true;
-      acceleration = "rocm";
       host = "[::]";
       openFirewall = true;
       environmentVariables = {

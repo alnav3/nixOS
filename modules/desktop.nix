@@ -79,7 +79,7 @@
         ${hyprland}/bin/hyprctl dispatch exit
         ${systemd}/bin/loginctl terminate-user "alnav"
       '')
-      inputs.zen-browser.packages."${system}".default
+      inputs.zen-browser.packages."${pkgs.stdenv.hostPlatform.system}".default
       firefox
     ])
     ++ (with pkgs-stable; [

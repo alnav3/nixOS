@@ -9,7 +9,7 @@
   imports = [
     #./../../modules/jellyfin.nix
     #./../../modules/llms.nix
-    #./services.nix
+    ./services.nix
     #./../../modules/zigbee2mqtt.nix
     ./../../modules/virtualisation.nix
     ./../../modules/jellyfin.nix
