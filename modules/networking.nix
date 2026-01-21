@@ -13,13 +13,23 @@
       DNSStubListener=no
     '';
   };
-  # Disable IPv6 on physical interfaces but allow for virtual ones like waydroid
+  # Completely disable IPv6 for all devices and interfaces
   boot.kernel.sysctl = {
-    "net.ipv6.conf.wlp1s0.disable_ipv6" = 1;  # WiFi
-    "net.ipv6.conf.enp0s3.disable_ipv6" = 1;  # Ethernet (if exists)
-    "net.ipv6.conf.enp13s0.disable_ipv6" = 1;  # Ethernet (if exists)
-    # Keep IPv6 enabled for virtual interfaces like waydroid0
+    # Disable IPv6 globally
+    "net.ipv6.conf.all.disable_ipv6" = 1;
+    "net.ipv6.conf.default.disable_ipv6" = 1;
+    # Disable IPv6 on loopback interface
+    "net.ipv6.conf.lo.disable_ipv6" = 1;
+    # Disable IPv6 autoconfiguration
+    "net.ipv6.conf.all.autoconf" = 0;
+    "net.ipv6.conf.default.autoconf" = 0;
+    # Disable IPv6 router advertisements
+    "net.ipv6.conf.all.accept_ra" = 0;
+    "net.ipv6.conf.default.accept_ra" = 0;
   };
+
+  # Disable IPv6 in networking configuration
+  networking.enableIPv6 = false;
 
   environment.etc.openvpn.source = "${pkgs.update-resolv-conf}/libexec/openvpn";
   sops.secrets."home.ovpn" = {};
