@@ -32,7 +32,14 @@
         trusted-public-keys = [ "mjolnir.home:AE24oIg+8t8NWRQcjOHZuwHQiQG2QAzIcheHA/bliIY=" ];
     };
   };
-  services.openssh.enable = true;
+  services.openssh = {
+      enable = true;
+      settings = {
+          PasswordAuthentication = false;
+          KbdInteractiveAuthentication = false;
+          PermitRootLogin = "no";
+      };
+  };
 
   # Use the systemd-boot EFI boot loader.
   boot.loader.systemd-boot.enable = true;
