@@ -81,16 +81,41 @@
 
   networking.firewall = {
     enable = true;
-    allowedTCPPorts = [80 4200 1338 2300];
+    allowedTCPPorts = [80 4200 1338 2300 46899 46898];
+    allowedUDPPorts = [ 46898 ];
   };
 
-  # docker setup
+  # docker setup - optimized for power saving
   virtualisation.docker = {
     enable = true;
+    
+    # Power-optimized Docker settings
+    daemon.settings = {
+      # Reduce logging overhead
+      "log-driver" = "none";
+      "log-level" = "warn";
+      
+      # Reduce storage driver overhead
+      "storage-driver" = "overlay2";
+      "storage-opts" = [
+        "overlay2.override_kernel_check=true"
+        "overlay2.size=50G"
+      ];
+      
+      # Resource limits to prevent runaway containers
+      "default-ulimits" = {
+        "memlock" = {
+          "Hard" = 67108864;
+          "Name" = "memlock";
+          "Soft" = 67108864;
+        };
+      };
+    };
 
     autoPrune = {
       enable = true;
-      dates = "weekly";
+      dates = "daily";
+      flags = [ "--all" "--force" "--volumes" ];
     };
   };
   users.users.alnav.extraGroups = [ "docker" ];
@@ -118,5 +143,8 @@
     spice-gtk
     universal-android-debloater
     spice-vdagent
+    # Network troubleshooting tools
+    ethtool
+    iw
   ];
 }
