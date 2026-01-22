@@ -21,16 +21,6 @@ in {
     "ahci.mobile_lpm_policy=3"   # SATA link power management
   ];
 
-  environment.systemPackages = with pkgs; [
-    brightnessctl
-    ryzenadj
-    btop
-    powertop
-    hypridle
-    tlp
-    acpi
-  ];
-
   # TLP - Advanced power management
   services.tlp = {
     enable = true;
@@ -159,7 +149,7 @@ in {
     cpuFreqGovernor = "schedutil"; # Good balance between performance and power
   };
 
-  # Enable USB autosuspend for all devices by default
+  # Enable USB autosuspend for all devices by default + Smart Bluetooth triggers
   services.udev.extraRules = ''
     # USB autosuspend
     ACTION=="add", SUBSYSTEM=="usb", ATTR{power/control}="auto"
@@ -176,6 +166,14 @@ in {
     
     # Enable runtime PM for AMD GPU
     ACTION=="add", KERNEL=="card*", SUBSYSTEM=="drm", DRIVERS=="amdgpu", ATTR{device/power/control}="auto"
+    
+    # Smart Bluetooth management on power source changes
+    SUBSYSTEM=="power_supply", ATTR{online}=="0", RUN+="${pkgs.systemd}/bin/systemctl start smart-bluetooth.service"
+    SUBSYSTEM=="power_supply", ATTR{online}=="1", RUN+="${pkgs.systemd}/bin/systemctl start smart-bluetooth.service"
+    
+    # Additional trigger for AC adapter changes
+    SUBSYSTEM=="power_supply", KERNEL=="ACAD", ATTR{online}=="0", RUN+="${pkgs.systemd}/bin/systemctl start smart-bluetooth.service" 
+    SUBSYSTEM=="power_supply", KERNEL=="ACAD", ATTR{online}=="1", RUN+="${pkgs.systemd}/bin/systemctl start smart-bluetooth.service"
   '';
 
   # Enable thermald for better thermal management
@@ -271,6 +269,48 @@ in {
     "snd_pcsp"    # PC speaker sound
   ];
 
+  # TLP hooks for enhanced Bluetooth management
+  environment.etc."tlp.d/01-bluetooth-management".text = ''
+    # Smart Bluetooth management hooks for TLP
+    
+    # Function to check connected Bluetooth devices
+    check_bt_connections() {
+        ${pkgs.bluez}/bin/bluetoothctl devices Connected 2>/dev/null | wc -l
+    }
+    
+    # Hook when switching to AC power
+    tlp_ac_func() {
+        echo "TLP Hook: AC power detected - enabling Bluetooth..." | ${pkgs.systemd}/bin/systemd-cat -t tlp-bluetooth
+        ${pkgs.systemd}/bin/systemctl start bluetooth.service 2>/dev/null || true
+        sleep 2
+        ${pkgs.bluez}/bin/bluetoothctl power on 2>/dev/null || true
+    }
+    
+    # Hook when switching to battery power
+    tlp_bat_func() {
+        echo "TLP Hook: Battery power detected - checking Bluetooth connections..." | ${pkgs.systemd}/bin/systemd-cat -t tlp-bluetooth
+        
+        # Small delay to ensure services are ready
+        sleep 3
+        
+        # Check for active connections
+        connected=$(check_bt_connections)
+        
+        if [ "$connected" -eq 0 ]; then
+            echo "TLP Hook: No devices connected - disabling Bluetooth for power saving" | ${pkgs.systemd}/bin/systemd-cat -t tlp-bluetooth  
+            ${pkgs.bluez}/bin/bluetoothctl power off 2>/dev/null || true
+        else
+            echo "TLP Hook: $connected device(s) connected - keeping Bluetooth enabled" | ${pkgs.systemd}/bin/systemd-cat -t tlp-bluetooth
+        fi
+    }
+    
+    # Register hooks
+    case "$1" in
+        ac)   tlp_ac_func ;;
+        bat)  tlp_bat_func ;;
+    esac
+  '';
+
   # Additional power-saving optimizations
   services.dbus.implementation = "broker"; # More efficient D-Bus
   
@@ -280,12 +320,182 @@ in {
     powersave = true;
   };
 
-  # Bluetooth power optimizations
+  # Smart Bluetooth power management - auto enable/disable with AC/battery
   hardware.bluetooth = {
-    powerOnBoot = false; # Don't auto-enable bluetooth
+    enable = true;
+    powerOnBoot = false; # Don't auto-enable on boot
     settings.General = {
       Experimental = true;
       FastConnectable = false;
+      DiscoverableTimeout = 0; # Never discoverable unless explicitly set
     };
   };
+
+  # Add required packages for Bluetooth management  
+  environment.systemPackages = with pkgs; [
+    brightnessctl
+    ryzenadj
+    btop
+    powertop
+    hypridle
+    tlp
+    acpi
+    bluez
+    bluez-tools
+  ];
+
+  # Smart Bluetooth power management service
+  systemd.services.smart-bluetooth = {
+    description = "Smart Bluetooth Power Management - AC/Battery aware";
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = false;
+      User = "root";
+    };
+    script = ''
+      #!/bin/bash
+      set -e
+      
+      # Function to check power source
+      check_power_source() {
+        if [ -f /sys/class/power_supply/ACAD/online ]; then
+          cat /sys/class/power_supply/ACAD/online
+        else
+          # Fallback for different AC adapter naming
+          find /sys/class/power_supply -name "A*" -type d -exec cat {}/online \; 2>/dev/null | head -1 || echo "0"
+        fi
+      }
+      
+      # Function to count connected Bluetooth devices
+      count_connected_devices() {
+        ${pkgs.bluez}/bin/bluetoothctl devices Connected 2>/dev/null | wc -l
+      }
+      
+      # Function to enable Bluetooth
+      enable_bluetooth() {
+        echo "Enabling Bluetooth..."
+        ${pkgs.systemd}/bin/systemctl start bluetooth.service 2>/dev/null || true
+        sleep 2
+        ${pkgs.bluez}/bin/bluetoothctl power on 2>/dev/null || true
+        echo "Bluetooth enabled"
+      }
+      
+      # Function to disable Bluetooth
+      disable_bluetooth() {
+        echo "Disabling Bluetooth for power saving..."
+        ${pkgs.bluez}/bin/bluetoothctl power off 2>/dev/null || true
+        echo "Bluetooth disabled"
+      }
+      
+      # Main logic
+      power_source=$(check_power_source)
+      
+      if [ "$power_source" = "1" ]; then
+        # On AC power - always enable Bluetooth
+        echo "AC power detected - enabling Bluetooth automatically"
+        enable_bluetooth
+      else
+        # On battery power - check for connected devices
+        echo "Battery power detected - checking Bluetooth usage..."
+        
+        # Ensure bluetooth service is running to check connections
+        ${pkgs.systemd}/bin/systemctl start bluetooth.service 2>/dev/null || true
+        sleep 3
+        
+        connected_devices=$(count_connected_devices)
+        
+        if [ "$connected_devices" -eq 0 ]; then
+          echo "No Bluetooth devices connected ($connected_devices devices) - disabling for power saving"
+          disable_bluetooth
+        else
+          echo "Bluetooth devices connected ($connected_devices devices) - keeping enabled"
+        fi
+      fi
+      
+      echo "Smart Bluetooth management completed"
+    '';
+    path = with pkgs; [ bash bluez systemd coreutils findutils ];
+  };
+
+  # Periodic check for Bluetooth optimization (fallback)
+  systemd.services.bluetooth-power-check = {
+    description = "Periodic Bluetooth Power Optimization Check";
+    serviceConfig = {
+      Type = "oneshot";
+      User = "root";
+    };
+    script = ''
+      # Run the smart bluetooth logic
+      ${pkgs.systemd}/bin/systemctl start smart-bluetooth.service
+    '';
+  };
+
+  # Timer for periodic Bluetooth checks (every 5 minutes when on battery)
+  systemd.timers.bluetooth-power-check = {
+    description = "Timer for Bluetooth Power Optimization";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnBootSec = "10min";
+      OnUnitActiveSec = "5min";
+      Unit = "bluetooth-power-check.service";
+    };
+  };
+
+  # Helper script for manual Bluetooth management
+  environment.etc."bluetooth-power-helper".text = ''
+    #!/bin/bash
+    # Manual Bluetooth Power Management Helper
+    
+    case "$1" in
+      "status")
+        echo "=== Bluetooth Power Management Status ==="
+        echo -n "Power source: "
+        if [ -f /sys/class/power_supply/ACAD/online ]; then
+          if [ "$(cat /sys/class/power_supply/ACAD/online)" = "1" ]; then
+            echo "AC (plugged in)"
+          else
+            echo "Battery"
+          fi
+        else
+          echo "Unknown"
+        fi
+        
+        echo -n "Bluetooth power: "
+        ${pkgs.bluez}/bin/bluetoothctl show | grep "Powered:" || echo "Unknown"
+        
+        echo "Connected devices:"
+        ${pkgs.bluez}/bin/bluetoothctl devices Connected || echo "None"
+        ;;
+        
+      "force-on")
+        echo "Manually enabling Bluetooth..."
+        ${pkgs.systemd}/bin/systemctl start bluetooth.service
+        ${pkgs.bluez}/bin/bluetoothctl power on
+        ;;
+        
+      "force-off")  
+        echo "Manually disabling Bluetooth..."
+        ${pkgs.bluez}/bin/bluetoothctl power off
+        ;;
+        
+      "auto")
+        echo "Running automatic Bluetooth management..."
+        ${pkgs.systemd}/bin/systemctl start smart-bluetooth.service
+        ;;
+        
+      *)
+        echo "Usage: bluetooth-power-helper {status|force-on|force-off|auto}"
+        echo ""
+        echo "  status    - Show current Bluetooth and power status"
+        echo "  force-on  - Manually enable Bluetooth"
+        echo "  force-off - Manually disable Bluetooth"
+        echo "  auto      - Run automatic power management logic"
+        ;;
+    esac
+  '';
+
+  # Make helper script executable
+  system.activationScripts.bluetooth-helper = ''
+    chmod +x /etc/bluetooth-power-helper
+  '';
 }
