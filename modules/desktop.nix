@@ -68,7 +68,7 @@
       kanshi
       shikane
       proton-pass
-      vesktop
+      pkgs-stable.vesktop
 
       # recording tool
       wf-recorder

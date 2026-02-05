@@ -39,6 +39,7 @@ in
     listen: ":80"
     cache-file: "/var/cache/ntfy/cache.db"
     auth-default-access: "read-write"
+    auth-file: "/var/cache/ntfy/user.db"
     behind-proxy: true
   '';
 

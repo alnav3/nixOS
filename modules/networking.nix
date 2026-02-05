@@ -9,9 +9,6 @@
     dnssec = "true";
     domains = [ "~." ];
     fallbackDns = [ "9.9.9.9" "149.112.112.112" ];
-    extraConfig = ''
-      DNSStubListener=no
-    '';
   };
   # Completely disable IPv6 for all devices and interfaces
   boot.kernel.sysctl = {

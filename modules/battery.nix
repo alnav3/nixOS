@@ -496,6 +496,8 @@ in {
 
   # Make helper script executable
   system.activationScripts.bluetooth-helper = ''
-    chmod +x /etc/bluetooth-power-helper
+    if [ -f /etc/bluetooth-power-helper ]; then
+      chmod +x /etc/bluetooth-power-helper
+    fi
   '';
 }
