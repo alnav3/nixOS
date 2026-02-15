@@ -70,7 +70,6 @@ in
     cmus
     # comic conversion to kobo format
     pkgs-stable.kcc
-    cbconvert
     # ipod rockbox installation
     rockbox-utility
     idevicerestore

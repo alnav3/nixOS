@@ -4,7 +4,7 @@
 # Checks if public IP matches expected IP and shows notifications when it doesn't
 
 # Configuration
-EXPECTED_IP="212.104.214.23"
+EXPECTED_IP="79.127.184.15"
 NORMAL_INTERVAL=30  # seconds
 UNSAFE_INTERVAL=10  # seconds
 NOTIFICATION_ID=12345  # Persistent notification ID
@@ -77,7 +77,7 @@ show_notification() {
     daemon=$(detect_notification_daemon)
 
     # Don't clear automatically - only clear when explicitly requested
-    
+
     # Build notify-send command based on notification daemon
     local notify_cmd=""
     if command -v notify-send >/dev/null 2>&1; then
@@ -107,10 +107,10 @@ show_notification() {
         notify_cmd="$notify_cmd \"$title\" \"$message\""
         log_message "DEBUG: Sending notification: $notify_cmd"
         eval "$notify_cmd"
-        
+
         # Track the notification ID
         track_notification_id "$NOTIFICATION_ID"
-        
+
         # Store notification details for cleanup purposes
         if [[ "$persistent" == "true" ]]; then
             echo "$title|$message|$urgency|$daemon" > "/tmp/ip-monitor-notification.tmp"
@@ -138,7 +138,7 @@ clear_all_script_notifications() {
     if command -v notify-send >/dev/null 2>&1; then
         # Clear the main notification ID
         notify-send -r "$NOTIFICATION_ID" "" "" 2>/dev/null || true
-        
+
         # Clear all tracked notifications
         if [[ -f "$SCRIPT_NOTIFICATION_IDS" ]]; then
             while IFS= read -r notification_id; do
@@ -146,12 +146,12 @@ clear_all_script_notifications() {
             done < "$SCRIPT_NOTIFICATION_IDS"
         fi
     fi
-    
+
     # Remove tracking files
     [[ -f "$SCRIPT_NOTIFICATION_IDS" ]] && rm -f "$SCRIPT_NOTIFICATION_IDS"
     local notification_file="/tmp/ip-monitor-notification.tmp"
     [[ -f "$notification_file" ]] && rm -f "$notification_file"
-    
+
     log_message "DEBUG: Cleared notifications and tracking files"
 }
 
@@ -188,9 +188,9 @@ check_ip() {
 
     current_ip=$(get_public_ip)
     last_state=$(get_last_state)
-    
+
     log_message "DEBUG: Current IP: $current_ip, Last state: '$last_state'"
-    
+
     if [[ -z "$current_ip" ]]; then
         log_message "ERROR: Could not retrieve public IP address"
         # Only show error notification if we weren't already in error state
