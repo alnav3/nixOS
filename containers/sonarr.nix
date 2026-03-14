@@ -1,41 +1,93 @@
-{ lib, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 
 let
-  myContainerIPs = {
-    sonarr = "172.42.0.32";
-  };
+  cfg = config.services.mycontainers.sonarr;
+  clib = import ./_lib { inherit lib; };
+  
+  containerIP = clib.helpers.mkIP cfg.ipSuffix;
 in
 {
-  virtualisation.oci-containers.containers = {
-    sonarr = {
-      image = "lscr.io/linuxserver/sonarr:latest";
-      environment = {
-        TZ = "Etc/UTC";
-        PUID = "994";   # matches your previous sonarr uid
-        PGID = "104";   # set numeric group id (adjust if your media group has a different gid)
+  options.services.mycontainers.sonarr = {
+    enable = lib.mkEnableOption "Sonarr TV show management";
+    
+    ipSuffix = lib.mkOption {
+      type = lib.types.int;
+      default = 32;
+      description = "Last octet of container IP address";
+    };
+    
+    port = lib.mkOption {
+      type = lib.types.port;
+      default = 8989;
+      description = "Internal port for Sonarr";
+    };
+    
+    domain = {
+      internal = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = "sonarr.home";
+        description = "Internal domain name";
       };
-      extraOptions = [ "--net" "custom-net" "--ip" "${myContainerIPs.sonarr}" ];
-      volumes = [
-        "/var/containers-data/sonarr:/config"   # arr-family config sync location you requested
-        "/mnt/things:/downloads"
-        "/mnt/media:/media"
-      ];
-      ports = [ ];
+      
+      external = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "External domain name (enables external access)";
+      };
+    };
+    
+    dataDir = lib.mkOption {
+      type = lib.types.str;
+      default = "${clib.defaults.paths.dataDir}/sonarr";
+      description = "Directory for Sonarr configuration";
+    };
+    
+    environment = lib.mkOption {
+      type = lib.types.attrsOf lib.types.str;
+      default = {};
+      description = "Additional environment variables";
     };
   };
-
-  containers.nginx-internal.config.services.nginx.virtualHosts."sonarr.home" = {
-    serverName = "sonarr.home";
-    listen = [{ addr = "10.71.71.75"; port = 80; }];
-    locations."/" = {
-      proxyPass = "http://${myContainerIPs.sonarr}:8989";
-      extraConfig = ''
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-      '';
-    };
-  };
+  
+  config = lib.mkIf cfg.enable (lib.mkMerge [
+    {
+      virtualisation.oci-containers.containers.sonarr = {
+        image = "lscr.io/linuxserver/sonarr:latest";
+        environment = clib.helpers.mkEnv ({
+          PUID = "994";
+          PGID = "104";
+        } // cfg.environment);
+        extraOptions = [
+          "--net" clib.defaults.network.name
+          "--ip" containerIP
+        ];
+        volumes = [
+          "${cfg.dataDir}:/config"
+          "${clib.defaults.paths.downloadsDir}:/downloads"
+          "${clib.defaults.paths.mediaDir}:/media"
+        ];
+        ports = [];
+      };
+    }
+    
+    # Internal nginx proxy
+    (lib.mkIf (cfg.domain.internal != null) {
+      containers.nginx-internal.config.services.nginx.virtualHosts."${cfg.domain.internal}" = 
+        clib.nginx.mkInternalProxy {
+          domain = cfg.domain.internal;
+          targetIP = containerIP;
+          targetPort = cfg.port;
+        };
+    })
+    
+    # External nginx proxy
+    (lib.mkIf (cfg.domain.external != null) {
+      containers.nginx-external.config.services.nginx.virtualHosts."${cfg.domain.external}" = 
+        clib.nginx.mkExternalProxy {
+          domain = cfg.domain.external;
+          targetIP = containerIP;
+          targetPort = cfg.port;
+        };
+    })
+  ]);
 }
-

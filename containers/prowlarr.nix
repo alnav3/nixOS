@@ -1,41 +1,92 @@
-{ lib, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 
 let
-  myContainerIPs = {
-    prowlarr = "172.42.0.34";
-  };
+  cfg = config.services.mycontainers.prowlarr;
+  clib = import ./_lib { inherit lib; };
+  
+  containerIP = clib.helpers.mkIP cfg.ipSuffix;
 in
 {
-  virtualisation.oci-containers.containers = {
-    prowlarr = {
-      image = "lscr.io/linuxserver/prowlarr:latest";
-      environment = {
-        TZ = "Etc/UTC";
-        PUID = "275";   # matches your previous prowlarr uid
-        PGID = "275";
+  options.services.mycontainers.prowlarr = {
+    enable = lib.mkEnableOption "Prowlarr indexer management";
+    
+    ipSuffix = lib.mkOption {
+      type = lib.types.int;
+      default = 34;
+      description = "Last octet of container IP address";
+    };
+    
+    port = lib.mkOption {
+      type = lib.types.port;
+      default = 9696;
+      description = "Internal port for Prowlarr";
+    };
+    
+    domain = {
+      internal = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = "prowlarr.home";
+        description = "Internal domain name";
       };
-      extraOptions = [ "--net" "custom-net" "--ip" "${myContainerIPs.prowlarr}" ];
-      volumes = [
-        "/var/containers-data/prowlarr:/config"
-        "/mnt/media:/media"
-      ];
-      ports = [ ];
+      
+      external = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "External domain name (enables external access)";
+      };
+    };
+    
+    dataDir = lib.mkOption {
+      type = lib.types.str;
+      default = "${clib.defaults.paths.dataDir}/prowlarr";
+      description = "Directory for Prowlarr configuration";
+    };
+    
+    environment = lib.mkOption {
+      type = lib.types.attrsOf lib.types.str;
+      default = {};
+      description = "Additional environment variables";
     };
   };
-
-  containers.nginx-internal.config.services.nginx.virtualHosts."prowlarr.home" = {
-    serverName = "prowlarr.home";
-    listen = [{ addr = "10.71.71.75"; port = 80; }];
-    locations."/" = {
-      proxyPass = "http://${myContainerIPs.prowlarr}:9696";
-      extraConfig = ''
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-      '';
-    };
-  };
-
+  
+  config = lib.mkIf cfg.enable (lib.mkMerge [
+    {
+      virtualisation.oci-containers.containers.prowlarr = {
+        image = "lscr.io/linuxserver/prowlarr:latest";
+        environment = clib.helpers.mkEnv ({
+          PUID = "275";
+          PGID = "275";
+        } // cfg.environment);
+        extraOptions = [
+          "--net" clib.defaults.network.name
+          "--ip" containerIP
+        ];
+        volumes = [
+          "${cfg.dataDir}:/config"
+          "${clib.defaults.paths.mediaDir}:/media"
+        ];
+        ports = [];
+      };
+    }
+    
+    # Internal nginx proxy
+    (lib.mkIf (cfg.domain.internal != null) {
+      containers.nginx-internal.config.services.nginx.virtualHosts."${cfg.domain.internal}" = 
+        clib.nginx.mkInternalProxy {
+          domain = cfg.domain.internal;
+          targetIP = containerIP;
+          targetPort = cfg.port;
+        };
+    })
+    
+    # External nginx proxy
+    (lib.mkIf (cfg.domain.external != null) {
+      containers.nginx-external.config.services.nginx.virtualHosts."${cfg.domain.external}" = 
+        clib.nginx.mkExternalProxy {
+          domain = cfg.domain.external;
+          targetIP = containerIP;
+          targetPort = cfg.port;
+        };
+    })
+  ]);
 }
-

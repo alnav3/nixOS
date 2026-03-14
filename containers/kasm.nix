@@ -1,44 +1,105 @@
-{ lib, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 
 let
-  myContainerIPs = {
-    kasm = "172.42.0.47";
-  };
+  cfg = config.services.mycontainers.kasm;
+  clib = import ./_lib { inherit lib; };
+  
+  containerIP = clib.helpers.mkIP cfg.ipSuffix;
 in
 {
-  virtualisation.oci-containers.containers = {
-    kasm = {
-      image = "lscr.io/linuxserver/kasm:latest";
-      environment = {
-        TZ = "Etc/UTC";
-        KASM_PORT = "4443";
-        DOCKER_MTU = "1500";
+  options.services.mycontainers.kasm = {
+    enable = lib.mkEnableOption "Kasm Workspaces browser isolation";
+    
+    ipSuffix = lib.mkOption {
+      type = lib.types.int;
+      default = 47;
+      description = "Last octet of container IP address";
+    };
+    
+    port = lib.mkOption {
+      type = lib.types.port;
+      default = 3000;
+      description = "Internal HTTP port for Kasm";
+    };
+    
+    httpsPort = lib.mkOption {
+      type = lib.types.port;
+      default = 4443;
+      description = "HTTPS port for Kasm";
+    };
+    
+    domain = {
+      internal = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = "kasm.home";
+        description = "Internal domain name";
       };
-      extraOptions = [ "--net" "custom-net" "--ip" "${myContainerIPs.kasm}" "--privileged" ];
-      volumes = [
-        "/var/containers-data/kasm:/opt"
-        "/var/containers-data/kasm/profiles:/profiles"
-        "/dev/input:/dev/input"
-        "/run/udev/data:/run/udev/data"
-      ];
-      ports = [
-        "3000:3000"
-        "4443:4443"
-      ];
+      
+      external = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "External domain name (enables external access)";
+      };
+    };
+    
+    dataDir = lib.mkOption {
+      type = lib.types.str;
+      default = "${clib.defaults.paths.dataDir}/kasm";
+      description = "Directory for Kasm data";
+    };
+    
+    environment = lib.mkOption {
+      type = lib.types.attrsOf lib.types.str;
+      default = {};
+      description = "Additional environment variables";
     };
   };
-
-  containers.nginx-internal.config.services.nginx.virtualHosts."kasm.home" = {
-    serverName = "kasm.home";
-    listen = [{ addr = "10.71.71.75"; port = 80; }];
-    locations."/" = {
-      proxyPass = "http://${myContainerIPs.kasm}:3000";
-      extraConfig = ''
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-      '';
-    };
-  };
+  
+  config = lib.mkIf cfg.enable (lib.mkMerge [
+    {
+      virtualisation.oci-containers.containers.kasm = {
+        image = "lscr.io/linuxserver/kasm:latest";
+        environment = {
+          TZ = clib.defaults.environment.TZ;
+          KASM_PORT = toString cfg.httpsPort;
+          DOCKER_MTU = "1500";
+        } // cfg.environment;
+        extraOptions = [
+          "--net" clib.defaults.network.name
+          "--ip" containerIP
+          "--privileged"
+        ];
+        volumes = [
+          "${cfg.dataDir}:/opt"
+          "${cfg.dataDir}/profiles:/profiles"
+          "/dev/input:/dev/input"
+          "/run/udev/data:/run/udev/data"
+        ];
+        ports = [
+          "${toString cfg.port}:${toString cfg.port}"
+          "${toString cfg.httpsPort}:${toString cfg.httpsPort}"
+        ];
+      };
+    }
+    
+    # Internal nginx proxy
+    (lib.mkIf (cfg.domain.internal != null) {
+      containers.nginx-internal.config.services.nginx.virtualHosts."${cfg.domain.internal}" = 
+        clib.nginx.mkInternalProxy {
+          domain = cfg.domain.internal;
+          targetIP = containerIP;
+          targetPort = cfg.port;
+        };
+    })
+    
+    # External nginx proxy
+    (lib.mkIf (cfg.domain.external != null) {
+      containers.nginx-external.config.services.nginx.virtualHosts."${cfg.domain.external}" = 
+        clib.nginx.mkExternalProxy {
+          domain = cfg.domain.external;
+          targetIP = containerIP;
+          targetPort = cfg.port;
+        };
+    })
+  ]);
 }

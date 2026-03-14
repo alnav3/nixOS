@@ -1,21 +1,44 @@
-{ lib, pkgs, config, ... }:
+{ config, lib, pkgs, ... }:
 
 let
-  myContainerIPs = {
-    synapse = "172.42.0.40";
-    mautrix-telegram = "172.42.0.51";
-  };
+  cfg = config.services.mycontainers.mautrix-telegram;
+  clib = import ./_lib { inherit lib; };
+  
+  containerIP = clib.helpers.mkIP cfg.ipSuffix;
 in
 {
-  virtualisation.oci-containers.containers = {
-    mautrix-telegram = {
+  options.services.mycontainers.mautrix-telegram = {
+    enable = lib.mkEnableOption "Mautrix-Telegram bridge for Matrix";
+    
+    ipSuffix = lib.mkOption {
+      type = lib.types.int;
+      default = 51;
+      description = "Last octet of container IP address";
+    };
+    
+    dataDir = lib.mkOption {
+      type = lib.types.str;
+      default = "${clib.defaults.paths.dataDir}/mautrix-telegram";
+      description = "Directory for Mautrix-Telegram data";
+    };
+    
+    environment = lib.mkOption {
+      type = lib.types.attrsOf lib.types.str;
+      default = {};
+      description = "Additional environment variables";
+    };
+  };
+  
+  config = lib.mkIf cfg.enable {
+    virtualisation.oci-containers.containers.mautrix-telegram = {
       image = "dock.mau.dev/mautrix/telegram:latest";
       volumes = [
-        "/var/containers-data/mautrix-telegram:/data"
+        "${cfg.dataDir}:/data"
       ];
+      environment = cfg.environment;
       extraOptions = [
-        "--net" "custom-net"
-        "--ip" "${myContainerIPs.mautrix-telegram}"
+        "--net" clib.defaults.network.name
+        "--ip" containerIP
       ];
       dependsOn = [ "synapse" ];
     };

@@ -58,6 +58,7 @@
     postingPkg
     qemu
     ripgrep
+    sshuttle
     sqlc
     tailwindcss_4
     templ

@@ -1,41 +1,102 @@
-{ lib, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 
 let
-  myContainerIPs = {
-    etesync = "172.42.0.44";
-  };
+  cfg = config.services.mycontainers.etesync;
+  clib = import ./_lib { inherit lib; };
+  
+  containerIP = clib.helpers.mkIP cfg.ipSuffix;
 in
 {
-  # Ensure data directory exists with correct permissions
-  systemd.tmpfiles.rules = [
-    "d /var/containers-data/etesync 0755 373 373 -"
-  ];
-  virtualisation.oci-containers.containers = {
-    etesync = {
-      image = "victorrds/etesync:latest";
-      environment = {
-        TZ = "Etc/UTC";
-        ALLOWED_HOSTS = "etesync.home,172.42.0.44,localhost,127.0.0.1";
+  options.services.mycontainers.etesync = {
+    enable = lib.mkEnableOption "EteSync synchronization service";
+    
+    ipSuffix = lib.mkOption {
+      type = lib.types.int;
+      default = 44;
+      description = "Last octet of container IP address";
+    };
+    
+    port = lib.mkOption {
+      type = lib.types.port;
+      default = 3735;
+      description = "Internal port for EteSync";
+    };
+    
+    domain = {
+      internal = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = "etesync.home";
+        description = "Internal domain name";
       };
-      extraOptions = [ "--net" "custom-net" "--ip" "${myContainerIPs.etesync}" ];
-      volumes = [
-        "/var/containers-data/etesync:/data"
+      
+      external = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "External domain name (enables external access)";
+      };
+    };
+    
+    dataDir = lib.mkOption {
+      type = lib.types.str;
+      default = "${clib.defaults.paths.dataDir}/etesync";
+      description = "Directory for EteSync data";
+    };
+    
+    allowedHosts = lib.mkOption {
+      type = lib.types.str;
+      default = "etesync.home,${containerIP},localhost,127.0.0.1";
+      description = "Allowed hosts for EteSync";
+    };
+    
+    environment = lib.mkOption {
+      type = lib.types.attrsOf lib.types.str;
+      default = {};
+      description = "Additional environment variables";
+    };
+  };
+  
+  config = lib.mkIf cfg.enable (lib.mkMerge [
+    {
+      # Ensure data directory exists with correct permissions (UID 373)
+      systemd.tmpfiles.rules = [
+        "d ${cfg.dataDir} 0755 373 373 -"
       ];
-      ports = [ ];
-    };
-  };
-
-  containers.nginx-internal.config.services.nginx.virtualHosts."etesync.home" = {
-    serverName = "etesync.home";
-    listen = [{ addr = "10.71.71.75"; port = 80; }];
-    locations."/" = {
-      proxyPass = "http://${myContainerIPs.etesync}:3735";
-      extraConfig = ''
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-      '';
-    };
-  };
+      
+      virtualisation.oci-containers.containers.etesync = {
+        image = "victorrds/etesync:latest";
+        environment = {
+          TZ = clib.defaults.environment.TZ;
+          ALLOWED_HOSTS = cfg.allowedHosts;
+        } // cfg.environment;
+        extraOptions = [
+          "--net" clib.defaults.network.name
+          "--ip" containerIP
+        ];
+        volumes = [
+          "${cfg.dataDir}:/data"
+        ];
+        ports = [];
+      };
+    }
+    
+    # Internal nginx proxy
+    (lib.mkIf (cfg.domain.internal != null) {
+      containers.nginx-internal.config.services.nginx.virtualHosts."${cfg.domain.internal}" = 
+        clib.nginx.mkInternalProxy {
+          domain = cfg.domain.internal;
+          targetIP = containerIP;
+          targetPort = cfg.port;
+        };
+    })
+    
+    # External nginx proxy
+    (lib.mkIf (cfg.domain.external != null) {
+      containers.nginx-external.config.services.nginx.virtualHosts."${cfg.domain.external}" = 
+        clib.nginx.mkExternalProxy {
+          domain = cfg.domain.external;
+          targetIP = containerIP;
+          targetPort = cfg.port;
+        };
+    })
+  ]);
 }

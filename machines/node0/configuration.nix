@@ -7,43 +7,57 @@
 
 {
   imports = [
-    #./../../modules/jellyfin.nix
-    #./../../modules/llms.nix
-    #./services.nix
-    #./../../modules/zigbee2mqtt.nix
     ./../../modules/virtualisation.nix
     ./../../modules/jellyfin.nix
-    ./../../containers/nginx.nix
-    ./../../containers/searx.nix
-    #./../../containers/windmill.nix
-    ./../../containers/sonarr.nix
-    ./../../containers/kasm.nix
-    ./../../containers/immich.nix
-    ./../../containers/radarr.nix
-    ./../../containers/prowlarr.nix
-    ./../../containers/calibre-web.nix
-    ./../../containers/transmission.nix
-    ./../../containers/infisical.nix
-    ./../../containers/suggestarr.nix
-    ./../../containers/jellyseerr.nix
-    ./../../containers/synapse.nix
-    ./../../containers/mautrix-whatsapp.nix
-    ./../../containers/mautrix-telegram.nix
-    ./../../containers/mautrix-signal.nix
-    ./../../containers/ntfy.nix
-    ./../../containers/deemix.nix
-    ./../../containers/metube.nix
-    #./../../containers/splitweb.nix
-    ./../../containers/slskd.nix
-    ./../../containers/pihole.nix
-    ./../../containers/headscale.nix
-    ./../../containers/etesync.nix
-    ./../../containers/trmnl.nix
-    ./../../containers/syncthing.nix
-    #./../../containers/traefik.nix
-    #./../../containers/dokploy.nix
+    ./../../containers  # Import all container modules
     "${modulesPath}/virtualisation/lxc-container.nix"
   ];
+  
+  # Enable and configure containers using the new modular system
+  services.mycontainers = {
+    # Nginx reverse proxies
+    nginx = {
+      enableInternal = true;
+      enableExternal = true;
+    };
+    
+    # Media management (*arr stack)
+    sonarr.enable = true;
+    radarr.enable = true;
+    prowlarr.enable = true;
+    jellyseerr.enable = true;
+    suggestarr.enable = true;
+    
+    # Download clients
+    transmission.enable = true;
+    deemix.enable = true;
+    metube.enable = true;
+    slskd.enable = true;
+    
+    # Media libraries
+    calibre-web.enable = true;
+    
+    # Photo management
+    immich.enable = true;
+    
+    # Communication (Matrix)
+    synapse.enable = true;
+    mautrix-whatsapp.enable = true;
+    mautrix-telegram.enable = true;
+    mautrix-signal.enable = true;
+    
+    # Utilities
+    ntfy.enable = true;
+    searx.enable = true;
+    pihole.enable = true;
+    syncthing.enable = true;
+    etesync.enable = true;
+    trmnl.enable = true;
+    
+    # Development/Infrastructure
+    infisical.enable = true;
+    kasm.enable = true;
+  };
   users.groups.transcoding= {
     gid = 104;
   };

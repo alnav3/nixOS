@@ -1,59 +1,94 @@
-{ lib, pkgs, config, ... }:
+{ config, lib, pkgs, ... }:
 
 let
-  myContainerIPs = {
-    synapse = "172.42.0.40";
-  };
+  cfg = config.services.mycontainers.synapse;
+  clib = import ./_lib { inherit lib; };
+  
+  containerIP = clib.helpers.mkIP cfg.ipSuffix;
 in
 {
-  # Create the data directory
-  systemd.tmpfiles.rules = [
-    "d /var/containers-data/synapse 0755 root root -"
-    "d /var/containers-data/synapse/data 0755 root root -"
-  ];
-
-  virtualisation.oci-containers.containers = {
-    synapse = {
-      image = "matrixdotorg/synapse:latest";
-      volumes = [
-        "synapse-data:/data"
-        "/var/containers-data/mautrix-whatsapp:/mautrix-whatsapp:ro"
-      ];
-      extraOptions = [ "--net" "custom-net" "--ip" "${myContainerIPs.synapse}" ];
+  options.services.mycontainers.synapse = {
+    enable = lib.mkEnableOption "Synapse Matrix homeserver";
+    
+    ipSuffix = lib.mkOption {
+      type = lib.types.int;
+      default = 40;
+      description = "Last octet of container IP address";
+    };
+    
+    port = lib.mkOption {
+      type = lib.types.port;
+      default = 8008;
+      description = "Internal port for Synapse";
+    };
+    
+    domain = {
+      internal = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = "matrix.home";
+        description = "Internal domain name";
+      };
+      
+      external = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = "matrix.alnav.dev";
+        description = "External domain name (enables external access)";
+      };
+    };
+    
+    dataDir = lib.mkOption {
+      type = lib.types.str;
+      default = "${clib.defaults.paths.dataDir}/synapse";
+      description = "Directory for Synapse data";
+    };
+    
+    environment = lib.mkOption {
+      type = lib.types.attrsOf lib.types.str;
+      default = {};
+      description = "Additional environment variables";
     };
   };
-
-  containers = {
-      nginx-internal.config.services.nginx.virtualHosts."synapse" = {
-          serverName = "matrix.home";
-          listen = [{ addr = "10.71.71.75"; port = 80; }];
-          locations."/" = {
-              proxyPass = "http://${myContainerIPs.synapse}:8008";
-              extraConfig = ''
-              proxy_set_header Host $host;
-              proxy_set_header X-Real-IP $remote_addr;
-              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-              proxy_set_header X-Forwarded-Proto $scheme;
-              '';
-          };
+  
+  config = lib.mkIf cfg.enable (lib.mkMerge [
+    {
+      # Create the data directory
+      systemd.tmpfiles.rules = [
+        "d ${cfg.dataDir} 0755 root root -"
+        "d ${cfg.dataDir}/data 0755 root root -"
+      ];
+      
+      virtualisation.oci-containers.containers.synapse = {
+        image = "matrixdotorg/synapse:latest";
+        volumes = [
+          "synapse-data:/data"
+          "${clib.defaults.paths.dataDir}/mautrix-whatsapp:/mautrix-whatsapp:ro"
+        ];
+        environment = cfg.environment;
+        extraOptions = [
+          "--net" clib.defaults.network.name
+          "--ip" containerIP
+        ];
       };
-      nginx-external.config.services.nginx.virtualHosts."matrix.alnav.dev" = {
-          forceSSL = true;
-          useACMEHost = "alnav.dev";
-          serverName = "matrix.alnav.dev";
-          listen = [
-          { addr = "10.71.71.193"; port = 80; }
-          { addr = "10.71.71.193"; port = 443; ssl = true; }
-          ];
-          locations."/" = {
-              proxyPass = "http://${myContainerIPs.synapse}:8008";
-              extraConfig = ''
-              proxy_set_header Host $host;
-              proxy_set_header X-Real-IP $remote_addr;
-              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-              proxy_set_header X-Forwarded-Proto $scheme;
-              '';
-          };
-      };
-  };
+    }
+    
+    # Internal nginx proxy
+    (lib.mkIf (cfg.domain.internal != null) {
+      containers.nginx-internal.config.services.nginx.virtualHosts."${cfg.domain.internal}" = 
+        clib.nginx.mkInternalProxy {
+          domain = cfg.domain.internal;
+          targetIP = containerIP;
+          targetPort = cfg.port;
+        };
+    })
+    
+    # External nginx proxy
+    (lib.mkIf (cfg.domain.external != null) {
+      containers.nginx-external.config.services.nginx.virtualHosts."${cfg.domain.external}" = 
+        clib.nginx.mkExternalProxy {
+          domain = cfg.domain.external;
+          targetIP = containerIP;
+          targetPort = cfg.port;
+        };
+    })
+  ]);
 }

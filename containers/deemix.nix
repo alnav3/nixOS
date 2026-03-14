@@ -1,46 +1,108 @@
-{ lib, pkgs, ... }:
+{ config, lib, pkgs, ... }:
+
 let
-  myContainerIPs = {
-    deemix = "172.42.0.36";  # Changed from 0.33 to 0.36
-  };
+  cfg = config.services.mycontainers.deemix;
+  clib = import ./_lib { inherit lib; };
+  
+  containerIP = clib.helpers.mkIP cfg.ipSuffix;
 in
 {
-  virtualisation.oci-containers.containers = {
-    deemix = {
-      image = "registry.gitlab.com/bockiii/deemix-docker:latest";
-      environment = {
-        TZ = "Etc/UTC";
-        PUID = "994";
-        PGID = "104";
-        UMASK_SET = "022";
+  options.services.mycontainers.deemix = {
+    enable = lib.mkEnableOption "Deemix music downloader";
+    
+    ipSuffix = lib.mkOption {
+      type = lib.types.int;
+      default = 36;
+      description = "Last octet of container IP address";
+    };
+    
+    port = lib.mkOption {
+      type = lib.types.port;
+      default = 6595;
+      description = "Internal port for Deemix";
+    };
+    
+    domain = {
+      internal = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = "deemix.home";
+        description = "Internal domain name";
       };
-      extraOptions = [ "--net" "custom-net" "--ip" "${myContainerIPs.deemix}" ];
-      volumes = [
-        "/var/containers-data/deemix:/config"
-        "/mnt/things:/downloads"
-        "/mnt/media/media/Music:/music"
-      ];
-      ports = [ ];
+      
+      external = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "External domain name (enables external access)";
+      };
+    };
+    
+    dataDir = lib.mkOption {
+      type = lib.types.str;
+      default = "${clib.defaults.paths.dataDir}/deemix";
+      description = "Directory for Deemix configuration";
+    };
+    
+    musicDir = lib.mkOption {
+      type = lib.types.str;
+      default = "/mnt/media/media/Music";
+      description = "Directory for music files";
+    };
+    
+    environment = lib.mkOption {
+      type = lib.types.attrsOf lib.types.str;
+      default = {};
+      description = "Additional environment variables";
     };
   };
-
-  containers.nginx-internal.config.services.nginx.virtualHosts."deemix.home" = {
-    serverName = "deemix.home";
-    listen = [{ addr = "10.71.71.75"; port = 80; }];
-    locations."/" = {
-      proxyPass = "http://${myContainerIPs.deemix}:6595";
-      extraConfig = ''
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-
-        # WebSocket support
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_read_timeout 86400;
-      '';
-    };
-  };
+  
+  config = lib.mkIf cfg.enable (lib.mkMerge [
+    {
+      virtualisation.oci-containers.containers.deemix = {
+        image = "registry.gitlab.com/bockiii/deemix-docker:latest";
+        environment = clib.helpers.mkEnv ({
+          PUID = "994";
+          PGID = "104";
+          UMASK_SET = "022";
+        } // cfg.environment);
+        extraOptions = [
+          "--net" clib.defaults.network.name
+          "--ip" containerIP
+        ];
+        volumes = [
+          "${cfg.dataDir}:/config"
+          "${clib.defaults.paths.downloadsDir}:/downloads"
+          "${cfg.musicDir}:/music"
+        ];
+        ports = [];
+      };
+    }
+    
+    # Internal nginx proxy with WebSocket support
+    (lib.mkIf (cfg.domain.internal != null) {
+      containers.nginx-internal.config.services.nginx.virtualHosts."${cfg.domain.internal}" = 
+        clib.nginx.mkInternalProxy {
+          domain = cfg.domain.internal;
+          targetIP = containerIP;
+          targetPort = cfg.port;
+          extraConfig = ''
+            ${clib.nginx.webSocketHeaders}
+            proxy_read_timeout 86400;
+          '';
+        };
+    })
+    
+    # External nginx proxy
+    (lib.mkIf (cfg.domain.external != null) {
+      containers.nginx-external.config.services.nginx.virtualHosts."${cfg.domain.external}" = 
+        clib.nginx.mkExternalProxy {
+          domain = cfg.domain.external;
+          targetIP = containerIP;
+          targetPort = cfg.port;
+          extraConfig = ''
+            ${clib.nginx.webSocketHeaders}
+            proxy_read_timeout 86400;
+          '';
+        };
+    })
+  ]);
 }

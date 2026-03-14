@@ -1,71 +1,117 @@
-{ lib, pkgs, config, ... }:
+{ config, lib, pkgs, ... }:
 
 let
-  myContainerIPs = {
-    ntfy = "172.42.0.38";
-  };
+  cfg = config.services.mycontainers.ntfy;
+  clib = import ./_lib { inherit lib; };
+  
+  containerIP = clib.helpers.mkIP cfg.ipSuffix;
 in
 {
-  virtualisation.oci-containers.containers = {
-    ntfy = {
-      image = "binwiederhier/ntfy:latest";
-      cmd = [ "serve" ];
-      environment = {
-        PUID = "1000";
-        PGID = "1000";
-        TZ = "Etc/UTC";
-      };
-      volumes = [
-        "/var/containers-data/ntfy/cache:/var/cache/ntfy"
-        "/var/containers-data/ntfy/etc:/etc/ntfy"
-      ];
-      extraOptions = [
-        "--net" "custom-net"
-        "--ip" "${myContainerIPs.ntfy}"
-      ];
+  options.services.mycontainers.ntfy = {
+    enable = lib.mkEnableOption "Ntfy notification service";
+    
+    ipSuffix = lib.mkOption {
+      type = lib.types.int;
+      default = 38;
+      description = "Last octet of container IP address";
     };
-  };
-
-  # Create data directories
-  systemd.tmpfiles.rules = [
-    "d /var/containers-data/ntfy 0755 root root -"
-    "d /var/containers-data/ntfy/cache 0755 root root -"
-    "d /var/containers-data/ntfy/etc 0755 root root -"
-  ];
-
-  # Create basic ntfy config
-  environment.etc."ntfy/server.yml".text = ''
-    base-url: "https://ntfy.alnav.dev"
-    listen: ":80"
-    cache-file: "/var/cache/ntfy/cache.db"
-    auth-default-access: "read-write"
-    auth-file: "/var/cache/ntfy/user.db"
-    behind-proxy: true
-  '';
-
-  containers = {
-    nginx-external.config.services.nginx.virtualHosts."ntfy.alnav.dev" = {
-      forceSSL = true;
-      useACMEHost = "alnav.dev";
-      serverName = "ntfy.alnav.dev";
-      listen = [
-        { addr = "10.71.71.193"; port = 80; }
-        { addr = "10.71.71.193"; port = 443; ssl = true; }
-      ];
-      locations."/" = {
-        proxyPass = "http://${myContainerIPs.ntfy}:80";
-        extraConfig = ''
-          proxy_set_header Host $host;
-          proxy_set_header X-Real-IP $remote_addr;
-          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-          proxy_set_header X-Forwarded-Proto $scheme;
-
-          # WebSocket support for ntfy
-          proxy_http_version 1.1;
-          proxy_set_header Upgrade $http_upgrade;
-          proxy_set_header Connection "upgrade";
-        '';
+    
+    port = lib.mkOption {
+      type = lib.types.port;
+      default = 80;
+      description = "Internal port for Ntfy";
+    };
+    
+    domain = {
+      internal = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "Internal domain name";
+      };
+      
+      external = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = "ntfy.alnav.dev";
+        description = "External domain name (enables external access)";
       };
     };
+    
+    baseUrl = lib.mkOption {
+      type = lib.types.str;
+      default = "https://ntfy.alnav.dev";
+      description = "Base URL for ntfy service";
+    };
+    
+    dataDir = lib.mkOption {
+      type = lib.types.str;
+      default = "${clib.defaults.paths.dataDir}/ntfy";
+      description = "Directory for Ntfy data";
+    };
+    
+    environment = lib.mkOption {
+      type = lib.types.attrsOf lib.types.str;
+      default = {};
+      description = "Additional environment variables";
+    };
   };
+  
+  config = lib.mkIf cfg.enable (lib.mkMerge [
+    {
+      virtualisation.oci-containers.containers.ntfy = {
+        image = "binwiederhier/ntfy:latest";
+        cmd = [ "serve" ];
+        environment = clib.helpers.mkEnv ({
+          PUID = "1000";
+          PGID = "1000";
+        } // cfg.environment);
+        volumes = [
+          "${cfg.dataDir}/cache:/var/cache/ntfy"
+          "${cfg.dataDir}/etc:/etc/ntfy"
+        ];
+        extraOptions = [
+          "--net" clib.defaults.network.name
+          "--ip" containerIP
+        ];
+      };
+      
+      # Create data directories
+      systemd.tmpfiles.rules = clib.helpers.mkDataDirs [
+        "ntfy"
+        "ntfy/cache"
+        "ntfy/etc"
+      ];
+      
+      # Create basic ntfy config
+      environment.etc."ntfy/server.yml".text = ''
+        base-url: "${cfg.baseUrl}"
+        listen: ":${toString cfg.port}"
+        cache-file: "/var/cache/ntfy/cache.db"
+        auth-default-access: "read-write"
+        auth-file: "/var/cache/ntfy/user.db"
+        behind-proxy: true
+      '';
+    }
+    
+    # Internal nginx proxy
+    (lib.mkIf (cfg.domain.internal != null) {
+      containers.nginx-internal.config.services.nginx.virtualHosts."${cfg.domain.internal}" = 
+        clib.nginx.mkInternalProxy {
+          domain = cfg.domain.internal;
+          targetIP = containerIP;
+          targetPort = cfg.port;
+          extraConfig = clib.nginx.webSocketHeaders;
+        };
+    })
+    
+    # External nginx proxy with WebSocket support
+    (lib.mkIf (cfg.domain.external != null) {
+      containers.nginx-external.config.services.nginx.virtualHosts."${cfg.domain.external}" = 
+        clib.nginx.mkExternalProxy {
+          domain = cfg.domain.external;
+          targetIP = containerIP;
+          targetPort = cfg.port;
+          extraConfig = clib.nginx.webSocketHeaders;
+        };
+    })
+  ]);
 }

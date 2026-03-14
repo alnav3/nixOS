@@ -1,55 +1,87 @@
-{ lib, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 
 let
-  myContainerIPs = {
-    searx = "172.42.0.21";
-  };
+  cfg = config.services.mycontainers.searx;
+  clib = import ./_lib { inherit lib; };
+  
+  containerIP = clib.helpers.mkIP cfg.ipSuffix;
 in
 {
-  virtualisation.oci-containers.containers = {
-    searx = {
-      image = "searxng/searxng:latest";
-      environment = {
-        TZ = "Etc/UTC";
-        # TODO: secret just for testing - change in the future
-        SEARX_SECRET_KEY = "tcmaahDTQYAXpYPhOKfzK7UiZ/f5YguCrUWcU672rZI=";
+  options.services.mycontainers.searx = {
+    enable = lib.mkEnableOption "SearXNG metasearch engine";
+    
+    ipSuffix = lib.mkOption {
+      type = lib.types.int;
+      default = 21;
+      description = "Last octet of container IP address";
+    };
+    
+    port = lib.mkOption {
+      type = lib.types.port;
+      default = 8080;
+      description = "Internal port for SearXNG";
+    };
+    
+    domain = {
+      internal = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = "search.home";
+        description = "Internal domain name";
       };
-      extraOptions = [ "--net" "custom-net" "--ip" "${myContainerIPs.searx}" ];
+      
+      external = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = "search.alnav.dev";
+        description = "External domain name (enables external access)";
+      };
+    };
+    
+    secretKey = lib.mkOption {
+      type = lib.types.str;
+      default = "tcmaahDTQYAXpYPhOKfzK7UiZ/f5YguCrUWcU672rZI=";
+      description = "Secret key for SearXNG (should be changed)";
+    };
+    
+    environment = lib.mkOption {
+      type = lib.types.attrsOf lib.types.str;
+      default = {};
+      description = "Additional environment variables";
     };
   };
-
-  containers = {
-      nginx-internal.config.services.nginx.virtualHosts."search.home" = {
-          serverName = "search.home";
-          listen = [{ addr = "10.71.71.75"; port = 80; }];
-          locations."/" = {
-              proxyPass = "http://${myContainerIPs.searx}:8080";
-              extraConfig = ''
-                  proxy_set_header Host $host;
-                  proxy_set_header X-Real-IP $remote_addr;
-                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                  proxy_set_header X-Forwarded-Proto $scheme;
-              '';
-          };
+  
+  config = lib.mkIf cfg.enable (lib.mkMerge [
+    {
+      virtualisation.oci-containers.containers.searx = {
+        image = "searxng/searxng:latest";
+        environment = {
+          TZ = clib.defaults.environment.TZ;
+          SEARX_SECRET_KEY = cfg.secretKey;
+        } // cfg.environment;
+        extraOptions = [
+          "--net" clib.defaults.network.name
+          "--ip" containerIP
+        ];
       };
-      nginx-external.config.services.nginx.virtualHosts."search.alnav.dev" = {
-          forceSSL = true;
-          useACMEHost = "alnav.dev";
-          serverName = "search.alnav.dev";
-          listen = [
-              { addr = "10.71.71.193"; port = 80; }
-              { addr = "10.71.71.193"; port = 443; ssl = true; }
-          ];
-          locations."/" = {
-              proxyPass = "http://${myContainerIPs.searx}:8080";
-              extraConfig = ''
-                  proxy_set_header Host $host;
-                  proxy_set_header X-Real-IP $remote_addr;
-                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                  proxy_set_header X-Forwarded-Proto $scheme;
-              '';
-          };
-      };
-  };
+    }
+    
+    # Internal nginx proxy
+    (lib.mkIf (cfg.domain.internal != null) {
+      containers.nginx-internal.config.services.nginx.virtualHosts."${cfg.domain.internal}" = 
+        clib.nginx.mkInternalProxy {
+          domain = cfg.domain.internal;
+          targetIP = containerIP;
+          targetPort = cfg.port;
+        };
+    })
+    
+    # External nginx proxy
+    (lib.mkIf (cfg.domain.external != null) {
+      containers.nginx-external.config.services.nginx.virtualHosts."${cfg.domain.external}" = 
+        clib.nginx.mkExternalProxy {
+          domain = cfg.domain.external;
+          targetIP = containerIP;
+          targetPort = cfg.port;
+        };
+    })
+  ]);
 }
-

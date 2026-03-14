@@ -1,45 +1,102 @@
-{ lib, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 
 let
-  myContainerIPs = {
-    pihole = "172.42.0.14";
-  };
+  cfg = config.services.mycontainers.pihole;
+  clib = import ./_lib { inherit lib; };
+  
+  containerIP = clib.helpers.mkIP cfg.ipSuffix;
 in
 {
-  virtualisation.oci-containers.containers = {
-    pihole = {
-      image = "pihole/pihole:latest";
-      environment = {
-        TZ = "Europe/London";
-        FTLCONF_dns_listeningMode = "ALL";
+  options.services.mycontainers.pihole = {
+    enable = lib.mkEnableOption "Pi-hole DNS ad blocker";
+    
+    ipSuffix = lib.mkOption {
+      type = lib.types.int;
+      default = 14;
+      description = "Last octet of container IP address";
+    };
+    
+    port = lib.mkOption {
+      type = lib.types.port;
+      default = 80;
+      description = "Internal HTTP port for Pi-hole";
+    };
+    
+    domain = {
+      internal = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = "pihole.home";
+        description = "Internal domain name";
       };
-      extraOptions = [
-        "--net" "custom-net"
-        "--ip" "${myContainerIPs.pihole}"
-        "--cap-add=NET_ADMIN"
-      ];
-      volumes = [
-        "/var/containers-data/pihole/etc-pihole:/etc/pihole"
-        "/var/containers-data/pihole/etc-dnsmasq.d:/etc/dnsmasq.d"
-      ];
-      ports = [
-        "53:53/tcp"   # DNS TCP
-        "53:53/udp"   # DNS UDP
-      ];
+      
+      external = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "External domain name (enables external access)";
+      };
+    };
+    
+    dataDir = lib.mkOption {
+      type = lib.types.str;
+      default = "${clib.defaults.paths.dataDir}/pihole";
+      description = "Directory for Pi-hole data";
+    };
+    
+    timezone = lib.mkOption {
+      type = lib.types.str;
+      default = "Europe/London";
+      description = "Timezone for Pi-hole";
+    };
+    
+    environment = lib.mkOption {
+      type = lib.types.attrsOf lib.types.str;
+      default = {};
+      description = "Additional environment variables";
     };
   };
-
-  containers.nginx-internal.config.services.nginx.virtualHosts."pihole.home" = {
-    serverName = "pihole.home";
-    listen = [{ addr = "10.71.71.75"; port = 80; }];
-    locations."/" = {
-      proxyPass = "http://${myContainerIPs.pihole}:80";
-      extraConfig = ''
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-      '';
-    };
-  };
+  
+  config = lib.mkIf cfg.enable (lib.mkMerge [
+    {
+      virtualisation.oci-containers.containers.pihole = {
+        image = "pihole/pihole:latest";
+        environment = {
+          TZ = cfg.timezone;
+          FTLCONF_dns_listeningMode = "ALL";
+        } // cfg.environment;
+        extraOptions = [
+          "--net" clib.defaults.network.name
+          "--ip" containerIP
+          "--cap-add=NET_ADMIN"
+        ];
+        volumes = [
+          "${cfg.dataDir}/etc-pihole:/etc/pihole"
+          "${cfg.dataDir}/etc-dnsmasq.d:/etc/dnsmasq.d"
+        ];
+        ports = [
+          "53:53/tcp"
+          "53:53/udp"
+        ];
+      };
+    }
+    
+    # Internal nginx proxy
+    (lib.mkIf (cfg.domain.internal != null) {
+      containers.nginx-internal.config.services.nginx.virtualHosts."${cfg.domain.internal}" = 
+        clib.nginx.mkInternalProxy {
+          domain = cfg.domain.internal;
+          targetIP = containerIP;
+          targetPort = cfg.port;
+        };
+    })
+    
+    # External nginx proxy
+    (lib.mkIf (cfg.domain.external != null) {
+      containers.nginx-external.config.services.nginx.virtualHosts."${cfg.domain.external}" = 
+        clib.nginx.mkExternalProxy {
+          domain = cfg.domain.external;
+          targetIP = containerIP;
+          targetPort = cfg.port;
+        };
+    })
+  ]);
 }

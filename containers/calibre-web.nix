@@ -1,69 +1,105 @@
-{ lib, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 
 let
-  myContainerIPs = {
-    calibre = "172.42.0.22";
-  };
+  cfg = config.services.mycontainers.calibre-web;
+  clib = import ./_lib { inherit lib; };
+  
+  containerIP = clib.helpers.mkIP cfg.ipSuffix;
 in
 {
-  virtualisation.oci-containers.containers = {
-    calibre = {
-      image = "lscr.io/linuxserver/calibre-web:latest";
-      environment = {
-        TZ  = "Etc/UTC";
-        PUID = "994";
-        PGID = "104";
-        # Optional extras:
-        # DOCKER_MODS = "linuxserver/mods:universal-calibre"; # optional: ebook conversion layer
-        # OAUTHLIB_RELAX_TOKEN_SCOPE = "1";                  # optional for Google OAUTH
+  options.services.mycontainers.calibre-web = {
+    enable = lib.mkEnableOption "Calibre-Web ebook library manager";
+    
+    ipSuffix = lib.mkOption {
+      type = lib.types.int;
+      default = 22;
+      description = "Last octet of container IP address";
+    };
+    
+    port = lib.mkOption {
+      type = lib.types.port;
+      default = 443;
+      description = "Internal port for Calibre-Web (uses 443 internally)";
+    };
+    
+    hostPort = lib.mkOption {
+      type = lib.types.port;
+      default = 8083;
+      description = "Host port mapping";
+    };
+    
+    domain = {
+      internal = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = "books.home";
+        description = "Internal domain name";
       };
-      extraOptions = [ "--net" "custom-net" "--ip" "${myContainerIPs.calibre}" ];
-      volumes = [
-        "/var/containers-data/calibre/config:/config"
-        "/var/containers-data/calibre/books:/books"
-      ];
-      ports = [ "8083:443" ];
+      
+      external = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = "books.alnav.dev";
+        description = "External domain name (enables external access)";
+      };
+    };
+    
+    dataDir = lib.mkOption {
+      type = lib.types.str;
+      default = "${clib.defaults.paths.dataDir}/calibre";
+      description = "Directory for Calibre-Web configuration";
+    };
+    
+    environment = lib.mkOption {
+      type = lib.types.attrsOf lib.types.str;
+      default = {};
+      description = "Additional environment variables";
     };
   };
-
-  containers = {
-      nginx-internal.config.services.nginx.virtualHosts."books.home" = {
-          serverName = "books.home";
-          listen = [{ addr = "10.71.71.75"; port = 80; }];
-          locations."/" = {
-              proxyPass = "http://${myContainerIPs.calibre}:443";
-              extraConfig = ''
-                  proxy_set_header Host $host;
-                  client_max_body_size 10G;
-                  proxy_set_header X-Real-IP $remote_addr;
-                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                  proxy_set_header X-Forwarded-Proto $scheme;
-              '';
-          };
+  
+  config = lib.mkIf cfg.enable (lib.mkMerge [
+    {
+      virtualisation.oci-containers.containers.calibre = {
+        image = "lscr.io/linuxserver/calibre-web:latest";
+        environment = clib.helpers.mkEnv ({
+          PUID = "994";
+          PGID = "104";
+        } // cfg.environment);
+        extraOptions = [
+          "--net" clib.defaults.network.name
+          "--ip" containerIP
+        ];
+        volumes = [
+          "${cfg.dataDir}/config:/config"
+          "${cfg.dataDir}/books:/books"
+        ];
+        ports = [ "${toString cfg.hostPort}:${toString cfg.port}" ];
       };
-      nginx-external.config.services.nginx.virtualHosts."books.alnav.dev" = {
-          forceSSL = true;
-          useACMEHost = "alnav.dev";
-          serverName = "books.alnav.dev";
-          listen = [
-              { addr = "10.71.71.193"; port = 80; }
-              { addr = "10.71.71.193"; port = 443; ssl = true; }
-          ];
-          locations."/" = {
-              proxyPass = "http://${myContainerIPs.calibre}:443";
-              extraConfig = ''
-                  proxy_busy_buffers_size   1024k;
-                  proxy_buffers   4 512k;
-                  proxy_buffer_size   1024k;
-                  proxy_set_header Host $host;
-                  client_max_body_size 10G;
-                  proxy_set_header X-Real-IP $remote_addr;
-                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                  proxy_set_header X-Forwarded-Proto $scheme;
-              '';
-          };
-      };
-
-  };
+    }
+    
+    # Internal nginx proxy
+    (lib.mkIf (cfg.domain.internal != null) {
+      containers.nginx-internal.config.services.nginx.virtualHosts."${cfg.domain.internal}" = 
+        clib.nginx.mkInternalProxy {
+          domain = cfg.domain.internal;
+          targetIP = containerIP;
+          targetPort = cfg.port;
+          clientMaxBodySize = "10G";
+        };
+    })
+    
+    # External nginx proxy with custom buffer configuration
+    (lib.mkIf (cfg.domain.external != null) {
+      containers.nginx-external.config.services.nginx.virtualHosts."${cfg.domain.external}" = 
+        clib.nginx.mkExternalProxy {
+          domain = cfg.domain.external;
+          targetIP = containerIP;
+          targetPort = cfg.port;
+          clientMaxBodySize = "10G";
+          extraConfig = ''
+            proxy_busy_buffers_size   1024k;
+            proxy_buffers   4 512k;
+            proxy_buffer_size   1024k;
+          '';
+        };
+    })
+  ]);
 }
-
