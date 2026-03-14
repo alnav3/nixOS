@@ -9,7 +9,7 @@
   imports = [
     #./../../modules/jellyfin.nix
     #./../../modules/llms.nix
-    ./services.nix
+    #./services.nix
     #./../../modules/zigbee2mqtt.nix
     ./../../modules/virtualisation.nix
     ./../../modules/jellyfin.nix
@@ -17,6 +17,7 @@
     ./../../containers/searx.nix
     #./../../containers/windmill.nix
     ./../../containers/sonarr.nix
+    ./../../containers/kasm.nix
     ./../../containers/immich.nix
     ./../../containers/radarr.nix
     ./../../containers/prowlarr.nix
@@ -36,9 +37,9 @@
     ./../../containers/slskd.nix
     ./../../containers/pihole.nix
     ./../../containers/headscale.nix
-    ./../../containers/n8n.nix
     ./../../containers/etesync.nix
     ./../../containers/trmnl.nix
+    ./../../containers/syncthing.nix
     #./../../containers/traefik.nix
     #./../../containers/dokploy.nix
     "${modulesPath}/virtualisation/lxc-container.nix"

@@ -1,6 +1,5 @@
 {
   pkgs,
-  pkgs-stable,
   inputs,
   postingPkg,
   ...
@@ -33,6 +32,7 @@
     android-tools
     bat
     carapace
+    cargo
     eza
     fzf
     gcc
@@ -55,6 +55,7 @@
     nodejs_22
     opencode
     oh-my-posh
+    python313
     postingPkg
     qemu
     ripgrep
@@ -64,7 +65,6 @@
     temurin-bin-21
     tmux
     tree-sitter
-    turso-cli
     unzip
     wl-clipboard
     zoxide
@@ -83,7 +83,6 @@
       cl = "clear";
       update = "sudo nixos-rebuild switch --flake '/home/alnav/nixOS#framework'";
       clean-disk = "sudo nix profile wipe-history --profile /nix/var/nix/profiles/system --older-than 1d";
-      rofi-wifi = "${inputs.rofi-wifi}/rofi-wifi-menu.sh";
       update-flake = "nix flake lock --update-input";
       kill-battery = ''
           sudo ryzenadj --stapm-limit=15000 --fast-limit=20000 --slow-limit=15000
@@ -94,8 +93,6 @@
     };
   };
   users.defaultUserShell = pkgs.zsh;
-  services = {
-    gnome.gnome-keyring.enable = true;
-  };
 
 }
+

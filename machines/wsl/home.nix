@@ -31,30 +31,16 @@
       name = ".config/oh-my-posh/zen.toml";
       value.source = "${inputs.dotfiles}/zsh/.config/oh-my-posh/zen.toml";
     }
-    {
-      name = ".config/kanshi/config.test";
-      value.source = "${inputs.dotfiles}/kanshi/config";
-    }
 
     # nvim config
     {
-      name = ".config/nvim.bak";
+      name = ".config/nvim";
       value.source = "${inputs.dotfiles}/nvim";
-    }
-
-    # desktop config
-    {
-      name = ".config/hypr.bak";
-      value.source = "${inputs.dotfiles}/hypr";
-    }
-    {
-      name = "wallpapers";
-      value.source = "${inputs.dotfiles}/wallpapers";
     }
 
     # tmux config
     {
-      name = ".tmux.conf.bak";
+      name = ".tmux.conf";
       value.source = "${inputs.dotfiles}/tmux/.tmux.conf";
     }
     {
@@ -63,7 +49,7 @@
     }
     # lua-language-server for mason and nvim
     {
-      name = ".local/share/nvim/mason/bin/lua-language-server";
+      name = ".local/share/nvim/mason/bin/lua-language-server.bak";
       value.source = "${pkgs.lua-language-server}/bin/lua-language-server";
     }
     {
@@ -82,76 +68,18 @@
     additionalJDKs;
 in {
   programs.home-manager.enable = true;
-  programs.hyprpanel = {
-    # Configure and theme almost all options from the GUI.
-    # See 'https://hyprpanel.com/configuration/settings.html'.
-    # Default: <same as gui>
-    settings = {
 
-      # Configure bar layouts for monitors.
-      # See 'https://hyprpanel.com/configuration/panel.html'.
-      # Default: null
-      layout = {
-        bar.layouts = {
-          "0" = {
-            left = [ "dashboard" "workspaces" ];
-            middle = [ "media" ];
-            right = [ "volume" "systray" "notifications" ];
-          };
-        };
-      };
-
-      bar.launcher.autoDetectIcon = true;
-      bar.workspaces.show_icons = true;
-
-      menus.clock = {
-        time = {
-          military = true;
-          hideSeconds = true;
-        };
-        weather.unit = "metric";
-      };
-
-      menus.dashboard.directories.enabled = false;
-      menus.dashboard.stats.enable_gpu = true;
-
-      theme.bar.transparent = true;
-
-      theme.font = {
-        name = "CaskaydiaCove NF";
-        size = "16px";
-      };
-    };
-  };
-  programs.kitty = {
-    enable = true;
-    settings = {
-      map = ''
-        ctrl+shift+u no_op
-      '';
-      confirm_os_window_close = 0;
-    };
-  };
   home.username = "alnav";
   home.homeDirectory = "/home/alnav";
   home.stateVersion = "26.05";
 
-  # Git config
+  # Git config (without credential helper override)
   programs.git = {
     enable = true;
     settings = {
-      credential.helper = "${
-        pkgs.git.override {withLibsecret = true;}
-      }/bin/git-credential-libsecret";
       push = {autoSetupRemote = true;};
     };
   };
-
-  # neovim config
-  programs.neovim.plugins = [
-    pkgs.vimPlugins.nvim-java
-    pkgs.vimPlugins.nvim-java-dap
-  ];
 
   # opensnitch running in the background
   #services.opensnitch-ui.enable = true;

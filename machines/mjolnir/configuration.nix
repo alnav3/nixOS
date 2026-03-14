@@ -13,7 +13,7 @@
   ];
   networking.networkmanager.enable = true;
   # enable system-bridge port
-  networking.firewall.allowedTCPPorts = [ 9170 8088 ];
+  networking.firewall.allowedTCPPorts = [ 9170 8088 8384 ];
 
   # required to rebuild duet
   boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
@@ -90,6 +90,15 @@
     steamtinkerlaunch
     inputs.system-bridge-nix.packages.x86_64-linux.system-bridge
   ];
+
+  # syncthing config
+  services.syncthing = {
+      enable = true;
+      openDefaultPorts = true; # TCP/UDP 22000 UDP 21027
+      user = "alnav";
+      dataDir = "/home/alnav";
+      configDir = "/home/alnav/.config";
+  };
 
   #systemd.services.usb-wake = {
   #    description = "Enables wakeup for all usb devices";

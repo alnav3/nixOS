@@ -11,7 +11,7 @@
 #    };
 #  };
 #}
-{ pkgs, lib, ... }: let
+{ inputs, pkgs, lib, ... }: let
   tuigreet = "${pkgs.tuigreet}/bin/tuigreet";
   session = "dbus-run-session ${pkgs.hyprland}/bin/start-hyprland";
   username = "alnav";

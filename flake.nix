@@ -68,6 +68,12 @@
       url = "github:zbaylin/rofi-wifi-menu";
       flake = false;
     };
+
+    hyprdynamicmonitors.url = "github:fiffeek/hyprdynamicmonitors";
+
+    # NixOS-WSL
+    nixos-wsl.url = "github:nix-community/NixOS-WSL/main";
+    nixos-wsl.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs = {
@@ -79,6 +85,7 @@
     nixos-hardware,
     sops-nix,
     nix-flatpak,
+    hyprdynamicmonitors,
     ...
   } @ inputs: let
     hosts = [
@@ -86,18 +93,26 @@
         name = "framework";
         system = "x86_64-linux";
         useHomeManager = true;
+        isWsl = false;
       }
       {
         name = "mjolnir";
         system = "x86_64-linux";
         useHomeManager = false;
+        isWsl = false;
       }
       {
         name = "node0";
         system = "x86_64-linux";
         useHomeManager = false;
+        isWsl = false;
       }
-
+      {
+        name = "wsl";
+        system = "x86_64-linux";
+        useHomeManager = true;
+        isWsl = true;
+      }
     ];
   in {
     nixosConfigurations = builtins.listToAttrs (map (host: {
@@ -112,30 +127,41 @@
             pkgs-unstable = inputs.nixpkgs.legacyPackages.${host.system};
           };
           system = host.system;
-          modules =
-            [
+          modules = [
               # NixOS encryption module
               sops-nix.nixosModules.sops
-              # disko
-              disko.nixosModules.disko
               nix-flatpak.nixosModules.nix-flatpak
-
-              # System Specific
-              ./machines/${host.name}/hardware-configuration.nix
-              ./machines/${host.name}/disko-config.nix
-
-              # General
-              ./configuration.nix
-
-              # home-manager
             ]
+            ++ (
+              if host.isWsl
+              then [
+                # WSL: self-contained machine config (includes nixos-wsl module)
+                ./machines/${host.name}/configuration.nix
+                ./machines/${host.name}/hardware-configuration.nix
+              ]
+              else [
+                # disko
+                disko.nixosModules.disko
+
+                # System Specific
+                ./machines/${host.name}/hardware-configuration.nix
+                ./machines/${host.name}/disko-config.nix
+
+                # General
+                ./configuration.nix
+              ]
+            )
             ++ (
               if host.useHomeManager
               then [
                 home-manager.nixosModules.home-manager
                 {
                   home-manager.useUserPackages = true;
-                  home-manager.users.alnav = import ./home.nix;
+                  home-manager.users.alnav = import (
+                    if host.isWsl
+                    then ./machines/wsl/home.nix
+                    else ./home.nix
+                  );
                   home-manager.backupFileExtension = "bak";
                   home-manager.extraSpecialArgs = {
                     inherit inputs;

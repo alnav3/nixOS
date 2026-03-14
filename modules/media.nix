@@ -8,13 +8,13 @@ let
       libgbm
       openssl
 
-      xorg.libX11
-      xorg.libXcomposite
-      xorg.libXdamage
-      xorg.libXext
-      xorg.libXfixes
-      xorg.libXrandr
-      xorg.libxcb
+      libX11
+      libXcomposite
+      libXdamage
+      libXext
+      libXfixes
+      libXrandr
+      libxcb
 
       gtk3
       glib
@@ -67,6 +67,7 @@ in
     #vlc but good
     mpv
     # music and podcast
+    obs-studio
     cmus
     # comic conversion to kobo format
     pkgs-stable.kcc

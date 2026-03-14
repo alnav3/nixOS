@@ -88,20 +88,20 @@
   # docker setup - optimized for power saving
   virtualisation.docker = {
     enable = true;
-    
+
     # Power-optimized Docker settings
     daemon.settings = {
       # Reduce logging overhead
       "log-driver" = "none";
       "log-level" = "warn";
-      
+
       # Reduce storage driver overhead
       "storage-driver" = "overlay2";
       "storage-opts" = [
         "overlay2.override_kernel_check=true"
         "overlay2.size=50G"
       ];
-      
+
       # Resource limits to prevent runaway containers
       "default-ulimits" = {
         "memlock" = {
@@ -130,13 +130,18 @@
       })
     .fwupd;
 
+  # syncthing config
+  services.syncthing = {
+      enable = true;
+      openDefaultPorts = true; # TCP/UDP 22000 UDP 21027
+      user = "alnav";
+      dataDir = "/home/alnav";
+      configDir = "/home/alnav/.config";
+  };
 
   virtualisation.spiceUSBRedirection.enable = true;
-  # enable the tailscale service
-  services.tailscale.enable = true;
   # for complete guide on fingerprint workaround, read https://github.com/NixOS/nixos-hardware/tree/master/framework/13-inch/7040-amd#suspendwake-workaround
   environment.systemPackages = with pkgs; [
-    tailscale
     docker-compose
     fw-ectool
     distrobox

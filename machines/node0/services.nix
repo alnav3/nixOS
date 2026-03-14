@@ -1,5 +1,5 @@
 {
-    import = [
+    imports = [
         ./../../containers/containers.nix
     ];
     myContainers = {
@@ -33,28 +33,7 @@
     # test
     networking.nat.enable = true;
     networking.nat.internalInterfaces = [ "ve-*" ];
-    networking.nat.externalInterface = "wlp1s0"; # modify once we actually use this
-    containers.n8n = {
-        autoStart = true;
-        privateNetwork = true;
-        hostAddress = "172.69.0.1";   # Host side of the veth pair
-        localAddress = "172.69.0.2";  # Container's IP
-        config = { config, pkgs, ... }:
-        {
-            services.n8n = {
-                enable = true;
-                openFirewall = true;  # Allows port access from the host if necessary
-                settings = {
-                    listen_address = "0.0.0.0";
-                    port = 5678;
-                    generic_timezone = "Europe/Berlin";
-                    protocol = "http";
-                };
-
-                environment = { N8N_SECURE_COOKIE = "false"; N8N_HOST = "n8n"; };
-            };
-        };
-    };
+    #networking.nat.externalInterface = "wlp1s0"; # modify once we actually use this
 
 
 }

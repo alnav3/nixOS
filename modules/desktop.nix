@@ -8,6 +8,10 @@
   programs.hyprland = {
     enable = true;
     xwayland.enable = true;
+    # set the flake package
+    package = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
+    # make sure to also set the portal package, so that they are in sync
+    portalPackage = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.xdg-desktop-portal-hyprland;
   };
 
   environment.sessionVariables = {
@@ -36,7 +40,8 @@
     (with pkgs; [
       hyprpanel
       hyprsunset
-     gnome-multi-writer
+      gnome-multi-writer
+      inputs.hyprdynamicmonitors.packages.${system}.default
       # terminal needed for hyprland
       kitty
       # File manager and icon theme needed for gtk apps
@@ -80,7 +85,7 @@
         ${systemd}/bin/loginctl terminate-user "alnav"
       '')
       inputs.zen-browser.packages."${pkgs.stdenv.hostPlatform.system}".default
-      firefox
+      ungoogled-chromium
     ])
     ++ (with pkgs-stable; [
     ]);

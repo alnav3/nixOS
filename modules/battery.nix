@@ -19,6 +19,7 @@ in {
     "processor.max_cstate=5"     # Allow deeper CPU sleep states
     "intel_idle.max_cstate=5"    # Allow deeper idle states
     "ahci.mobile_lpm_policy=3"   # SATA link power management
+    "resume=/dev/nvme0n1p3"      # Resume device for hibernation
   ];
 
   # TLP - Advanced power management
@@ -111,11 +112,17 @@ in {
     script = ''
       if [ $(cat /sys/class/power_supply/ACAD/online) -eq 0 ]; then
         curtime=$(date +%s)
-        echo "$curtime $1" >> /tmp/autohibernate.log
+        echo "$(date): Battery power detected, scheduling hibernation in $HIBERNATE_SECONDS seconds" >> /tmp/autohibernate.log
+        
+        # Ensure lock file directory exists
+        mkdir -p $(dirname $HIBERNATE_LOCK)
         echo "$curtime" > $HIBERNATE_LOCK
+        
+        # Schedule wake-up for hibernation check
         ${pkgs.util-linux}/bin/rtcwake -m no -s $HIBERNATE_SECONDS
+        echo "$(date): RTC wake scheduled for hibernation check" >> /tmp/autohibernate.log
       else
-        echo "System is on AC power, skipping wake-up scheduling for hibernation." >> /tmp/autohibernate.log
+        echo "$(date): System is on AC power, skipping wake-up scheduling for hibernation." >> /tmp/autohibernate.log
       fi
     '';
     serviceConfig.Type = "simple";
@@ -128,12 +135,26 @@ in {
     environment = hibernateEnvironment;
     script = ''
       curtime=$(date +%s)
-      sustime=$(cat $HIBERNATE_LOCK)
-      rm $HIBERNATE_LOCK
-      if [ $(($curtime - $sustime)) -ge $HIBERNATE_SECONDS ] ; then
-        systemctl hibernate
+      
+      # Check if hibernate lock file exists
+      if [ -f "$HIBERNATE_LOCK" ]; then
+        sustime=$(cat $HIBERNATE_LOCK)
+        rm $HIBERNATE_LOCK
+        
+        # Check if enough time has passed for hibernation
+        if [ $(($curtime - $sustime)) -ge $HIBERNATE_SECONDS ] ; then
+          echo "$(date): Hibernate timeout reached, hibernating system" >> /tmp/autohibernate.log
+          systemctl hibernate
+        else
+          echo "$(date): Not enough time passed, scheduling another check" >> /tmp/autohibernate.log
+          ${pkgs.util-linux}/bin/rtcwake -m no -s 1
+        fi
       else
-        ${pkgs.util-linux}/bin/rtcwake -m no -s 1
+        echo "$(date): No hibernate lock file found, system likely woke up due to user activity" >> /tmp/autohibernate.log
+        # Check if we're still on battery and no active connections
+        if [ $(cat /sys/class/power_supply/ACAD/online) -eq 0 ]; then
+          echo "$(date): Still on battery power, but no auto-hibernate scheduled" >> /tmp/autohibernate.log
+        fi
       fi
     '';
     serviceConfig.Type = "simple";
