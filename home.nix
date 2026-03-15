@@ -2,160 +2,47 @@
   pkgs,
   inputs,
   ...
-}: let
-  additionalJDKs = with pkgs; [
-    temurin-bin-11
-    temurin-bin-17
-    temurin-bin-21
+}: {
+  imports = [
+    ./home-modules
   ];
 
-  # Convertir archivos estáticos en una lista explícita
-  staticFiles = [
-    {
-      name = ".local/share/zsh/zsh-autosuggestions";
-      value.source = "${pkgs.zsh-autosuggestions}/share/zsh/zsh-autosuggestions";
-    }
-    {
-      name = ".local/share/zsh/zsh-syntax-highlighting";
-      value.source = "${pkgs.zsh-syntax-highlighting}/share/zsh/site-functions";
-    }
-    {
-      name = ".local/share/zsh/nix-zsh-completions";
-      value.source = "${pkgs.nix-zsh-completions}/share/zsh/plugins/nix";
-    }
-    {
-      name = ".zshrc";
-      value.source = "${inputs.dotfiles}/zsh/.zshrc";
-    }
-    {
-      name = ".config/oh-my-posh/zen.toml";
-      value.source = "${inputs.dotfiles}/zsh/.config/oh-my-posh/zen.toml";
-    }
-    {
-      name = ".config/kanshi/config.test";
-      value.source = "${inputs.dotfiles}/kanshi/config";
-    }
+  # Configuration that matches the original home.nix exactly
+  myhome = {
+    # Basic user configuration
+    user.enable = true;
 
-    # nvim config
-    {
-      name = ".config/nvim.bak";
-      value.source = "${inputs.dotfiles}/nvim";
-    }
+    # Git configuration
+    git.enable = true;
 
-    # desktop config
-    {
-      name = ".config/hypr.bak";
-      value.source = "${inputs.dotfiles}/hypr";
-    }
-    {
-      name = "wallpapers";
-      value.source = "${inputs.dotfiles}/wallpapers";
-    }
+    # JDK management
+    jdk.enable = true;
 
-    # tmux config
-    {
-      name = ".tmux.conf.bak";
-      value.source = "${inputs.dotfiles}/tmux/.tmux.conf";
-    }
-    {
-      name = "/.tmux/plugins/tpm";
-      value.source = "${inputs.tpm}";
-    }
-    # lua-language-server for mason and nvim
-    {
-      name = ".local/share/nvim/mason/bin/lua-language-server";
-      value.source = "${pkgs.lua-language-server}/bin/lua-language-server";
-    }
-    {
-      name = ".local/share/llm-ls/llm-ls";
-      value.source = "${pkgs.llm-ls}/bin/llm-ls";
-    }
+    # Kitty terminal
+    kitty.enable = true;
 
-  ];
+    # Hyprpanel desktop panel
+    hyprpanel.enable = true;
 
-  # Generar configuraciones dinámicas para JDKs con nombres únicos
-  generatedFiles =
-    builtins.map (jdk: {
-      name = ".jdks/${jdk.version}";
-      value.source = jdk;
-    })
-    additionalJDKs;
-in {
-  programs.home-manager.enable = true;
-  programs.hyprpanel = {
-    # Configure and theme almost all options from the GUI.
-    # See 'https://hyprpanel.com/configuration/settings.html'.
-    # Default: <same as gui>
-    settings = {
-
-      # Configure bar layouts for monitors.
-      # See 'https://hyprpanel.com/configuration/panel.html'.
-      # Default: null
-      layout = {
-        bar.layouts = {
-          "0" = {
-            left = [ "dashboard" "workspaces" ];
-            middle = [ "media" ];
-            right = [ "volume" "systray" "notifications" ];
-          };
-        };
-      };
-
-      bar.launcher.autoDetectIcon = true;
-      bar.workspaces.show_icons = true;
-
-      menus.clock = {
-        time = {
-          military = true;
-          hideSeconds = true;
-        };
-        weather.unit = "metric";
-      };
-
-      menus.dashboard.directories.enabled = false;
-      menus.dashboard.stats.enable_gpu = true;
-
-      theme.bar.transparent = true;
-
-      theme.font = {
-        name = "CaskaydiaCove NF";
-        size = "16px";
-      };
+    # Neovim with Java support
+    neovim = {
+      enable = true;
+      javaSupport = true;
     };
-  };
-  programs.kitty = {
-    enable = true;
-    settings = {
-      map = ''
-        ctrl+shift+u no_op
-      '';
-      confirm_os_window_close = 0;
-    };
-  };
-  home.username = "alnav";
-  home.homeDirectory = "/home/alnav";
-  home.stateVersion = "26.05";
 
-  # Git config
-  programs.git = {
-    enable = true;
-    settings = {
-      credential.helper = "${
-        pkgs.git.override {withLibsecret = true;}
-      }/bin/git-credential-libsecret";
-      push = {autoSetupRemote = true;};
+    # Dotfiles and static file management
+    dotfiles = {
+      enable = true;
+      zsh.enable = true;
+      nvim.enable = true;
+      hypr.enable = true;
+      tmux.enable = true;
+      wallpapers.enable = true;
+      kanshi.enable = true;
+      llmLs.enable = true;
     };
   };
 
-  # neovim config
-  programs.neovim.plugins = [
-    pkgs.vimPlugins.nvim-java
-    pkgs.vimPlugins.nvim-java-dap
-  ];
-
-  # opensnitch running in the background
-  #services.opensnitch-ui.enable = true;
-
-  # Concatenar las listas de archivos estáticos y generados
-  home.file = builtins.listToAttrs (staticFiles ++ generatedFiles);
+  # Commented out service - preserve as comment for reference
+  # services.opensnitch-ui.enable = true;
 }

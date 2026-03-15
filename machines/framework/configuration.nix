@@ -1,57 +1,282 @@
 {
   inputs,
   pkgs,
+  config,
   ...
 }: {
   imports = [
-    ./../../modules/android.nix
-    ./../../modules/backup.nix
-    ./../../modules/battery.nix
-    ./../../modules/bluetooth.nix
-    ./../../modules/3dprint.nix
-    ./../../modules/desktop.nix
-    ./../../modules/development.nix
-    ./../../modules/freelance.nix
-    ./../../modules/login.nix
-    ./../../modules/media.nix
-    ./../../modules/networking.nix
-    ./../../modules/ricing.nix
-    ./../../modules/gaming.nix
-    ./../../modules/work.nix
-    ./../../modules/misc.nix
-    #./../../modules/llms.nix
-    #./../../modules/virtualisation.nix
-    # testing bootloader stuff
-    ./../../modules/bootloader.nix
-    ./../../modules/ip-monitor.nix
-
+    ./../../modules  # Import all modules
   ];
 
+  # =============================================================================
+  # Module Configuration - All options explicitly enabled
+  # =============================================================================
 
+  mymodules = {
+    # Base system configuration
+    base = {
+      enable = true;
+      # Framework uses default base settings
+      user.extraGroups = [
+        "uinput"
+        "wheel"
+        "docker"
+        "audio"
+        "input"
+        "disk"
+        "libvirtd"
+        "qemu-libvirtd"
+        "libvirt"
+        "dialout"
+      ];
+      vm.enable = true; # Enable VM variant configuration
+    };
 
-  # using latest linux kernel for network issues
+    # Desktop environment
+    desktop = {
+      enable = true;
+      login = {
+        enable = true;
+        autoLogin = true;
+        user = "alnav";
+        session = "hyprland";
+      };
+      hyprland = {
+        enable = true;
+        xwayland = true;
+      };
+      stylix = {
+        enable = true;
+        theme = "catppuccin-mocha";
+        polarity = "dark";
+      };
+      apps = {
+        browser = true;
+        fileManager = true;
+        notifications = true;
+        screenshots = true;
+        screenRecording = true;
+        localsend = true;
+      };
+    };
+
+    # Development environment
+    development = {
+      enable = true;
+      shell = {
+        zsh.enable = true;
+        direnv = true;
+      };
+      languages = {
+        go = true;
+        nodejs = true;
+        java = true;
+        nix = true;
+      };
+      infrastructure = {
+        kubernetes = true;
+        dockerTools = true;
+        databases = true;
+      };
+      editor = {
+        neovim = true;
+        tmux = true;
+        opencode = true;
+      };
+      git = {
+        enable = true;
+        gitlab = true;
+      };
+      work.enable = true;
+      freelance.enable = true;
+    };
+
+    # Gaming
+    gaming = {
+      enable = true;
+      steam = {
+        enable = true;
+        gamescope = true;
+      };
+      launchers = {
+        lutris = true;
+        heroic = true;
+        bottles = true;
+      };
+      emulation = {
+        enable = true;
+        switch = true;
+      };
+      performance = {
+        mangohud = true;
+        protonTools = true;
+      };
+      android = {
+        enable = true;
+        tools = true;
+      };
+    };
+
+    # Media
+    media = {
+      enable = true;
+      video = {
+        mpv = true;
+        obs = true;
+      };
+      audio = {
+        playerctl = true;
+        finamp = true;
+      };
+      youtube = {
+        ytdlp = true;
+        grayjay = true;
+      };
+      documents = {
+        zathura = true;
+        thorium = true;
+        kcc = true;
+      };
+      portable.rockbox = true;
+      soulseek = true;
+      casting.fcast = true;
+      streaming.streamrip = true;
+      social = {
+        enable = true;
+        discord = true;
+        signal = true;
+        telegram = true;
+      };
+      mail.thunderbird = true;
+      backup.pikaBackup = true;
+      printing3d.enable = true;
+    };
+
+    # Networking
+    networking = {
+      enable = true;
+      networkManager = true;
+      dns = {
+        resolved = true;
+        dnssec = true;
+      };
+      ipv6.enable = false;
+      firewall = {
+        enable = true;
+        allowedTCPPorts = [ 80 4200 1338 2300 46899 46898 ];
+        allowedUDPPorts = [ 46898 ];
+      };
+      diagnostics = true;
+    };
+
+    # Virtualisation
+    virtualisation = {
+      enable = true;
+      docker = {
+        enable = true;
+        batteryOptimized = true;
+        autoPrune = {
+          enable = true;
+          schedule = "daily";
+          aggressive = true;
+        };
+      };
+      spice = true;
+      distrobox = true;
+      qemu = true;
+    };
+
+    # Hardware
+    hardware = {
+      bluetooth = {
+        enable = true;
+        powerManagement = {
+          enable = true;
+          disableOnBattery = true;
+        };
+        audio = {
+          mprisProxy = true;
+          highQuality = true;
+        };
+        ui = {
+          blueman = true;
+          rofiBluetooth = true;
+        };
+      };
+
+      battery = {
+        enable = true;
+        tlp.enable = true;
+        tlp.chargeThresholds = {
+          start = 40;
+          stop = 80;
+        };
+        suspend = {
+          hibernateAfterSuspend = true;
+          lidAction = "suspend-then-hibernate";
+          lidActionOnAC = "lock";
+        };
+        resumeDevice = "/dev/nvme0n1p3";
+        amd.pstate = true;
+      };
+
+      graphics = {
+        enable = true;
+        gpu = "amd";
+        enable32Bit = true;
+        amd = {
+          initrdEnable = true;
+          vulkan = true;
+        };
+      };
+    };
+
+    # Services
+    services = {
+      syncthing = {
+        enable = true;
+        user = "alnav";
+        openFirewall = true;
+      };
+
+      ipMonitor.enable = true;
+    };
+  };
+
+  # =============================================================================
+  # Framework-specific Configuration
+  # =============================================================================
+
+  # Latest kernel for network compatibility
   boot.kernelPackages = pkgs.linuxPackages_latest;
-# required to rebuild duet
+
+  # ARM emulation for Duet
   boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
 
-
+  # AMD GPU early loading
   hardware.amdgpu.initrd.enable = true;
 
   nixpkgs.config.allowUnfree = true;
 
-  # Updating firmware | after first start we need to run fwupdmgr update
+  # Firmware updates
   services.fwupd.enable = true;
+  services.fwupd.package =
+    (import (builtins.fetchTarball {
+        url = "https://github.com/NixOS/nixpkgs/archive/bb2009ca185d97813e75736c2b8d1d8bb81bde05.tar.gz";
+        sha256 = "sha256:003qcrsq5g5lggfrpq31gcvj82lb065xvr7bpfa8ddsw8x4dnysk";
+      }) {
+        system = pkgs.stdenv.hostPlatform.system;
+      })
+    .fwupd;
 
-  # Suspend/wake workaround, keyboard will not wake up the system
+  # Framework hardware settings
   hardware.framework.amd-7040.preventWakeOnAC = true;
   hardware.framework.enableKmod = true;
-  # Networking configuration
-  networking = {
-    networkmanager.enable = true;
-    useDHCP = false;
-  };
 
+  # Networking (useDHCP disabled, networkmanager handles it)
+  networking.useDHCP = false;
 
+  # Kanata key remapping
   services.kanata = {
     enable = true;
     keyboards = {
@@ -79,77 +304,57 @@
     };
   };
 
-  networking.firewall = {
-    enable = true;
-    allowedTCPPorts = [80 4200 1338 2300 46899 46898];
-    allowedUDPPorts = [ 46898 ];
-  };
+  # Extra framework-specific packages (things not in modules)
+  environment.systemPackages = with pkgs; [
+    fw-ectool           # Framework laptop control
+    gum                 # Shell scripting helper
+    sshuttle            # SSH-based VPN
+    transmission_4-gtk  # Torrent client
+  ];
 
-  # docker setup - optimized for power saving
-  virtualisation.docker = {
-    enable = true;
+  # =============================================================================
+  # Home Manager Configuration
+  # =============================================================================
 
-    # Power-optimized Docker settings
-    daemon.settings = {
-      # Reduce logging overhead
-      "log-driver" = "none";
-      "log-level" = "warn";
+  home-manager = {
+    useUserPackages = true;
+    users.alnav = { pkgs, inputs, ... }: {
+      imports = [ ../../home-modules ];
 
-      # Reduce storage driver overhead
-      "storage-driver" = "overlay2";
-      "storage-opts" = [
-        "overlay2.override_kernel_check=true"
-        "overlay2.size=50G"
-      ];
+      myhome = {
+        user.enable = true;
 
-      # Resource limits to prevent runaway containers
-      "default-ulimits" = {
-        "memlock" = {
-          "Hard" = 67108864;
-          "Name" = "memlock";
-          "Soft" = 67108864;
+        git.enable = true;
+        jdk.enable = true;
+
+        kitty.enable = true;
+
+        hyprpanel.enable = true;
+
+        neovim = {
+          enable = true;
+          javaSupport = true;
+        };
+
+        dotfiles = {
+          enable = true;
+          zsh.enable = true;
+          nvim.enable = true;
+          hypr.enable = true;
+          tmux.enable = true;
+          wallpapers.enable = true;
+          kanshi.enable = true;
+          llmLs.enable = true; # Enable LLM language server for development
         };
       };
-    };
 
-    autoPrune = {
-      enable = true;
-      dates = "daily";
-      flags = [ "--all" "--force" "--volumes" ];
+      # Enable services that framework can use
+      services.opensnitch-ui.enable = true;
+    };
+    backupFileExtension = "bak";
+    extraSpecialArgs = {
+      inherit inputs;
+      meta = { name = "framework"; system = "x86_64-linux"; useHomeManager = true; isWsl = false; };
     };
   };
-  users.users.alnav.extraGroups = [ "docker" ];
-
-  # fingerprint reader support
-  services.fwupd.package =
-    (import (builtins.fetchTarball {
-        url = "https://github.com/NixOS/nixpkgs/archive/bb2009ca185d97813e75736c2b8d1d8bb81bde05.tar.gz";
-        sha256 = "sha256:003qcrsq5g5lggfrpq31gcvj82lb065xvr7bpfa8ddsw8x4dnysk";
-      }) {
-        system = pkgs.stdenv.hostPlatform.system;
-      })
-    .fwupd;
-
-  # syncthing config
-  services.syncthing = {
-      enable = true;
-      openDefaultPorts = true; # TCP/UDP 22000 UDP 21027
-      user = "alnav";
-      dataDir = "/home/alnav";
-      configDir = "/home/alnav/.config";
-  };
-
-  virtualisation.spiceUSBRedirection.enable = true;
-  # for complete guide on fingerprint workaround, read https://github.com/NixOS/nixos-hardware/tree/master/framework/13-inch/7040-amd#suspendwake-workaround
-  environment.systemPackages = with pkgs; [
-    docker-compose
-    fw-ectool
-    distrobox
-    spice-gtk
-    universal-android-debloater
-    spice-vdagent
-    # Network troubleshooting tools
-    ethtool
-    iw
-  ];
 }

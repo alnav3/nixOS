@@ -98,13 +98,13 @@
       {
         name = "mjolnir";
         system = "x86_64-linux";
-        useHomeManager = false;
+        useHomeManager = true;
         isWsl = false;
       }
       {
         name = "node0";
         system = "x86_64-linux";
-        useHomeManager = false;
+        useHomeManager = true;
         isWsl = false;
       }
       {
@@ -152,22 +152,71 @@
               ]
             )
             ++ (
-              if host.useHomeManager
+              if host.useHomeManager && (host.name == "mjolnir" || host.name == "node0")
               then [
                 home-manager.nixosModules.home-manager
                 {
                   home-manager.useUserPackages = true;
-                  home-manager.users.alnav = import (
-                    if host.isWsl
-                    then ./machines/wsl/home.nix
-                    else ./home.nix
-                  );
+                  home-manager.users.alnav = 
+                    if host.name == "mjolnir" then
+                      # Mjolnir - Gaming HTPC with desktop interface
+                      { pkgs, inputs, ... }: {
+                        imports = [ ./home-modules ];
+                        myhome = {
+                          user.enable = true;
+                          git.enable = true;
+                          jdk.enable = true;
+                          kitty.enable = true;
+                          hyprpanel.enable = true;
+                          neovim = { enable = true; javaSupport = false; };
+                          dotfiles = {
+                            enable = true;
+                            zsh.enable = true;
+                            nvim.enable = true;
+                            hypr.enable = true;
+                            tmux.enable = true;
+                            wallpapers.enable = true;
+                            kanshi.enable = true;
+                            llmLs.enable = false;
+                          };
+                        };
+                      }
+                    else if host.name == "node0" then
+                      # Node0 - Home server (minimal, no GUI)
+                      { pkgs, inputs, ... }: {
+                        imports = [ ./home-modules ];
+                        myhome = {
+                          user.enable = true;
+                          git.enable = true;
+                          jdk.enable = false;
+                          kitty.enable = false;
+                          hyprpanel.enable = false;
+                          neovim = { enable = true; javaSupport = false; };
+                          dotfiles = {
+                            enable = true;
+                            zsh.enable = true;
+                            nvim.enable = true;
+                            tmux.enable = true;
+                            hypr.enable = false;
+                            wallpapers.enable = false;
+                            kanshi.enable = false;
+                            llmLs.enable = false;
+                          };
+                        };
+                      }
+                    else
+                      import ./home.nix;
                   home-manager.backupFileExtension = "bak";
                   home-manager.extraSpecialArgs = {
                     inherit inputs;
                     meta = host;
                   };
                 }
+              ]
+              else if host.useHomeManager
+              then [
+                home-manager.nixosModules.home-manager
+                # Framework and WSL now define their home-manager config in their configuration.nix
               ]
               else []
             )

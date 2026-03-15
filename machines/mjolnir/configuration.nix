@@ -1,34 +1,184 @@
 { config, lib, pkgs, inputs, ... }: {
   imports = [
-    # SteamOS module brings in gaming optimizations.
-    ./../../modules/android.nix
-    ./../../modules/bluetooth.nix
-    ./../../modules/desktop.nix
-    ./../../modules/loginSteam.nix
-    ./../../modules/tvMedia.nix
-    ./../../modules/networking.nix
-    ./../../modules/ricing.nix
-    ./../../modules/steamos.nix
-    ./../../modules/launch-game.nix
+    ./../../modules  # Import all modules
   ];
-  networking.networkmanager.enable = true;
-  # enable system-bridge port
-  networking.firewall.allowedTCPPorts = [ 9170 8088 8384 ];
 
-  # required to rebuild duet
-  boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
-  virtualisation.docker = {
-    enable = true;
+  # =============================================================================
+  # Module Configuration - All options explicitly enabled
+  # =============================================================================
 
-    autoPrune = {
+  mymodules = {
+    # Base system configuration
+    base = {
       enable = true;
-      dates = "weekly";
+      ssh = {
+        enable = true;
+        x11Forwarding = true;  # Enable X11 forwarding for remote gaming
+      };
+    };
+
+    # Desktop environment (SteamOS-style with Hyprland fallback)
+    desktop = {
+      enable = true;
+      login = {
+        enable = true;
+        autoLogin = true;
+        user = "alnav";
+        session = "gamescope";  # Start in SteamOS mode
+      };
+      hyprland = {
+        enable = true;
+        xwayland = true;
+      };
+      stylix = {
+        enable = true;
+        theme = "catppuccin-mocha";
+        polarity = "dark";
+      };
+      apps = {
+        notifications = true;
+        fileManager = true;
+      };
+    };
+
+    # Development
+    development = {
+      enable = true;
+      shell = {
+        zsh.enable = true;
+        direnv = true;
+      };
+      editor = {
+        neovim = true;
+        tmux = true;
+      };
+      git.enable = true;
+    };
+
+    # Gaming (SteamOS mode)
+    gaming = {
+      enable = true;
+      steam = {
+        enable = true;
+        gamescope = true;
+      };
+      steamos = {
+        enable = true;
+        autoStart = true;
+        user = "alnav";
+        deckyLoader = true;
+        frameGeneration = true;
+      };
+      launchers = {
+        lutris = true;
+        heroic = true;
+        bottles = true;
+      };
+      emulation = {
+        enable = true;
+        retroDeck = true;
+      };
+      performance = {
+        mangohud = true;
+        protonTools = true;
+      };
+      android.enable = true;
+      tvMedia.kodi = true;
+    };
+
+    # Networking
+    networking = {
+      enable = true;
+      networkManager = true;
+      firewall = {
+        enable = true;
+        allowedTCPPorts = [ 9170 8088 8384 ];  # system-bridge, syncthing
+      };
+    };
+
+    # Virtualisation
+    virtualisation = {
+      enable = true;
+      docker = {
+        enable = true;
+        autoPrune = {
+          enable = true;
+          schedule = "weekly";
+        };
+      };
+    };
+
+    # Hardware
+    hardware = {
+      bluetooth = {
+        enable = true;
+        audio = {
+          mprisProxy = true;
+          highQuality = true;
+        };
+        ui.blueman = true;
+      };
+
+      graphics = {
+        enable = true;
+        gpu = "amd";
+        enable32Bit = true;
+        amd = {
+          initrdEnable = true;
+          vulkan = true;
+        };
+      };
+    };
+
+    # Services
+    services = {
+      syncthing = {
+        enable = true;
+        user = "alnav";
+        openFirewall = true;
+      };
+
+      ollama = {
+        enable = true;
+        host = "[::]";
+        openFirewall = true;
+        amdGfxVersion = "11.0.0";
+      };
     };
   };
-  users.users.alnav.extraGroups = [ "docker" ];
 
+  # =============================================================================
+  # Jovian/SteamOS Configuration (Jovian module is loaded via flake.nix)
+  # =============================================================================
 
-  # Use a recent kernel version (6.11) which can improve hardware performance.
+  jovian = {
+    steam = {
+      autoStart = true;
+      enable = true;
+      user = "alnav";
+      desktopSession = "hyprland";
+    };
+    steamos = {
+      useSteamOSConfig = true;
+    };
+    decky-loader = {
+      enable = true;
+      extraPackages = with pkgs; [ wget p7zip ];
+    };
+    hardware.has.amd.gpu = true;
+  };
+
+  # Frame generation (LSFG-VK)
+  services.lsfg-vk = {
+    enable = true;
+    ui.enable = true;
+  };
+
+  # =============================================================================
+  # Mjolnir-specific Configuration
+  # =============================================================================
+
+  # Boot configuration (silent boot)
   boot = {
     kernelPackages = pkgs.linuxPackages_latest;
     consoleLogLevel = 0;
@@ -47,33 +197,19 @@
       systemd-boot.enable = true;
     };
     kernelModules = [ "kvm-amd" ];
+    binfmt.emulatedSystems = [ "aarch64-linux" ];
   };
-  networking.interfaces.enp13s0.wakeOnLan = {
-    enable = true;
-  };
-  # ssh config
-  services.openssh = {
-    enable = true;
-    settings = {
-      X11Forwarding = true;
-    };
-  };
+
+  # Wake on LAN
+  networking.interfaces.enp13s0.wakeOnLan.enable = true;
+
+  # SSH configuration handled by base module
   programs.ssh.setXAuthLocation = true;
 
-  # Activate ollama for llm usage
-  services.ollama ={
-      enable = true;
-      host = "[::]";
-      openFirewall = true;
-      environmentVariables = {
-        HSA_OVERRIDE_GFX_VERSION = "11.0.0";
-      };
-  };
-
-  # Ensure AMD GPU firmware is loaded early in the initramfs.
+  # AMD GPU
   hardware.amdgpu.initrd.enable = true;
 
-  # Allow unfree Steam-related packages.
+  # Unfree packages
   nixpkgs.config.allowUnfreePredicate = pkg:
     builtins.elem (lib.getName pkg) [
       "steam"
@@ -84,42 +220,7 @@
       "steamdeck-hw-theme"
       "n8n"
     ];
-  environment.systemPackages = with pkgs; [
-    tmux
-    neovim
-    steamtinkerlaunch
-    inputs.system-bridge-nix.packages.x86_64-linux.system-bridge
-  ];
 
-  # syncthing config
-  services.syncthing = {
-      enable = true;
-      openDefaultPorts = true; # TCP/UDP 22000 UDP 21027
-      user = "alnav";
-      dataDir = "/home/alnav";
-      configDir = "/home/alnav/.config";
-  };
-
-  #systemd.services.usb-wake = {
-  #    description = "Enables wakeup for all usb devices";
-  #    wantedBy = [ "multi-user.target" ];
-  #    serviceConfig = {
-  #        Type = "oneshot";
-  #        ExecStart = [ "/etc/usb-wake.sh" ];
-  #    };
-  #};
-
-  #environment.etc."usb-wake.sh".source = pkgs.writeScript "enable-wakeup" ''
-  #  #!${pkgs.runtimeShell}
-
-  #  # Disable all USB wakeups first
-  #  for device in /sys/bus/usb/devices/usb[0-9]*; do
-  #    echo disabled > "$device/power/wakeup"
-  #  done
-
-  #  # Only enable USB3 and USB5 (used by 8BitDo)
-  #  echo enabled > /sys/bus/usb/devices/usb3/power/wakeup
-  #  echo enabled > /sys/bus/usb/devices/usb5/power/wakeup
-  #'';
+  # Extra mjolnir-specific packages
+  environment.systemPackages = [ inputs.system-bridge-nix.packages.x86_64-linux.system-bridge ];
 }
-
