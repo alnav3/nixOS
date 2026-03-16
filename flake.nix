@@ -55,7 +55,7 @@
     nix-flatpak.url = "github:gmodena/nix-flatpak/?ref=v0.6.0";
 
     dotfiles = {
-      url = "github:alnav3/dotfiles";
+      url = "git+file:./dotfiles";
       flake = false;
     };
 
@@ -157,7 +157,7 @@
                 home-manager.nixosModules.home-manager
                 {
                   home-manager.useUserPackages = true;
-                  home-manager.users.alnav = 
+                  home-manager.users.alnav =
                     if host.name == "mjolnir" then
                       # Mjolnir - Gaming HTPC with desktop interface
                       { pkgs, inputs, ... }: {
@@ -174,9 +174,11 @@
                             zsh.enable = true;
                             nvim.enable = true;
                             hypr.enable = true;
+                            hyprdynamicmonitors.enable = false;
+                            hyprpanel.enable = true;
+                            rofi.enable = true;
                             tmux.enable = true;
                             wallpapers.enable = true;
-                            kanshi.enable = true;
                             llmLs.enable = false;
                           };
                         };
@@ -199,7 +201,7 @@
                             tmux.enable = true;
                             hypr.enable = false;
                             wallpapers.enable = false;
-                            kanshi.enable = false;
+                            hyprdynamicmonitors.enable = false;
                             llmLs.enable = false;
                           };
                         };

@@ -156,7 +156,7 @@ in
         bc
         imv
         # Screen management
-        kanshi
+        hyprdynamicmonitors
         shikane
         # Password manager
         proton-pass
@@ -244,17 +244,17 @@ in
             desktop = 10;
             popups = 10;
           };
-          
+
           monospace = {
             package = pkgs.nerd-fonts.fira-code;
             name = "FiraCode Nerd Font Mono";
           };
-          
+
           sansSerif = {
             package = pkgs.dejavu_fonts;
             name = "DejaVu Sans";
           };
-          
+
           serif = {
             package = pkgs.dejavu_fonts;
             name = "DejaVu Serif";

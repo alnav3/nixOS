@@ -341,9 +341,11 @@
           zsh.enable = true;
           nvim.enable = true;
           hypr.enable = true;
+          hyprdynamicmonitors.enable = true;
+          hyprpanel.enable = true;
+          rofi.enable = true;
           tmux.enable = true;
           wallpapers.enable = true;
-          kanshi.enable = true;
           llmLs.enable = true; # Enable LLM language server for development
         };
       };

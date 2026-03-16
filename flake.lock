@@ -126,15 +126,14 @@
       "locked": {
         "lastModified": 1773488282,
         "narHash": "sha256-Bb4CNvlURLSMLmOfkIIdj85D28FvP3D0+CcfiebSndI=",
-        "owner": "alnav3",
-        "repo": "dotfiles",
         "rev": "9443e61b902250adc52278605c73323aaef77deb",
-        "type": "github"
+        "revCount": 123,
+        "type": "git",
+        "url": "file:./dotfiles"
       },
       "original": {
-        "owner": "alnav3",
-        "repo": "dotfiles",
-        "type": "github"
+        "type": "git",
+        "url": "file:./dotfiles"
       }
     },
     "firefox-gnome-theme": {

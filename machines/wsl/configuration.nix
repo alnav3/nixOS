@@ -57,7 +57,7 @@
       };
       infrastructure = {
         kubernetes = true;
-        dockerTools = false;
+        dockerTools = true;
         databases = false;
       };
       editor = {
@@ -101,7 +101,19 @@
 
     media.enable = false;
 
-    virtualisation.enable = false;
+    # Virtualisation
+    virtualisation = {
+      enable = true;
+      docker = {
+        enable = true;
+        batteryOptimized = true;
+        autoPrune = {
+          enable = true;
+          schedule = "daily";
+          aggressive = true;
+        };
+      };
+    };
 
     hardware = {
       bluetooth.enable = false;
@@ -121,12 +133,12 @@
   # =============================================================================
   # Home Manager Configuration
   # =============================================================================
-  
+
   home-manager = {
     useUserPackages = true;
     users.alnav = { pkgs, inputs, ... }: {
       imports = [ ../../home-modules ];
-      
+
       # WSL home configuration - Basic development setup
       myhome = {
         # Basic user configuration
@@ -158,7 +170,6 @@
           hypr.enable = false;  # No Hyprland in WSL
           tmux.enable = true;
           wallpapers.enable = false;  # No wallpapers in WSL
-          kanshi.enable = false;  # No monitor management in WSL
           llmLs.enable = true;  # Useful for development
         };
       };

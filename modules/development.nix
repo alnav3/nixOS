@@ -248,6 +248,7 @@ in
       environment.systemPackages = with pkgs; [
         temurin-bin-21
         maven
+        gradle
       ];
     })
 
@@ -319,9 +320,7 @@ in
     # Work tools
     (lib.mkIf cfg.work.enable {
       environment.systemPackages = with pkgs; [
-        openfortivpn
         teams-for-linux
-        platformio-core
       ];
     })
 

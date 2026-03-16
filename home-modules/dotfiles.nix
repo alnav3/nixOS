@@ -29,6 +29,24 @@ in {
       description = "Enable hyprland configuration";
     };
 
+    hyprdynamicmonitors.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "Enable hyprdynamicmonitors configuration";
+    };
+
+    hyprpanel.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "Enable hyprpanel configuration";
+    };
+
+    rofi.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "Enable rofi configuration";
+    };
+
     tmux.enable = lib.mkOption {
       type = lib.types.bool;
       default = false;
@@ -39,12 +57,6 @@ in {
       type = lib.types.bool;
       default = false;
       description = "Enable wallpapers";
-    };
-
-    kanshi.enable = lib.mkOption {
-      type = lib.types.bool;
-      default = false;
-      description = "Enable kanshi configuration";
     };
 
     llmLs.enable = lib.mkOption {
@@ -72,17 +84,36 @@ in {
 
     # Nvim configuration
     nvimFiles = lib.optionals cfg.nvim.enable [
-      (hlib.helpers.mkDotfile inputs "nvim" ".config/nvim.bak")
+      (hlib.helpers.mkDotfile inputs "nvim" ".config/nvim")
     ];
 
-    # Hyprland configuration
     hyprFiles = lib.optionals cfg.hypr.enable [
-      (hlib.helpers.mkDotfile inputs "hypr" ".config/hypr.bak")
+      (hlib.helpers.mkDotfile inputs "hypr/scripts"        ".config/hypr/scripts")
+      (hlib.helpers.mkDotfile inputs "hypr/hypridle.conf"  ".config/hypr/hypridle.conf")
+      (hlib.helpers.mkDotfile inputs "hypr/hyprland.conf"  ".config/hypr/hyprland.conf")
+      (hlib.helpers.mkDotfile inputs "hypr/hyprlock.conf"  ".config/hypr/hyprlock.conf")
+      (hlib.helpers.mkDotfile inputs "hypr/hyprpaper.conf" ".config/hypr/hyprpaper.conf")
+      (hlib.helpers.mkDotfile inputs "hypr/mocha.conf"     ".config/hypr/mocha.conf")
+    ];
+
+    # hyprdynamicmonitors configuration
+    hyprdynamicmonitorsFiles = lib.optionals cfg.hyprdynamicmonitors.enable [
+      (hlib.helpers.mkDotfile inputs "hyprdynamicmonitors" ".config/hyprdynamicmonitors")
+    ];
+
+    # hyprdynamicmonitors configuration
+    hyprpanelFiles = lib.optionals cfg.hyprpanel.enable [
+      (hlib.helpers.mkDotfile inputs "hyprpanel" ".config/hyprpanel")
+    ];
+
+    # rofi configuration
+    rofiFiles = lib.optionals cfg.rofi.enable [
+      (hlib.helpers.mkDotfile inputs "rofi" ".config/rofi")
     ];
 
     # Tmux configuration
     tmuxFiles = lib.optionals cfg.tmux.enable [
-      (hlib.helpers.mkDotfile inputs "tmux/.tmux.conf" ".tmux.conf.bak")
+      (hlib.helpers.mkDotfile inputs "tmux/.tmux.conf" ".tmux.conf")
       {
         name = "/.tmux/plugins/tpm";
         value.source = "${inputs.tpm}";
@@ -94,11 +125,6 @@ in {
       (hlib.helpers.mkDotfile inputs "wallpapers" "wallpapers")
     ];
 
-    # Kanshi configuration
-    kanshiFiles = lib.optionals cfg.kanshi.enable [
-      (hlib.helpers.mkDotfile inputs "kanshi/config" ".config/kanshi/config.test")
-    ];
-
     # LLM Language Server
     llmLsFiles = lib.optionals cfg.llmLs.enable [
       {
@@ -108,14 +134,16 @@ in {
     ];
 
     # All static files combined
-    allFiles = 
+    allFiles =
       zshFiles
-      ++ nvimFiles 
-      ++ hyprFiles 
-      ++ tmuxFiles 
-      ++ wallpaperFiles 
-      ++ kanshiFiles 
-      ++ llmLsFiles 
+      ++ nvimFiles
+      ++ hyprFiles
+      ++ hyprdynamicmonitorsFiles
+      ++ hyprpanelFiles
+      ++ rofiFiles
+      ++ tmuxFiles
+      ++ wallpaperFiles
+      ++ llmLsFiles
       ++ cfg.extraFiles;
 
   in {

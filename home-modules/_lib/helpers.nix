@@ -14,7 +14,7 @@
   # Helper to create dotfile mappings
   mkDotfile = inputs: relativePath: targetPath: {
     name = targetPath;
-    value.source = "${inputs.dotfiles}/${relativePath}";
+    value.source = ../../dotfiles/${relativePath};
   };
 
   # Helper to create zsh plugin files
