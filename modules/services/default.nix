@@ -6,5 +6,6 @@
     ./ollama.nix
     ./jellyfin.nix
     ./ip-monitor.nix
+    ./sunshine.nix
   ];
 }

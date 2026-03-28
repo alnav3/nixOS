@@ -78,7 +78,7 @@ in {
       (hlib.helpers.mkZshPlugin pkgs "zsh-autosuggestions" ".local/share/zsh/zsh-autosuggestions" "share/zsh/zsh-autosuggestions")
       (hlib.helpers.mkZshPlugin pkgs "zsh-syntax-highlighting" ".local/share/zsh/zsh-syntax-highlighting" "share/zsh/site-functions")
       (hlib.helpers.mkZshPlugin pkgs "nix-zsh-completions" ".local/share/zsh/nix-zsh-completions" "share/zsh/plugins/nix")
-      (hlib.helpers.mkDotfile inputs "zsh/.zshrc" ".zshrc")
+      (hlib.helpers.mkDotfile inputs "zsh/.zshrc" ".zshrc.bak")
       (hlib.helpers.mkDotfile inputs "zsh/.config/oh-my-posh/zen.toml" ".config/oh-my-posh/zen.toml")
     ];
 

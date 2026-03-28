@@ -228,6 +228,7 @@ in
     (lib.mkIf cfg.languages.go {
       environment.systemPackages = with pkgs; [
         go
+        gcc # required for debug
         air
         goose
         sqlc

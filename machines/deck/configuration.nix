@@ -4,16 +4,38 @@
   ];
 
   # =============================================================================
-  # Module Configuration - All options explicitly enabled
+  # Module Configuration - Based on mjolnir, adapted for Steam Deck
   # =============================================================================
-
+  fileSystems."/mnt/MicroSDCard" = {
+    device = "/dev/mmcblk0p1";
+    # If you have this partition mounted, then you can check its type by using
+    # df -T | grep /dev/${device}
+    fsType = "ext4";
+    options = [
+      # System will boot up if you don't have sd card inserted
+      "nofail"
+      # After booting up systemd will try mounting the sd card
+      "x-systemd.automount"
+    ];
+  };
   mymodules = {
+    media = {
+        enable = true;
+        video = {
+            mpv = true;
+            obs = true;
+        };
+        audio = {
+            playerctl = true;
+            finamp = true;
+        };
+    };
     # Base system configuration
     base = {
       enable = true;
       ssh = {
         enable = true;
-        x11Forwarding = true;  # Enable X11 forwarding for remote gaming
+        x11Forwarding = true;
       };
     };
 
@@ -67,7 +89,6 @@
         autoStart = true;
         user = "alnav";
         deckyLoader = true;
-        frameGeneration = true;
       };
       launchers = {
         lutris = true;
@@ -83,7 +104,6 @@
         protonTools = true;
       };
       android.enable = true;
-      tvMedia.kodi = true;
     };
 
     # Networking
@@ -92,19 +112,7 @@
       networkManager = true;
       firewall = {
         enable = true;
-        allowedTCPPorts = [ 9170 8088 8384 ];  # system-bridge, syncthing
-      };
-    };
-
-    # Virtualisation
-    virtualisation = {
-      enable = true;
-      docker = {
-        enable = true;
-        autoPrune = {
-          enable = true;
-          schedule = "weekly";
-        };
+        allowedTCPPorts = [ 8384 ];  # syncthing
       };
     };
 
@@ -137,82 +145,67 @@
         user = "alnav";
         openFirewall = true;
       };
-
-      ollama = {
-        enable = true;
-        host = "[::]";
-        openFirewall = true;
-        amdGfxVersion = "11.0.0";
-      };
-
-      sunshine = {
-        enable = true;
-        openFirewall = true;
-      };
     };
   };
 
   # =============================================================================
-  # Jovian/SteamOS Configuration (Jovian module is loaded via flake.nix)
+  # Jovian/SteamOS + Steam Deck Configuration (Jovian module loaded via flake.nix)
   # =============================================================================
 
   jovian = {
+    # Steam Deck hardware support (enables all sub-options by default:
+    # controller udev rules, kernel cmdline, initrd modules, fwupd BIOS updates,
+    # kernel patches, OS fan control, perf control udev rules, sound support,
+    # vendor drivers, xorg rotation)
+    devices.steamdeck = {
+        enable = true;
+        enableControllerUdevRules = true;      # controller out of "lizard" mode
+        enableDefaultCmdlineConfig = true;     # deck-specific kernel cmdline flags
+        enableDefaultStage1Modules = true;     # essential kernel modules in initrd
+        enableFwupdBiosUpdates = true;         # BIOS updates via fwupd
+        enableKernelPatches = true;            # Valve kernel patches
+        enableOsFanControl = true;             # OS-controlled fan curve
+        enablePerfControlUdevRules = true;     # TDP, GPU clock, brightness control
+        enableSoundSupport = true;             # audio support
+        enableVendorDrivers = true;            # Valve's Mesa branches
+        enableXorgRotation = true;             # correct display rotation in X11
+        autoUpdate = false;                    # auto-update BIOS/controller firmware (careful)
+        enableGyroDsuService = false;          # gyro DSU for Cemu/Cemuhook (optional)
+    };
+
+    # Steam Deck UI
     steam = {
       autoStart = true;
       enable = true;
       user = "alnav";
       desktopSession = "hyprland";
     };
+
+    # SteamOS configuration
     steamos = {
       useSteamOSConfig = true;
     };
+
+    # Decky Loader (same as mjolnir)
     decky-loader = {
       enable = true;
       extraPackages = with pkgs; [ wget p7zip ];
     };
+
+    # AMD GPU support
     hardware.has.amd.gpu = true;
   };
 
-  # Frame generation (LSFG-VK)
-  services.lsfg-vk = {
-    enable = true;
-    ui.enable = true;
-  };
-
   # =============================================================================
-  # Mjolnir-specific Configuration
+  # Deck-specific Configuration
   # =============================================================================
 
-  # Boot configuration (silent boot)
-  boot = {
-    kernelPackages = pkgs.linuxPackages_latest;
-    consoleLogLevel = 0;
-    initrd.verbose = false;
-    kernelParams = [
-      "quiet"
-      "splash"
-      "rd.systemd.show_status=false"
-      "rd.udev.log_level=3"
-      "udev.log_priority=3"
-      "boot.shell_on_fail"
-    ];
-    loader = {
-      timeout = 0;
-      efi.canTouchEfiVariables = true;
-      systemd-boot.enable = true;
-    };
-    kernelModules = [ "kvm-amd" ];
-    binfmt.emulatedSystems = [ "aarch64-linux" ];
-  };
 
-  # Wake on LAN
-  networking.interfaces.enp13s0.wakeOnLan.enable = true;
+  # Eden Nintendo Switch emulator
+  programs.eden.enable = true;
 
-  # SSH configuration handled by base module
+  # SSH configuration
   programs.ssh.setXAuthLocation = true;
-
-  # AMD GPU
-  hardware.amdgpu.initrd.enable = true;
 
   # Unfree packages
   nixpkgs.config.allowUnfreePredicate = pkg:
@@ -223,12 +216,7 @@
       "steam-jupiter-original"
       "steam-jupiter-unwrapped"
       "steamdeck-hw-theme"
-      "n8n"
     ];
+  environment.systemPackages = with pkgs; [ ludusavi moonlight-qt ];
 
-  # Eden Nintendo Switch emulator
-  programs.eden.enable = true;
-
-  # Extra mjolnir-specific packages
-  environment.systemPackages = [ inputs.system-bridge-nix.packages.x86_64-linux.system-bridge ];
 }

@@ -161,7 +161,6 @@ in
         # Password manager
         proton-pass
         # Topbar
-        hyprpanel
         hyprsunset
         # Exit helper
         (pkgs.writeShellScriptBin "hyprexit" ''
@@ -230,7 +229,7 @@ in
       stylix = {
         enable = true;
         base16Scheme = "${pkgs-stable.base16-schemes}/share/themes/${cfg.stylix.theme}.yaml";
-        image = "${inputs.dotfiles}/wallpapers/comfy-home.png";
+        image = ../dotfiles/wallpapers/comfy-home.png;
         polarity = cfg.stylix.polarity;
         cursor = {
           package = pkgs.rose-pine-cursor;

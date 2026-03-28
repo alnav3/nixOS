@@ -301,7 +301,7 @@ in
     # Social apps
     (lib.mkIf cfg.social.enable (lib.mkMerge [
       (lib.mkIf cfg.social.discord {
-        environment.systemPackages = [ pkgs-stable.vesktop ];
+        environment.systemPackages = [ pkgs.vesktop ];
       })
       (lib.mkIf cfg.social.signal {
         environment.systemPackages = [ pkgs.signal-desktop ];

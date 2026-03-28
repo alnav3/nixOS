@@ -7,9 +7,11 @@
   # You can change versions, add patches, set compilation flags, anything really.
   # https://nixos.wiki/wiki/Overlays
   modifications = final: prev: {
-    # example = prev.example.overrideAttrs (oldAttrs: rec {
-    # ...
-    # });
+    niri = prev.niri.overrideAttrs (oldAttrs: {
+      patches = (oldAttrs.patches or []) ++ [
+        ./no-decorations.patch
+      ];
+    });
   };
 
 }

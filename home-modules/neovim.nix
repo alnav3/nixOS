@@ -26,13 +26,6 @@ in {
 
   config = lib.mkIf cfg.enable {
     programs.neovim = {
-      plugins = lib.mkMerge [
-        (lib.mkIf cfg.javaSupport [
-          pkgs.vimPlugins.nvim-java
-          pkgs.vimPlugins.nvim-java-dap
-        ])
-        cfg.extraPlugins
-      ];
     };
   };
 }

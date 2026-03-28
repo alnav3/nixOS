@@ -139,7 +139,12 @@ in
     # Base networking
     {
       networking = {
-        networkmanager.enable = cfg.networkManager;
+        networkmanager = {
+          enable = cfg.networkManager;
+          plugins = lib.mkIf cfg.networkManager (with pkgs; [
+            networkmanager-openvpn
+          ]);
+        };
         enableIPv6 = cfg.ipv6.enable;
         hosts = cfg.hosts;
       };
@@ -169,7 +174,8 @@ in
       services.resolved = {
         enable = true;
         settings.Resolve = {
-          DNSSEC = if cfg.dns.dnssec then "true" else "false";
+          DNS = cfg.dns.fallbackDns;
+          DNSSEC = "false";
           Domains = [ "~." ];
           FallbackDNS = cfg.dns.fallbackDns;
         };

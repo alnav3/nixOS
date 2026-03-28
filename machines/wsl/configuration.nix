@@ -16,15 +16,28 @@
   # WSL settings
   wsl.enable = true;
   wsl.defaultUser = "alnav";
+  wsl.wslConf.network.generateResolvConf = false;
 
   # Network hostname
   networking.hostName = "wsl";
+
+  # Configure nameservers since WSL resolv.conf generation is disabled
+  networking.nameservers = [
+    "192.168.2.250"    # VPN DNS (primary)
+    "213.229.189.8"    # VPN DNS (secondary)
+    "9.9.9.9"          # Quad9 (fallback)
+  ];
 
   # =============================================================================
   # Module Configuration - WSL appropriate modules only
   # =============================================================================
 
   mymodules = {
+    desktop = {
+      apps = {
+        browser = true;
+      };
+    };
     base = {
       enable = true;
       ssh = {
@@ -54,6 +67,7 @@
         java = true;
         nix = true;
         python = true;
+        nodejs = true;
       };
       infrastructure = {
         kubernetes = true;
@@ -70,11 +84,13 @@
         gitlab = true;
       };
       work.enable = true;
-      freelance.enable = true;
+      freelance.enable = false;
 
       # Extra packages from development.nix that don't fit in categories
       extraPackages = with pkgs; [
         android-tools
+        firefox
+        openconnect
         cargo
         gcc
         lsof
@@ -87,7 +103,7 @@
       enable = true;
       networkManager = false;  # WSL handles networking
       dns = {
-        resolved = false;   # WSL uses Windows DNS
+        resolved = false;   # Keep simple for VPN compatibility
         dnssec = false;
       };
       ipv6.enable = false;
@@ -128,6 +144,7 @@
   # Additional WSL-specific system packages
   environment.systemPackages = with pkgs; [
     xauth
+    inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.niri
   ];
 
   # =============================================================================

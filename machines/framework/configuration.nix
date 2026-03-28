@@ -71,6 +71,7 @@
         go = true;
         nodejs = true;
         java = true;
+        python = true;
         nix = true;
       };
       infrastructure = {
@@ -112,7 +113,7 @@
         protonTools = true;
       };
       android = {
-        enable = true;
+        enable = false;
         tools = true;
       };
     };
@@ -144,8 +145,8 @@
       social = {
         enable = true;
         discord = true;
-        signal = true;
-        telegram = true;
+        signal = false;
+        telegram = false;
       };
       mail.thunderbird = true;
       backup.pikaBackup = true;
@@ -163,7 +164,7 @@
       ipv6.enable = false;
       firewall = {
         enable = true;
-        allowedTCPPorts = [ 80 4200 1338 2300 46899 46898 ];
+        allowedTCPPorts = [ 80 4200 1338 2300 46899 46898 4096 ];
         allowedUDPPorts = [ 46898 ];
       };
       diagnostics = true;
@@ -211,8 +212,15 @@
           start = 40;
           stop = 80;
         };
+        # CPU frequency limits for AMD 7840U (max boost 5.1GHz)
+        # Capping battery to 2GHz prevents unnecessary power-hungry boost clocks
+        tlp.cpuFreq = {
+          minOnAC = 1000000;   # 1.0 GHz
+          maxOnAC = 4972000;   # ~5.0 GHz (near max boost)
+          minOnBAT = 400000;   # 0.4 GHz (lowest P-state)
+          maxOnBAT = 2000000;  # 2.0 GHz (efficient range)
+        };
         suspend = {
-          hibernateAfterSuspend = true;
           lidAction = "suspend-then-hibernate";
           lidActionOnAC = "lock";
         };
@@ -310,6 +318,30 @@
     gum                 # Shell scripting helper
     sshuttle            # SSH-based VPN
     transmission_4-gtk  # Torrent client
+    openvpn
+  ];
+
+  # =============================================================================
+  # TrueNAS Backup - Minimal receive-only user
+  # =============================================================================
+
+  # Locked-down user: no groups, no sudo, no password, SSH key-only
+  users.users.truenas_backup = {
+    isNormalUser = true;
+    home = "/home/truenas_backup";
+    createHome = true;
+    group = "truenas_backup";
+    shell = pkgs.bashInteractive;
+    hashedPassword = "!"; # Password login disabled
+    openssh.authorizedKeys.keys = [
+        "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCb+DSHytoCdLPprOjDv1uj78R2J8KDHPMmfpBdHFRhtGykW/qy3h3RC/P1X7kOubPWmlSgAgq3bRDyyTI1m6nqgbLx4LUuDU1lgmcjNOy99FLO5p26AnHiAuCbhvXaIuxYAiDDhOS/gIpuaFfjKEd5u2SefK5uJGtGlS9Um5VV2YG67/sEAlkJmvqg7db1anKMfaeyiCtTT7/HPHy92WpHuV5yeA9PMx29LDF3khLHQURHOAUvj+YNYqr3K6wMxoKc6Aln6/eLJDmuSQ7PMCIB35kpvJGyNKmgcgImwVaic2e5ugOx4ptsqF+L0+9pm+gmDu0rzH+eih1NDNisUrqUxV3GfDBgM32PZnnbtjIoJ4Y+3shdXM1o7AvwKZU8+njUuedON4wNagWVzZOYNt+xKUiKe+IsvFfqGOjpKCObee8hOX3bJOWCYow6WL3sNejAyPtX96E/1iRxMDfvRxSwa1vkAD7KfolQBGZXqEirAiKV8fy5cD1uBFFTMs77zFk= root@truenas"
+    ];
+  };
+  users.groups.truenas_backup = {};
+
+  # Pre-create backup target directory with correct ownership
+  systemd.tmpfiles.rules = [
+    "d /home/truenas_backup/backups 0700 truenas_backup truenas_backup -"
   ];
 
   # =============================================================================

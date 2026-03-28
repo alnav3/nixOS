@@ -54,11 +54,6 @@
     # flatpak packages installed declaratively
     nix-flatpak.url = "github:gmodena/nix-flatpak/?ref=v0.6.0";
 
-    dotfiles = {
-      url = "git+file:./dotfiles";
-      flake = false;
-    };
-
     tpm = {
       url = "github:tmux-plugins/tpm";
       flake = false;
@@ -71,9 +66,24 @@
 
     hyprdynamicmonitors.url = "github:fiffeek/hyprdynamicmonitors";
 
+    # Eden Nintendo Switch emulator
+    eden-nix = {
+      url = "github:Daaboulex/eden-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # NixOS-WSL
     nixos-wsl.url = "github:nix-community/NixOS-WSL/main";
     nixos-wsl.inputs.nixpkgs.follows = "nixpkgs";
+
+    # Noctalia shell
+    noctalia = {
+      url = "github:noctalia-dev/noctalia-shell";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # Nix wrapper modules for portable wrapped programs
+    wrapper-modules.url = "github:BirdeeHub/nix-wrapper-modules";
   };
 
   outputs = {
@@ -81,7 +91,6 @@
     nixpkgs,
     disko,
     home-manager,
-    dotfiles,
     nixos-hardware,
     sops-nix,
     nix-flatpak,
@@ -102,6 +111,12 @@
         isWsl = false;
       }
       {
+        name = "deck";
+        system = "x86_64-linux";
+        useHomeManager = true;
+        isWsl = false;
+      }
+      {
         name = "node0";
         system = "x86_64-linux";
         useHomeManager = true;
@@ -115,12 +130,25 @@
       }
     ];
   in {
+    # Wrapped packages (nix run github:alnav3/nixos#niri)
+    packages.x86_64-linux = let
+      pkgs = nixpkgs.legacyPackages.x86_64-linux;
+      lib = pkgs.lib;
+      myNoctalia = import ./wrapped/noctalia.nix { inherit pkgs inputs; };
+    in {
+      noctalia = myNoctalia;
+      niri = import ./wrapped/niri.nix {
+        inherit pkgs inputs lib;
+        noctaliaPackage = myNoctalia;
+      };
+    };
+
     nixosConfigurations = builtins.listToAttrs (map (host: {
         name = host.name;
         value = nixpkgs.lib.nixosSystem {
           specialArgs = {
+            inherit inputs;
             overlays = import ./overlays;
-            inherit inputs dotfiles;
             meta = {hostname = host.name;};
             pkgs-stable = inputs.nixpkgs-stable.legacyPackages.${host.system};
             postingPkg = inputs.posting-flake.packages.${host.system}.posting;
@@ -149,17 +177,18 @@
 
                 # General
                 ./configuration.nix
+                ./noctalia.nix
               ]
             )
             ++ (
-              if host.useHomeManager && (host.name == "mjolnir" || host.name == "node0")
+              if host.useHomeManager && (host.name == "mjolnir" || host.name == "deck" || host.name == "node0")
               then [
                 home-manager.nixosModules.home-manager
                 {
                   home-manager.useUserPackages = true;
                   home-manager.users.alnav =
-                    if host.name == "mjolnir" then
-                      # Mjolnir - Gaming HTPC with desktop interface
+                    if host.name == "mjolnir" || host.name == "deck" then
+                      # Mjolnir / Deck - Gaming with desktop interface
                       { pkgs, inputs, ... }: {
                         imports = [ ./home-modules ];
                         myhome = {
@@ -223,7 +252,7 @@
               else []
             )
             ++ (
-              if host.name == "framework" || host.name == "mjolnir"
+              if host.name == "framework" || host.name == "mjolnir" || host.name == "deck"
               then [
                 # Deck SteamOS experience
                 inputs.jovian-nixos.nixosModules.jovian
@@ -231,9 +260,27 @@
 
                 # Ricing the nixOS way
                 inputs.stylix.nixosModules.stylix
+              ]
+              else []
+            )
+            ++ (
+              if host.name == "framework"
+              then [
                 nixos-hardware.nixosModules.framework-13-7040-amd
-                #inputs.system-bridge-nix.nixosModules.x86_64-linux
+              ]
+              else []
+            )
+            ++ (
+              if host.name == "mjolnir"
+              then [
                 inputs.system-bridge-nix.nixosModules.${host.system}.default
+              ]
+              else []
+            )
+            ++ (
+              if host.name == "deck" || host.name == "mjolnir"
+              then [
+                inputs.eden-nix.nixosModules.default
               ]
               else []
             );

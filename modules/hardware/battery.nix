@@ -2,9 +2,12 @@
 
 let
   cfg = config.mymodules.hardware.battery;
-  hibernateEnvironment = {
-    HIBERNATE_SECONDS = toString cfg.hibernateAfterSeconds;
-    HIBERNATE_LOCK = "/var/run/autohibernate.lock";
+  # Build CPU frequency TLP attrs, only including non-null values
+  cpuFreqAttrs = lib.filterAttrs (_: v: v != null) {
+    CPU_SCALING_MIN_FREQ_ON_AC = cfg.tlp.cpuFreq.minOnAC;
+    CPU_SCALING_MAX_FREQ_ON_AC = cfg.tlp.cpuFreq.maxOnAC;
+    CPU_SCALING_MIN_FREQ_ON_BAT = cfg.tlp.cpuFreq.minOnBAT;
+    CPU_SCALING_MAX_FREQ_ON_BAT = cfg.tlp.cpuFreq.maxOnBAT;
   };
 in
 {
@@ -33,19 +36,40 @@ in
           description = "Stop charging when battery reaches this percentage";
         };
       };
+
+      # CPU frequency limits (critical for battery life)
+      cpuFreq = {
+        minOnAC = lib.mkOption {
+          type = lib.types.nullOr lib.types.int;
+          default = null;
+          description = "Minimum CPU frequency on AC power (kHz). null = TLP auto";
+        };
+
+        maxOnAC = lib.mkOption {
+          type = lib.types.nullOr lib.types.int;
+          default = null;
+          description = "Maximum CPU frequency on AC power (kHz). null = TLP auto";
+        };
+
+        minOnBAT = lib.mkOption {
+          type = lib.types.nullOr lib.types.int;
+          default = null;
+          description = "Minimum CPU frequency on battery (kHz). null = TLP auto";
+        };
+
+        maxOnBAT = lib.mkOption {
+          type = lib.types.nullOr lib.types.int;
+          default = null;
+          description = "Maximum CPU frequency on battery (kHz). Strongly recommended to set this.";
+        };
+      };
     };
 
     # Suspend/hibernate behavior
     suspend = {
-      hibernateAfterSuspend = lib.mkOption {
-        type = lib.types.bool;
-        default = false;
-        description = "Hibernate after suspend timeout (battery only)";
-      };
-
       lidAction = lib.mkOption {
         type = lib.types.enum [ "suspend" "hibernate" "suspend-then-hibernate" "lock" "ignore" ];
-        default = "suspend";
+        default = "lock";
         description = "Action when lid is closed";
       };
 
@@ -59,7 +83,7 @@ in
     hibernateAfterSeconds = lib.mkOption {
       type = lib.types.int;
       default = 1800;
-      description = "Seconds after suspend to hibernate (30 min default)";
+      description = "Seconds after suspend to hibernate (used by systemd suspend-then-hibernate)";
     };
 
     # Resume device for hibernation
@@ -98,11 +122,14 @@ in
       # Disable power-profiles-daemon (conflicts with TLP)
       services.power-profiles-daemon.enable = false;
 
-      # Thermald for thermal management
-      services.thermald.enable = true;
+      # Thermald is Intel-only; skip on AMD where it wastes resources
+      services.thermald.enable = !cfg.amd.pstate;
 
-      # D-Bus broker (more efficient)
+      # D-Bus broker (more efficient than dbus-daemon)
       services.dbus.implementation = "broker";
+
+      # Suspend-then-hibernate: hibernate after this delay
+      systemd.sleep.settings.Sleep.HibernateDelaySec = "${toString cfg.hibernateAfterSeconds}s";
 
       environment.systemPackages = with pkgs; [
         brightnessctl
@@ -110,10 +137,12 @@ in
         powertop
         hypridle
         acpi
-      ] ++ (lib.optionals cfg.tlp.enable [ tlp ]) ++ cfg.extraPackages;
+      ] ++ (lib.optionals cfg.tlp.enable [ tlp ])
+        ++ (lib.optionals cfg.amd.pstate [ ryzenadj ])
+        ++ cfg.extraPackages;
     }
 
-    # Kernel parameters
+    # Kernel parameters for power saving
     {
       boot.kernelParams = [
         "pcie_aspm=force"
@@ -122,21 +151,30 @@ in
         "processor.max_cstate=5"
         "intel_idle.max_cstate=5"
         "ahci.mobile_lpm_policy=3"
+        # Disable watchdog timers - they cause periodic CPU wakeups that waste power
+        "nowatchdog"
+        "nmi_watchdog=0"
+        # Audio codec power save (auto-suspend after 1 second of silence)
+        "snd_hda_intel.power_save=1"
       ] ++ (lib.optionals cfg.amd.pstate [ "amd_pstate=active" ])
         ++ (lib.optionals (cfg.resumeDevice != null) [ "resume=${cfg.resumeDevice}" ]);
 
-      # Kernel sysctl optimizations
+      # Kernel sysctl optimizations for power
       boot.kernel.sysctl = {
+        # Delay writes to disk - reduces disk wakeups on battery
         "vm.dirty_background_ratio" = 15;
         "vm.dirty_ratio" = 40;
         "vm.dirty_expire_centisecs" = 3000;
         "vm.dirty_writeback_centisecs" = 1500;
         "vm.laptop_mode" = 5;
         "vm.swappiness" = 10;
+        # Better network queue discipline
         "net.core.default_qdisc" = "fq_codel";
+        # Disable NMI watchdog via sysctl as well (belt and suspenders with kernel param)
+        "kernel.nmi_watchdog" = 0;
       };
 
-      # Disable PC speaker
+      # Disable unnecessary kernel modules
       boot.blacklistedKernelModules = [ "pcspkr" "snd_pcsp" ];
     }
 
@@ -145,11 +183,15 @@ in
       services.tlp = {
         enable = true;
         settings = {
-          # CPU scaling
+          # CPU scaling governor
           CPU_SCALING_GOVERNOR_ON_AC = "performance";
           CPU_SCALING_GOVERNOR_ON_BAT = "powersave";
+
+          # CPU energy performance preference
           CPU_ENERGY_PERF_POLICY_ON_AC = "performance";
           CPU_ENERGY_PERF_POLICY_ON_BAT = "power";
+
+          # CPU boost control - disable on battery to prevent power spikes
           CPU_BOOST_ON_AC = 1;
           CPU_BOOST_ON_BAT = 0;
           CPU_HWP_DYN_BOOST_ON_AC = 1;
@@ -159,7 +201,7 @@ in
           PLATFORM_PROFILE_ON_AC = "performance";
           PLATFORM_PROFILE_ON_BAT = "low-power";
 
-          # GPU power management
+          # GPU power management (Radeon/AMDGPU)
           RADEON_DPM_STATE_ON_AC = "performance";
           RADEON_DPM_STATE_ON_BAT = "battery";
           RADEON_POWER_PROFILE_ON_AC = "high";
@@ -172,32 +214,40 @@ in
 
           # USB autosuspend
           USB_AUTOSUSPEND = 1;
+          USB_BLACKLIST_BTUSB = 0;
+          USB_BLACKLIST_PHONE = 0;
           USB_BLACKLIST_PRINTER = 1;
+          USB_BLACKLIST_WWAN = 0;
 
-          # Battery thresholds
+          # Battery charge thresholds
           START_CHARGE_THRESH_BAT0 = cfg.tlp.chargeThresholds.start;
           STOP_CHARGE_THRESH_BAT0 = cfg.tlp.chargeThresholds.stop;
 
-          # Runtime PM
+          # Runtime power management for PCI/USB devices
           RUNTIME_PM_ON_AC = "on";
           RUNTIME_PM_ON_BAT = "auto";
           RUNTIME_PM_ALL = 1;
 
-          # SATA/PCIe power management
+          # SATA link power management
           SATA_LINKPWR_ON_AC = "med_power_with_dipm";
           SATA_LINKPWR_ON_BAT = "min_power";
+
+          # PCIe ASPM
           PCIE_ASPM_ON_AC = "performance";
           PCIE_ASPM_ON_BAT = "powersupersave";
 
-          # Disk parameters
+          # Disk power management
           DISK_APM_LEVEL_ON_AC = "254 254";
           DISK_APM_LEVEL_ON_BAT = "128 128";
+          DISK_SPINDOWN_TIMEOUT_ON_AC = "0 0";
+          DISK_SPINDOWN_TIMEOUT_ON_BAT = "24 24";
+          DISK_IOSCHED = "mq-deadline mq-deadline";
 
           # Audio power saving
           SOUND_POWER_SAVE_ON_AC = 0;
           SOUND_POWER_SAVE_ON_BAT = 1;
           SOUND_POWER_SAVE_CONTROLLER = "Y";
-        };
+        } // cpuFreqAttrs;
       };
     })
 
@@ -210,6 +260,30 @@ in
         IdleAction = "suspend-then-hibernate";
         IdleActionSec = "20min";
       };
+
+      # Listen for systemd-logind Lock signal and call noctalia-shell to lock
+      systemd.user.services.logind-lock-handler = {
+        description = "Lock screen via noctalia-shell on systemd Lock signal";
+        wantedBy = [ "default.target" ];
+        serviceConfig = {
+          Type = "simple";
+          Restart = "on-failure";
+          RestartSec = 3;
+          ExecStart = pkgs.writeShellScript "logind-lock-handler" ''
+            session_path="/org/freedesktop/login1/session/''${XDG_SESSION_ID:-auto}"
+            ${pkgs.glib}/bin/gdbus monitor --system \
+              --dest org.freedesktop.login1 \
+              --object-path "$session_path" |
+            while read -r line; do
+              case "$line" in
+                *"Lock ()"*)
+                  noctalia-shell ipc call lockScreen lock
+                  ;;
+              esac
+            done
+          '';
+        };
+      };
     }
 
     # Udev rules for power saving
@@ -219,6 +293,7 @@ in
         ACTION=="add", SUBSYSTEM=="pci", ATTR{power/control}="auto"
         ACTION=="add", SUBSYSTEM=="sound", ATTR{power/control}="auto"
         ACTION=="add", KERNEL=="card*", SUBSYSTEM=="drm", DRIVERS=="amdgpu", ATTR{device/power/control}="auto"
+        ACTION=="add", SUBSYSTEM=="net", KERNEL=="wl*", RUN+="${pkgs.iw}/bin/iw dev %k set power_save on"
       '';
     }
 
@@ -230,57 +305,26 @@ in
       };
     }
 
-    # Hibernate after suspend
-    (lib.mkIf cfg.suspend.hibernateAfterSuspend {
-      systemd.services."awake-after-suspend-for-a-time" = {
-        description = "Sets up suspend-then-hibernate on battery";
-        wantedBy = [ "suspend.target" ];
-        before = [ "systemd-suspend.service" ];
-        environment = hibernateEnvironment;
-        script = ''
-          if [ -f /sys/class/power_supply/ACAD/online ] && [ $(cat /sys/class/power_supply/ACAD/online) -eq 0 ]; then
-            curtime=$(date +%s)
-            mkdir -p $(dirname $HIBERNATE_LOCK)
-            echo "$curtime" > $HIBERNATE_LOCK
-            ${pkgs.util-linux}/bin/rtcwake -m no -s $HIBERNATE_SECONDS
-          fi
-        '';
-        serviceConfig.Type = "simple";
-      };
-
-      systemd.services."hibernate-after-recovery" = {
-        description = "Hibernates after suspend recovery timeout";
-        wantedBy = [ "suspend.target" ];
-        after = [ "systemd-suspend.service" ];
-        environment = hibernateEnvironment;
-        script = ''
-          curtime=$(date +%s)
-          if [ -f "$HIBERNATE_LOCK" ]; then
-            sustime=$(cat $HIBERNATE_LOCK)
-            rm $HIBERNATE_LOCK
-            if [ $(($curtime - $sustime)) -ge $HIBERNATE_SECONDS ]; then
-              systemctl hibernate
-            else
-              ${pkgs.util-linux}/bin/rtcwake -m no -s 1
-            fi
-          fi
-        '';
-        serviceConfig.Type = "simple";
-      };
-    })
-
-    # Systemd timer optimizations
+    # Systemd service & timer optimizations
     {
+      # Weekly TRIM with jitter to avoid thundering herd
       systemd.timers.fstrim.timerConfig = {
         OnCalendar = "weekly";
         RandomizedDelaySec = "1h";
       };
 
+      # Limit journal size to reduce disk writes
       systemd.services.systemd-journald.serviceConfig = {
         SystemMaxUse = "50M";
         RuntimeMaxUse = "50M";
         SystemMaxFileSize = "10M";
       };
+
+      # Reduce NTP polling frequency to save power (fewer network wakeups)
+      services.timesyncd.extraConfig = ''
+        PollIntervalMinSec=300
+        PollIntervalMaxSec=3600
+      '';
     }
   ]);
 }

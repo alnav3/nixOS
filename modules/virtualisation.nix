@@ -136,6 +136,13 @@ in
 
       # Battery-optimized settings (for laptops)
       (lib.mkIf cfg.docker.batteryOptimized {
+        # Don't start Docker on boot - it activates via socket when you run a docker command.
+        # This prevents containers with restart policies from auto-launching and draining battery.
+        virtualisation.docker.enableOnBoot = false;
+
+        # Disable live-restore to reduce daemon overhead
+        virtualisation.docker.liveRestore = false;
+
         virtualisation.docker.daemon.settings = {
           # Reduce logging overhead
           "log-driver" = "none";
