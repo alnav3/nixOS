@@ -153,6 +153,7 @@ in
         nfs-utils
         ethtool
         iw
+        wireguard-tools
       ] ++ cfg.extraPackages;
     }
 

@@ -29,6 +29,7 @@ in
         default = [
           "wheel"
           "audio"
+          "networkmanager"
           "input"
           "disk"
           "dialout"
@@ -183,7 +184,7 @@ in
       };
     };
 
-    # VM configuration  
+    # VM configuration
     vm = {
       enable = lib.mkOption {
         type = lib.types.bool;

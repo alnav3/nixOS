@@ -28,6 +28,7 @@
         "qemu-libvirtd"
         "libvirt"
         "dialout"
+        "networkmanager"
       ];
       vm.enable = true; # Enable VM variant configuration
     };
@@ -312,6 +313,7 @@
     };
   };
 
+  networking.firewall.checkReversePath = false;
   # Extra framework-specific packages (things not in modules)
   environment.systemPackages = with pkgs; [
     fw-ectool           # Framework laptop control
@@ -319,6 +321,7 @@
     sshuttle            # SSH-based VPN
     transmission_4-gtk  # Torrent client
     openvpn
+    protonvpn-gui
   ];
 
   # =============================================================================

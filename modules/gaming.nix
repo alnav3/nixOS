@@ -283,7 +283,7 @@ in
         wlr-randr
         cage
         iptables-nftables-compat
-        xorg.xdpyinfo
+        xdpyinfo
       ];
 
       # Steam Deck controller key layout for Waydroid
