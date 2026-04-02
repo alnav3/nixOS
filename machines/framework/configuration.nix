@@ -322,6 +322,7 @@
     transmission_4-gtk  # Torrent client
     openvpn
     protonvpn-gui
+    (pkgs.callPackage ../../pkgs/rebuild-remote.nix {})  # Custom rebuild command
   ];
 
   # =============================================================================
