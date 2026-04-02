@@ -193,11 +193,16 @@
     ];
     extraConfig = ''
       # Allow NTP queries from all local networks
-      allow 10.71.71.0/24   # LAN
-      allow 10.71.72.0/24   # Guest
-      allow 192.168.6.0/24  # IoT
-      allow 10.71.73.0/24   # Direct
-      allow 10.8.0.0/24     # OpenVPN clients
+      # LAN network
+      allow 10.71.71.0/24
+      # Guest network
+      allow 10.71.72.0/24
+      # IoT network
+      allow 192.168.6.0/24
+      # Direct VLAN
+      allow 10.71.73.0/24
+      # OpenVPN clients
+      allow 10.8.0.0/24
     '';
   };
 
