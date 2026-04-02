@@ -200,6 +200,26 @@
   # Deck-specific Configuration
   # =============================================================================
 
+  # Suspend-then-hibernate configuration
+  systemd.sleep.settings = {
+    Sleep = {
+      AllowSuspend = "yes";
+      AllowHibernation = "yes";
+      AllowSuspendThenHibernate = "yes";
+      HibernateDelaySec = "30min";
+    };
+  };
+
+  # Make suspend use suspend-then-hibernate instead
+  systemd.services."systemd-suspend" = {
+    overrideStrategy = "asDropin";
+    serviceConfig = {
+      ExecStart = [
+        "" # Clear the default
+        "${pkgs.systemd}/lib/systemd/systemd-sleep suspend-then-hibernate"
+      ];
+    };
+  };
 
   # Eden Nintendo Switch emulator
   programs.eden.enable = true;
