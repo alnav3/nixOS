@@ -25,8 +25,11 @@
     };
 
   swapDevices =
-    [ { device = "/dev/disk/by-uuid/7acef365-a18a-48b8-9e54-cb36c48f0ca2"; }
+    [ { device = "/dev/disk/by-uuid/7ad020a5-cece-4d15-85f0-1066252d6d66"; }
     ];
+
+  # Enable hibernation
+  boot.resumeDevice = "/dev/disk/by-uuid/7ad020a5-cece-4d15-85f0-1066252d6d66";
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
   hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;

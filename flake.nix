@@ -128,6 +128,13 @@
         useHomeManager = true;
         isWsl = true;
       }
+      {
+        name = "router";
+        system = "x86_64-linux";
+        useHomeManager = false;
+        isWsl = false;
+        isRouter = true;
+      }
     ];
   in {
     # Wrapped packages (nix run github:alnav3/nixos#niri)
@@ -161,7 +168,16 @@
               nix-flatpak.nixosModules.nix-flatpak
             ]
             ++ (
-              if host.isWsl
+              if host.isRouter or false
+              then [
+                # Router: minimal — disko for disk layout, no desktop/home-manager
+                disko.nixosModules.disko
+                ./modules
+                ./machines/${host.name}/hardware-configuration.nix
+                ./machines/${host.name}/disko-config.nix
+                ./machines/${host.name}/configuration.nix
+              ]
+              else if host.isWsl
               then [
                 # WSL: self-contained machine config (includes nixos-wsl module)
                 ./machines/${host.name}/configuration.nix
