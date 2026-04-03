@@ -187,6 +187,18 @@
           iifname "brlan" oifname "brlan" counter accept comment "Allow intra-LAN traffic"
 
           # -----------------------------------------------------------------
+          # Wake on LAN Traffic (Cross-VLAN)
+          # -----------------------------------------------------------------
+          # Allow WoL magic packets between some VLANs
+          # WoL packets are UDP on port 9 (or 7) and need broadcast capability
+
+          # LAN → Guest, IoT, Direct VLANs (WoL)
+          iifname "brlan" oifname { "brguest", "briot", "brdirect" } udp dport { 7, 9 } counter accept comment "WoL from LAN to other VLANs"
+
+          # Direct → LAN, Guest, IoT VLANs (WoL)
+          iifname "brdirect" oifname { "brlan", "brguest", "briot" } udp dport { 7, 9 } counter accept comment "WoL from Direct to other VLANs"
+
+          # -----------------------------------------------------------------
           # Device-Specific Internet Blocks
           # -----------------------------------------------------------------
           # Block specific devices from accessing internet (both VPN and WAN)

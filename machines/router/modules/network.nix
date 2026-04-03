@@ -43,10 +43,18 @@
     # Each bridge bonds ens19 and ens20 for redundancy/load balancing
     # This allows devices to connect via either physical port seamlessly
     bridges = {
-      brlan = { interfaces = [ "ens19" "ens20" ]; };
-      brguest = { interfaces = [ "ens19.6" "ens20.6" ]; };
-      briot = { interfaces = [ "ens19.10" "ens20.10" ]; };
-      brdirect = { interfaces = [ "ens19.100" "ens20.100" ]; };
+      brlan = { 
+        interfaces = [ "ens19" "ens20" ];
+      };
+      brguest = { 
+        interfaces = [ "ens19.6" "ens20.6" ];
+      };
+      briot = { 
+        interfaces = [ "ens19.10" "ens20.10" ];
+      };
+      brdirect = { 
+        interfaces = [ "ens19.100" "ens20.100" ];
+      };
     };
 
     # Interface IP addressing
@@ -94,4 +102,6 @@
     nat.enable = false;
     firewall.enable = false;
   };
+
+
 }

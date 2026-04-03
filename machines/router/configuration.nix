@@ -33,6 +33,7 @@
     ./modules/wan.nix
     ./modules/vpn-bypass.nix
     ./modules/openvpn-container.nix
+    ./modules/users.nix           # User accounts & security hardening
   ];
 
   # ===========================================================================

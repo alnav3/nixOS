@@ -2,21 +2,90 @@
 
 pkgs.writeShellScriptBin "rebuild-remote" ''
   # Custom nixos-rebuild command for remote hosts
-  # Usage: rebuild-remote <hostname>
-  # Example: rebuild-remote deck
+  # Usage: rebuild-remote [options] <hostname>
+  # Options:
+  #   --user <username>   Use username@hostname instead of just hostname
+  #   --rootless          Build locally, then SSH and run activate manually
+  #                      (for hosts where sudo is restricted)
+  # Examples:
+  #   rebuild-remote deck
+  #   rebuild-remote --user new-alnav router
+  #   rebuild-remote --rootless --user new-alnav router
 
-  if [ -z "$1" ]; then
-      echo "Usage: rebuild-remote <hostname>"
-      echo "Example: rebuild-remote deck"
+  set -e
+
+  USER=""
+  ROOTLESS=false
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --user)
+        USER="$2"
+        shift 2
+        ;;
+      --rootless)
+        ROOTLESS=true
+        shift
+        ;;
+      -h|--help)
+        echo "Usage: rebuild-remote [options] <hostname>"
+        echo ""
+        echo "Options:"
+        echo "  --user <username>   Use username@hostname instead of just hostname"
+        echo "  --rootless         Build locally, then SSH and run activate manually"
+        echo ""
+        echo "Examples:"
+        echo "  rebuild-remote deck"
+        echo "  rebuild-remote --user new-alnav router"
+        echo "  rebuild-remote --rootless --user new-alnav router"
+        exit 0
+        ;;
+      *)
+        HOST="$1"
+        shift
+        ;;
+    esac
+  done
+
+  if [ -z "$HOST" ]; then
+      echo "Error: hostname is required"
+      echo "Usage: rebuild-remote [options] <hostname>"
       exit 1
   fi
 
-  HOST="$1"
+  if [ -n "$USER" ]; then
+      TARGET="$USER@$HOST"
+  else
+      TARGET="$HOST"
+  fi
 
-  ${pkgs.nixos-rebuild}/bin/nixos-rebuild switch \
-      --flake "git+file:/home/alnav/nixOS?submodules=1#''${HOST}" \
-      --target-host "''${HOST}" \
-      --sudo \
-      --build-host mjolnir \
-      --impure
+  FLAKE_REF="git+file:/home/alnav/nixOS?submodules=1#''${HOST}"
+
+  if [ "$ROOTLESS" = true ]; then
+      echo "=== Building configuration (rootless mode) ==="
+      ${pkgs.nixos-rebuild}/bin/nixos-rebuild build \
+          --flake "$FLAKE_REF" \
+          --target-host "$TARGET" \
+          --build-host mjolnir \
+          --impure 2>&1 | tee /tmp/rebuild-output.log
+
+      # Extract the store path from the output
+      STORE_PATH=$(grep -oE "/nix/store/[^[:space:]]+-nixos-system-[^[:space:]]+" /tmp/rebuild-output.log | tail -1)
+
+      if [ -z "$STORE_PATH" ]; then
+          echo "Error: could not find store path in build output"
+          exit 1
+      fi
+
+      echo "=== Activating on $TARGET ==="
+      echo "Store path: $STORE_PATH"
+      ssh -t "$TARGET" "sudo $STORE_PATH/activate"
+  else
+      ${pkgs.nixos-rebuild}/bin/nixos-rebuild switch \
+          --flake "$FLAKE_REF" \
+          --target-host "$TARGET" \
+          --sudo \
+          --build-host mjolnir \
+          --impure
+  fi
 ''
