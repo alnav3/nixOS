@@ -305,11 +305,30 @@ in
     })
 
     # Neovim
-    (lib.mkIf cfg.editor.neovim {
+    (lib.mkIf cfg.editor.neovim (let
+      # Treesitter grammars path for preinstalled grammars
+      grammarsPath = pkgs.symlinkJoin {
+        name = "nvim-treesitter-grammars";
+        paths = pkgs.vimPlugins.nvim-treesitter.withAllGrammars.dependencies;
+      };
+
+      # Lua config snippet to add grammars to runtimepath
+      treesitterLuaConfig = ''
+        -- Append treesitter plugin (bundles some languages)
+        vim.opt.runtimepath:append("${pkgs.vimPlugins.nvim-treesitter}")
+        -- Append all compiled Treesitter grammars (*.so files)
+        vim.opt.runtimepath:append("${grammarsPath}")
+      '';
+    in {
       environment.systemPackages = with pkgs; [
-        neovim
+        pkgs-stable.neovim
+        tree-sitter
+        tree-sitter-cli
       ];
-    })
+
+      # Create a file with the Lua config for easy sourcing in your init.lua
+      environment.etc."xdg/nvim/treesitter-nix.lua".text = treesitterLuaConfig;
+    }))
 
     # Git tools
     (lib.mkIf cfg.git.enable {

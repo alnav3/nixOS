@@ -105,6 +105,12 @@
         isWsl = false;
       }
       {
+        name = "work";
+        system = "x86_64-linux";
+        useHomeManager = true;
+        isWsl = false;
+      }
+      {
         name = "mjolnir";
         system = "x86_64-linux";
         useHomeManager = true;
@@ -260,15 +266,15 @@
                   };
                 }
               ]
-              else if host.useHomeManager
+              else               if host.useHomeManager
               then [
                 home-manager.nixosModules.home-manager
-                # Framework and WSL now define their home-manager config in their configuration.nix
+                # Framework, Work, and WSL define their home-manager config in their configuration.nix
               ]
               else []
             )
             ++ (
-              if host.name == "framework" || host.name == "mjolnir" || host.name == "deck"
+              if host.name == "framework" || host.name == "work" || host.name == "mjolnir" || host.name == "deck"
               then [
                 # Deck SteamOS experience
                 inputs.jovian-nixos.nixosModules.jovian

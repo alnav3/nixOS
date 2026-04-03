@@ -9,14 +9,14 @@
   ];
 
   # =============================================================================
-  # Module Configuration - All options explicitly enabled
+  # Module Configuration - Work laptop configuration
   # =============================================================================
 
   mymodules = {
     # Base system configuration
     base = {
       enable = true;
-      # Framework uses default base settings
+      # Work laptop uses default base settings (SSH, alnav user, mjolnir build key)
       user.extraGroups = [
         "uinput"
         "wheel"
@@ -24,9 +24,6 @@
         "audio"
         "input"
         "disk"
-        "libvirtd"
-        "qemu-libvirtd"
-        "libvirt"
         "dialout"
         "networkmanager"
       ];
@@ -83,75 +80,54 @@
       editor = {
         neovim = true;
         tmux = true;
-        opencode = true;
+        opencode = false;  # Can enable if needed for work
       };
       git = {
         enable = true;
         gitlab = true;
       };
-      work.enable = true;
-      freelance.enable = true;
+      work.enable = true;      # Teams and work-related tools
+      freelance.enable = true;  # Bruno and other API tools
     };
 
-    # Gaming
+    # Gaming - DISABLED for work laptop
     gaming = {
-      enable = true;
-      steam = {
-        enable = true;
-        gamescope = true;
-      };
-      launchers = {
-        lutris = true;
-        heroic = true;
-        bottles = true;
-      };
-      emulation = {
-        enable = true;
-        switch = true;
-      };
-      performance = {
-        mangohud = true;
-        protonTools = true;
-      };
-      android = {
-        enable = false;
-        tools = true;
-      };
+      enable = false;
     };
 
-    # Media
+    # Media - MINIMAL for work (no entertainment)
     media = {
       enable = true;
       video = {
-        mpv = true;
-        obs = true;
+        mpv = false;  # No video player for work
+        obs = true;   # Useful for meetings/presentations
       };
       audio = {
-        playerctl = true;
-        finamp = true;
+        playerctl = true;  # Control media playback
+        finamp = false;    # No music streaming
       };
       youtube = {
-        ytdlp = true;
-        grayjay = true;
+        ytdlp = false;  # No YouTube downloading
+        grayjay = false;
       };
       documents = {
-        zathura = true;
-        thorium = true;
-        kcc = true;
+        zathura = true;   # PDF viewer for work documents
+        thorium = false;  # No manga reader
+        kcc = false;      # No comic converter
       };
-      portable.rockbox = true;
-      soulseek = true;
-      casting.fcast = true;
-      streaming.streamrip = true;
+      portable.rockbox = false;
+      soulseek = false;  # No P2P music
+      casting.fcast = false;
+      streaming.streamrip = false;  # No streaming downloads
       social = {
-        enable = true;
-        discord = true;
+        enable = false;  # No social media apps
+        discord = false;
         signal = false;
         telegram = false;
       };
-      mail.thunderbird = true;
-      backup.pikaBackup = true;
-      printing3d.enable = true;
+      mail.thunderbird = true;  # Email client for work
+      backup.pikaBackup = true;  # Backup important work data
+      printing3d.enable = false;
     };
 
     # Networking
@@ -165,8 +141,8 @@
       ipv6.enable = false;
       firewall = {
         enable = true;
-        allowedTCPPorts = [ 80 4200 1338 2300 46899 46898 4096 ];
-        allowedUDPPorts = [ 46898 ];
+        allowedTCPPorts = [ 80 443 8080 ];
+        allowedUDPPorts = [];
       };
       diagnostics = true;
     };
@@ -183,9 +159,9 @@
           aggressive = true;
         };
       };
-      spice = true;
-      distrobox = true;
-      qemu = true;
+      spice = false;     # Not needed for work
+      distrobox = true;  # Useful for testing different environments
+      qemu = false;      # Not needed for work initially
     };
 
     # Hardware
@@ -213,11 +189,11 @@
           start = 40;
           stop = 80;
         };
-        # CPU frequency limits for AMD 7840U (max boost 5.1GHz)
-        # Capping battery to 2GHz prevents unnecessary power-hungry boost clocks
+        # Conservative CPU frequency limits for work laptop
+        # Prioritize battery life over performance
         tlp.cpuFreq = {
           minOnAC = 1000000;   # 1.0 GHz
-          maxOnAC = 4972000;   # ~5.0 GHz (near max boost)
+          maxOnAC = 3500000;   # 3.5 GHz (moderate)
           minOnBAT = 400000;   # 0.4 GHz (lowest P-state)
           maxOnBAT = 2000000;  # 2.0 GHz (efficient range)
         };
@@ -225,14 +201,15 @@
           lidAction = "suspend-then-hibernate";
           lidActionOnAC = "lock";
         };
+        # Note: Will need to update this after hardware-configuration.nix is generated
         resumeDevice = "/dev/nvme0n1p3";
-        amd.pstate = true;
+        amd.pstate = true;  # Assuming AMD CPU like framework
       };
 
       graphics = {
         enable = true;
-        gpu = "amd";
-        enable32Bit = true;
+        gpu = "amd";  # Adjust if using Intel/NVIDIA
+        enable32Bit = false;  # No gaming, no need for 32-bit
         amd = {
           initrdEnable = true;
           vulkan = true;
@@ -248,44 +225,49 @@
         openFirewall = true;
       };
 
-      ipMonitor.enable = true;
+      ipMonitor.enable = false;  # Not needed for work laptop
     };
   };
 
   # =============================================================================
-  # Framework-specific Configuration
+  # Work-specific Configuration
   # =============================================================================
 
   # Latest kernel for network compatibility
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
-  # ARM emulation for Duet
-  boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
-
-  # AMD GPU early loading
+  # AMD GPU early loading (adjust if using different GPU)
   hardware.amdgpu.initrd.enable = true;
 
-  nixpkgs.config.allowUnfree = true;
+  # Allow only specific unfree packages for work
+  nixpkgs.config.allowUnfree = false;
+  nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (pkgs.lib.getName pkg) [
+    "teams-for-linux"  # Work communication
+  ];
 
   # Firmware updates
   services.fwupd.enable = true;
-  services.fwupd.package =
-    (import (builtins.fetchTarball {
-        url = "https://github.com/NixOS/nixpkgs/archive/bb2009ca185d97813e75736c2b8d1d8bb81bde05.tar.gz";
-        sha256 = "sha256:003qcrsq5g5lggfrpq31gcvj82lb065xvr7bpfa8ddsw8x4dnysk";
-      }) {
-        system = pkgs.stdenv.hostPlatform.system;
-      })
-    .fwupd;
-
-  # Framework hardware settings
-  hardware.framework.amd-7040.preventWakeOnAC = true;
-  hardware.framework.enableKmod = true;
 
   # Networking (useDHCP disabled, networkmanager handles it)
   networking.useDHCP = false;
 
-  # Kanata key remapping
+  # NetworkManager with OpenConnect VPN support
+  networking.networkmanager.plugins = with pkgs; [
+    networkmanager-openvpn
+    networkmanager-openconnect  # Corporate VPN support
+  ];
+
+  # OpenConnect VPN packages
+  environment.systemPackages = with pkgs; [
+    openconnect                  # OpenConnect VPN client
+    networkmanager-openconnect   # NetworkManager integration
+    gum                          # Shell scripting helper
+    rebuild-remote               # Custom rebuild command
+    deploy-all                   # Comprehensive deployment script
+    deploy-config-setup          # Deploy configuration setup helper
+  ];
+
+  # Kanata key remapping (adjust device path after hardware detection)
   services.kanata = {
     enable = true;
     keyboards = {
@@ -314,42 +296,6 @@
   };
 
   networking.firewall.checkReversePath = false;
-  # Extra framework-specific packages (things not in modules)
-  environment.systemPackages = with pkgs; [
-    fw-ectool           # Framework laptop control
-    gum                 # Shell scripting helper
-    sshuttle            # SSH-based VPN
-    transmission_4-gtk  # Torrent client
-    openvpn
-    protonvpn-gui
-    wakeonlan
-    rebuild-remote      # Custom rebuild command
-    deploy-all          # Comprehensive deployment script
-    deploy-config-setup # Deploy configuration setup helper
-  ];
-
-  # =============================================================================
-  # TrueNAS Backup - Minimal receive-only user
-  # =============================================================================
-
-  # Locked-down user: no groups, no sudo, no password, SSH key-only
-  users.users.truenas_backup = {
-    isNormalUser = true;
-    home = "/home/truenas_backup";
-    createHome = true;
-    group = "truenas_backup";
-    shell = pkgs.bashInteractive;
-    hashedPassword = "!"; # Password login disabled
-    openssh.authorizedKeys.keys = [
-        "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCb+DSHytoCdLPprOjDv1uj78R2J8KDHPMmfpBdHFRhtGykW/qy3h3RC/P1X7kOubPWmlSgAgq3bRDyyTI1m6nqgbLx4LUuDU1lgmcjNOy99FLO5p26AnHiAuCbhvXaIuxYAiDDhOS/gIpuaFfjKEd5u2SefK5uJGtGlS9Um5VV2YG67/sEAlkJmvqg7db1anKMfaeyiCtTT7/HPHy92WpHuV5yeA9PMx29LDF3khLHQURHOAUvj+YNYqr3K6wMxoKc6Aln6/eLJDmuSQ7PMCIB35kpvJGyNKmgcgImwVaic2e5ugOx4ptsqF+L0+9pm+gmDu0rzH+eih1NDNisUrqUxV3GfDBgM32PZnnbtjIoJ4Y+3shdXM1o7AvwKZU8+njUuedON4wNagWVzZOYNt+xKUiKe+IsvFfqGOjpKCObee8hOX3bJOWCYow6WL3sNejAyPtX96E/1iRxMDfvRxSwa1vkAD7KfolQBGZXqEirAiKV8fy5cD1uBFFTMs77zFk= root@truenas"
-    ];
-  };
-  users.groups.truenas_backup = {};
-
-  # Pre-create backup target directory with correct ownership
-  systemd.tmpfiles.rules = [
-    "d /home/truenas_backup/backups 0700 truenas_backup truenas_backup -"
-  ];
 
   # =============================================================================
   # Home Manager Configuration
@@ -389,13 +335,13 @@
         };
       };
 
-      # Enable services that framework can use
+      # Enable services that work laptop can use
       services.opensnitch-ui.enable = true;
     };
     backupFileExtension = "bak";
     extraSpecialArgs = {
       inherit inputs;
-      meta = { name = "framework"; system = "x86_64-linux"; useHomeManager = true; isWsl = false; };
+      meta = { name = "work"; system = "x86_64-linux"; useHomeManager = true; isWsl = false; };
     };
   };
 }

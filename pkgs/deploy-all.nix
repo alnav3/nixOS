@@ -21,6 +21,7 @@ pkgs.writeShellScriptBin "deploy-all" ''
   CONFIG_FILE="''${CONFIG_DIR}/config"
   LOG_FILE="''${REPO_DIR}/deploy-$(date +%Y%m%d_%H%M%S).log"
   VERBOSE=false
+  AUTO_YES_ROUTER=false
   MJOLNIR_HOST="mjolnir"
   WAKE_TIMEOUT=60
   ROUTER_TIMEOUT=120
@@ -38,11 +39,16 @@ pkgs.writeShellScriptBin "deploy-all" ''
         VERBOSE=true
         shift
         ;;
+      -y|--yes)
+        AUTO_YES_ROUTER=true
+        shift
+        ;;
       -h|--help)
-        echo "Usage: $0 [-v|--verbose] [-h|--help]"
+        echo "Usage: $0 [-v|--verbose] [-y|--yes] [-h|--help]"
         echo ""
         echo "Options:"
         echo "  -v, --verbose    Show verbose output including rebuild logs"
+        echo "  -y, --yes        Automatically rebuild router without confirmation"
         echo "  -h, --help       Show this help message"
         echo ""
         echo "This script performs a complete deployment of all NixOS hosts:"
@@ -257,11 +263,9 @@ pkgs.writeShellScriptBin "deploy-all" ''
   setup_sleep_inhibitor() {
     log "Setting up sleep inhibitor on ''${MJOLNIR_HOST}..."
     
-    # Create a new tmux session and run the sleep inhibitor
-    local inhibit_cmd='sudo systemd-inhibit --what=idle:sleep --why="Manual SSH inhibit" sleep infinity'
-    local tmux_cmd="tmux new-session -d -s deploy_inhibitor \"''${inhibit_cmd}\""
+    ssh "''${MJOLNIR_HOST}" 'bash -c "tmux new-session -d -s deploy_inhibitor sudo systemd-inhibit --what=idle:sleep --why=deploy sleep infinity"' >> "''${LOG_FILE}" 2>&1
     
-    if ssh "''${MJOLNIR_HOST}" "''${tmux_cmd}" >> "''${LOG_FILE}" 2>&1; then
+    if [[ $? -eq 0 ]]; then
       log "✓ Sleep inhibitor started in tmux session 'deploy_inhibitor' on ''${MJOLNIR_HOST}"
     else
       log "WARNING: Failed to start sleep inhibitor. Continuing anyway..."
@@ -281,7 +285,7 @@ pkgs.writeShellScriptBin "deploy-all" ''
     local host="$1"
     local description="Rebuilding ''${host}"
     
-    local rebuild_cmd="''${REPO_DIR}/result/bin/rebuild-remote ''${host}"
+    local rebuild_cmd="rebuild-remote ''${host}"
     execute_command "''${rebuild_cmd}" "''${description}"
   }
 
@@ -363,21 +367,14 @@ pkgs.writeShellScriptBin "deploy-all" ''
     # Step 3: Setup sleep inhibitor
     setup_sleep_inhibitor
     
-    # Step 4: Build the deployment tools first
-    log "Building deployment tools..."
-    execute_command "nix build .#nixosConfigurations.framework.config.environment.systemPackages --no-link" "Building system packages"
-    
-    # Create a temporary result for rebuild-remote
-    execute_command "nix build --out-link result" "Building framework configuration"
-    
-    # Step 5: Rebuild hosts in sequence
+    # Step 4: Rebuild hosts in sequence
     local hosts=("framework" "node0" "mjolnir")
     
     for host in "''${hosts[@]}"; do
       rebuild_host "''${host}"
     done
     
-    # Step 6: Check deck availability and rebuild if online
+    # Step 5: Check deck availability and rebuild if online
     log "Checking deck availability..."
     if check_host_reachable "deck"; then
       log "✓ deck is reachable"
@@ -394,15 +391,15 @@ pkgs.writeShellScriptBin "deploy-all" ''
       fi
     fi
     
-    # Step 7: Router confirmation
-    if get_confirmation_with_timeout "Do you want to rebuild the router? This will cause a brief network interruption." "''${ROUTER_TIMEOUT}"; then
+    # Step 6: Router confirmation
+    if [[ "''${AUTO_YES_ROUTER}" == "true" ]] || get_confirmation_with_timeout "Do you want to rebuild the router? This will cause a brief network interruption." "''${ROUTER_TIMEOUT}"; then
       rebuild_host "router"
       log "✓ Router rebuild completed"
     else
       log "Skipping router rebuild"
     fi
     
-    # Step 8: Cleanup and reboot mjolnir
+    # Step 7: Cleanup and reboot mjolnir
     cleanup_sleep_inhibitor
     
     log "Rebooting ''${MJOLNIR_HOST}..."
