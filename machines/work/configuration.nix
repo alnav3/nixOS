@@ -203,14 +203,14 @@
         };
         # Note: Will need to update this after hardware-configuration.nix is generated
         resumeDevice = "/dev/nvme0n1p3";
-        amd.pstate = true;  # Assuming AMD CPU like framework
+        amd.pstate = false;  # Using Intel CPU
       };
 
       graphics = {
         enable = true;
-        gpu = "amd";  # Adjust if using Intel/NVIDIA
+        gpu = "intel";  # Intel integrated graphics
         enable32Bit = false;  # No gaming, no need for 32-bit
-        amd = {
+        intel = {
           initrdEnable = true;
           vulkan = true;
         };
@@ -236,8 +236,8 @@
   # Latest kernel for network compatibility
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
-  # AMD GPU early loading (adjust if using different GPU)
-  hardware.amdgpu.initrd.enable = true;
+  # Intel GPU early loading
+  hardware.graphics.enable = true;
 
   # Allow only specific unfree packages for work
   nixpkgs.config.allowUnfree = false;

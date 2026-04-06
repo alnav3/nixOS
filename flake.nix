@@ -141,6 +141,13 @@
         isWsl = false;
         isRouter = true;
       }
+      {
+        name = "rpi3";
+        system = "aarch64-linux";
+        useHomeManager = true;
+        isWsl = false;
+        isRpi = true;
+      }
     ];
   in {
     # Wrapped packages (nix run github:alnav3/nixos#niri)
@@ -154,6 +161,8 @@
         inherit pkgs inputs lib;
         noctaliaPackage = myNoctalia;
       };
+      # SD card image for Raspberry Pi 3
+      rpi3-sdimage = self.nixosConfigurations.rpi3.config.system.build.sdImage;
     };
 
     nixosConfigurations = builtins.listToAttrs (map (host: {
@@ -164,7 +173,7 @@
             overlays = import ./overlays;
             meta = {hostname = host.name;};
             pkgs-stable = inputs.nixpkgs-stable.legacyPackages.${host.system};
-            postingPkg = inputs.posting-flake.packages.${host.system}.posting;
+            postingPkg = inputs.posting-flake.packages.${host.system}.posting or null;
             pkgs-unstable = inputs.nixpkgs.legacyPackages.${host.system};
           };
           system = host.system;
@@ -189,6 +198,12 @@
                 ./machines/${host.name}/configuration.nix
                 ./machines/${host.name}/hardware-configuration.nix
               ]
+              else if host.isRpi or false
+              then [
+                # Raspberry Pi: SD card based, no disko, no desktop
+                "${nixpkgs}/nixos/modules/installer/sd-card/sd-image-aarch64.nix"
+                ./machines/${host.name}/configuration.nix
+              ]
               else [
                 # disko
                 disko.nixosModules.disko
@@ -203,7 +218,7 @@
               ]
             )
             ++ (
-              if host.useHomeManager && (host.name == "mjolnir" || host.name == "deck" || host.name == "node0")
+              if host.useHomeManager && (host.name == "mjolnir" || host.name == "deck" || host.name == "node0" || host.name == "rpi3")
               then [
                 home-manager.nixosModules.home-manager
                 {
@@ -234,8 +249,8 @@
                           };
                         };
                       }
-                    else if host.name == "node0" then
-                      # Node0 - Home server (minimal, no GUI)
+                    else if host.name == "node0" || host.name == "rpi3" then
+                      # Node0 / RPi3 - Home server (minimal, no GUI)
                       { pkgs, inputs, ... }: {
                         imports = [ ./home-modules ];
                         myhome = {

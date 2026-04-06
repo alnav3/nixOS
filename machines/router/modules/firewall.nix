@@ -174,7 +174,7 @@
           # -----------------------------------------------------------------
           # Forward HTTP/HTTPS from internet to specific server on LAN
           # DNAT happens in NAT table, this just allows the forwarded traffic
-          iifname "ppp0" oifname "brlan" ip daddr 10.71.71.193 tcp dport { 80, 443 } counter accept comment "Port forward HTTP/HTTPS to 10.71.71.193"
+          iifname "ppp0" oifname "brlan" ip daddr 10.71.71.193 tcp dport { 443 } counter accept comment "Port forward HTTP/HTTPS to 10.71.71.193"
 
           # Return traffic from port-forwarded server back to internet
           iifname "brlan" oifname "ppp0" ip saddr 10.71.71.193 ct state established,related counter accept comment "Return traffic from forwarded server to WAN"

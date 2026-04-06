@@ -16,7 +16,7 @@
   # Adjust based on actual hardware
   boot.initrd.availableKernelModules = ["nvme" "xhci_pci" "thunderbolt" "usb_storage" "sd_mod" "ahci"];
   boot.initrd.kernelModules = [];
-  boot.kernelModules = ["kvm-amd"];  # Change to kvm-intel if using Intel CPU
+  boot.kernelModules = ["kvm-intel"];  # Intel CPU
   boot.extraModulePackages = [];
 
   # Enables DHCP on each ethernet and wireless interface. In case of scripted networking
@@ -26,7 +26,5 @@
   networking.useDHCP = lib.mkDefault true;
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
-  hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
-  # For Intel CPU, use instead:
-  # hardware.cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
+  hardware.cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 }

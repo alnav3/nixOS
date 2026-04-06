@@ -206,6 +206,10 @@ in
           clean-disk = "sudo nix profile wipe-history --profile /nix/var/nix/profiles/system --older-than 1d";
           rofi-wifi = "${inputs.rofi-wifi}/rofi-wifi-menu.sh";
           update-flake = "nix flake lock --update-input";
+          mjolnir = "ssh mjolnir";
+          deck = "ssh deck";
+          node0 = "ssh node0";
+          wsl = "ssh wsl";
         } // cfg.shell.zsh.aliases;
       };
       users.defaultUserShell = pkgs.zsh;
@@ -323,7 +327,6 @@ in
       environment.systemPackages = with pkgs; [
         pkgs-stable.neovim
         tree-sitter
-        tree-sitter-cli
       ];
 
       # Create a file with the Lua config for easy sourcing in your init.lua

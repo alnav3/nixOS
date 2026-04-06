@@ -321,6 +321,7 @@
     sshuttle            # SSH-based VPN
     transmission_4-gtk  # Torrent client
     openvpn
+    moonlight-qt
     protonvpn-gui
     wakeonlan
     rebuild-remote      # Custom rebuild command

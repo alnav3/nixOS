@@ -23,9 +23,9 @@
 
   # Configure nameservers since WSL resolv.conf generation is disabled
   networking.nameservers = [
-    "192.168.2.250"    # VPN DNS (primary)
-    "213.229.189.8"    # VPN DNS (secondary)
-    "9.9.9.9"          # Quad9 (fallback)
+    "9.9.9.9"          # Quad9 (primary)
+    "192.168.2.250"    # VPN DNS (secundary)
+    "213.229.189.8"    # VPN DNS (fallback)
   ];
 
   # =============================================================================
