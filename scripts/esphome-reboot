@@ -1,0 +1,310 @@
+#!/usr/bin/env python3
+"""
+ESPHome USB Device Reboot Script
+
+Detects ESPHome devices connected via USB and reboots them by toggling
+the DTR/RTS serial control signals (same method as web.esphome.io).
+
+Usage:
+  esphome-reboot              # Auto-detect and reboot all ESPHome devices
+  esphome-reboot /dev/ttyUSB0 # Reboot specific device
+  esphome-reboot --detect     # Only detect, don't reboot
+  esphome-reboot --check /dev/ttyUSB0  # Check if device is ESPHome
+
+Exit codes:
+  0 - Success (device found and rebooted, or --detect found devices)
+  1 - No ESPHome device found
+  2 - Error during reboot
+"""
+
+import argparse
+import glob
+import os
+import re
+import subprocess
+import sys
+import time
+
+# Known USB Vendor:Product IDs for ESP development boards
+# These are USB-to-serial chips commonly used on ESP boards
+ESP_USB_IDS = {
+    # CH340/CH341 (very common on cheap ESP boards)
+    ("1a86", "7523"): "CH340",
+    ("1a86", "55d4"): "CH341",
+    # Silicon Labs CP210x (common on quality boards)
+    ("10c4", "ea60"): "CP210x",
+    # FTDI (less common but used on some boards)
+    ("0403", "6001"): "FTDI FT232",
+    ("0403", "6015"): "FTDI FT231X",
+    # Espressif native USB (ESP32-S2, ESP32-S3, ESP32-C3)
+    ("303a", "1001"): "ESP32-S2",
+    ("303a", "1002"): "ESP32-S3",
+    ("303a", "0002"): "ESP32-S2 (bootloader)",
+    ("303a", "80d0"): "ESP32-C3",
+    # WCH CH9102 (newer CH340 variant)
+    ("1a86", "55d3"): "CH9102",
+}
+
+# ESPHome log patterns to identify ESPHome devices
+ESPHOME_PATTERNS = [
+    r"\[.+\].*INFO.*ESPHome",
+    r"\[.+\].*INFO.*WiFi",
+    r"esphome:",
+    r"INFO Reading configuration",
+    r"wifi:",
+    r"api:",
+    r"ota:",
+    r"logger:",
+]
+
+
+def get_usb_id(device_path: str) -> tuple[str, str] | None:
+    """Get USB Vendor:Product ID for a serial device."""
+    # Get the device name (e.g., ttyUSB0)
+    device_name = os.path.basename(device_path)
+    
+    # Try to find the USB device in sysfs
+    sysfs_paths = [
+        f"/sys/class/tty/{device_name}/device/../idVendor",
+        f"/sys/class/tty/{device_name}/device/../../idVendor",
+        f"/sys/class/tty/{device_name}/../idVendor",
+    ]
+    
+    for vendor_path in sysfs_paths:
+        product_path = vendor_path.replace("idVendor", "idProduct")
+        try:
+            if os.path.exists(vendor_path) and os.path.exists(product_path):
+                with open(vendor_path) as f:
+                    vendor = f.read().strip().lower()
+                with open(product_path) as f:
+                    product = f.read().strip().lower()
+                return (vendor, product)
+        except (IOError, OSError):
+            continue
+    
+    # Fallback: use udevadm
+    try:
+        result = subprocess.run(
+            ["udevadm", "info", "--query=property", f"--name={device_path}"],
+            capture_output=True, text=True, timeout=5
+        )
+        vendor = product = None
+        for line in result.stdout.splitlines():
+            if line.startswith("ID_VENDOR_ID="):
+                vendor = line.split("=")[1].strip().lower()
+            elif line.startswith("ID_MODEL_ID="):
+                product = line.split("=")[1].strip().lower()
+        if vendor and product:
+            return (vendor, product)
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        pass
+    
+    return None
+
+
+def is_esp_device(device_path: str) -> tuple[bool, str]:
+    """Check if a device is a known ESP development board."""
+    usb_id = get_usb_id(device_path)
+    if usb_id and usb_id in ESP_USB_IDS:
+        return True, ESP_USB_IDS[usb_id]
+    return False, ""
+
+
+def check_esphome_output(device_path: str, timeout: float = 2.0) -> bool:
+    """
+    Try to read serial output and check for ESPHome patterns.
+    This is a heuristic - not all ESPHome devices will output logs.
+    """
+    try:
+        import serial
+    except ImportError:
+        # If pyserial not available, skip this check
+        return False
+    
+    try:
+        with serial.Serial(device_path, 115200, timeout=timeout) as ser:
+            # Read any available data
+            time.sleep(0.5)
+            data = ser.read(ser.in_waiting or 1024).decode('utf-8', errors='ignore')
+            
+            for pattern in ESPHOME_PATTERNS:
+                if re.search(pattern, data, re.IGNORECASE):
+                    return True
+    except (serial.SerialException, OSError):
+        pass
+    
+    return False
+
+
+def find_esp_devices() -> list[tuple[str, str]]:
+    """Find all connected ESP devices."""
+    devices = []
+    
+    # Check /dev/ttyUSB* and /dev/ttyACM* devices
+    for pattern in ["/dev/ttyUSB*", "/dev/ttyACM*"]:
+        for device_path in glob.glob(pattern):
+            is_esp, chip_name = is_esp_device(device_path)
+            if is_esp:
+                devices.append((device_path, chip_name))
+    
+    return devices
+
+
+def reboot_device(device_path: str, verbose: bool = True) -> bool:
+    """
+    Reboot an ESP device by toggling DTR/RTS signals.
+    
+    This mimics what web.esphome.io does:
+    1. Assert DTR low (pulls EN/reset low)
+    2. Wait briefly
+    3. Deassert DTR (releases reset, device boots)
+    """
+    try:
+        import serial
+    except ImportError:
+        print("Error: pyserial is required. Install with: pip install pyserial", file=sys.stderr)
+        return False
+    
+    try:
+        # Open serial port
+        with serial.Serial(device_path, 115200) as ser:
+            if verbose:
+                print(f"  Resetting device...")
+            
+            # Method 1: Toggle DTR (most common reset circuit)
+            ser.dtr = False  # Pull EN low (reset)
+            ser.rts = True   # Keep GPIO0 high (normal boot)
+            time.sleep(0.1)
+            
+            ser.dtr = True   # Release EN (device starts)
+            ser.rts = False
+            time.sleep(0.1)
+            
+            # Method 2: Also try RTS toggle (some boards wire it differently)
+            ser.rts = True
+            time.sleep(0.05)
+            ser.rts = False
+            
+            if verbose:
+                print(f"  Device rebooted successfully")
+            
+            return True
+            
+    except serial.SerialException as e:
+        print(f"Error: Could not open {device_path}: {e}", file=sys.stderr)
+        return False
+    except OSError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return False
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Detect and reboot ESPHome devices connected via USB",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=__doc__
+    )
+    parser.add_argument(
+        "device", nargs="?",
+        help="Specific device path (e.g., /dev/ttyUSB0). Auto-detects if not provided."
+    )
+    parser.add_argument(
+        "--detect", "-d", action="store_true",
+        help="Only detect devices, don't reboot"
+    )
+    parser.add_argument(
+        "--check", "-c", action="store_true",
+        help="Check if the specified device is an ESPHome device"
+    )
+    parser.add_argument(
+        "--force", "-f", action="store_true",
+        help="Reboot even if device is not recognized as ESP"
+    )
+    parser.add_argument(
+        "--quiet", "-q", action="store_true",
+        help="Quiet mode, minimal output"
+    )
+    parser.add_argument(
+        "--verify-esphome", "-v", action="store_true",
+        help="Try to verify device is running ESPHome by reading serial output"
+    )
+    
+    args = parser.parse_args()
+    verbose = not args.quiet
+    
+    # Check mode: verify single device
+    if args.check:
+        if not args.device:
+            print("Error: --check requires a device path", file=sys.stderr)
+            return 1
+        
+        is_esp, chip_name = is_esp_device(args.device)
+        if is_esp:
+            print(f"{args.device}: ESP device ({chip_name})")
+            if args.verify_esphome:
+                if check_esphome_output(args.device):
+                    print(f"  ESPHome detected in serial output")
+                else:
+                    print(f"  Could not verify ESPHome (device may not be logging)")
+            return 0
+        else:
+            print(f"{args.device}: Not a recognized ESP device")
+            return 1
+    
+    # Detect mode: list all ESP devices
+    if args.detect:
+        devices = find_esp_devices()
+        if not devices:
+            if verbose:
+                print("No ESP devices found")
+            return 1
+        
+        print(f"Found {len(devices)} ESP device(s):")
+        for device_path, chip_name in devices:
+            print(f"  {device_path} ({chip_name})")
+            if args.verify_esphome:
+                if check_esphome_output(device_path):
+                    print(f"    ESPHome detected in serial output")
+        return 0
+    
+    # Reboot mode
+    if args.device:
+        # Reboot specific device
+        if not args.force:
+            is_esp, chip_name = is_esp_device(args.device)
+            if not is_esp:
+                print(f"Error: {args.device} is not a recognized ESP device", file=sys.stderr)
+                print("Use --force to reboot anyway", file=sys.stderr)
+                return 1
+            if verbose:
+                print(f"Rebooting {args.device} ({chip_name})...")
+        else:
+            if verbose:
+                print(f"Rebooting {args.device} (forced)...")
+        
+        if reboot_device(args.device, verbose):
+            return 0
+        return 2
+    
+    # Auto-detect and reboot all ESP devices
+    devices = find_esp_devices()
+    if not devices:
+        if verbose:
+            print("No ESP devices found")
+        return 1
+    
+    success_count = 0
+    for device_path, chip_name in devices:
+        if verbose:
+            print(f"Rebooting {device_path} ({chip_name})...")
+        if reboot_device(device_path, verbose):
+            success_count += 1
+    
+    if verbose:
+        print(f"\nRebooted {success_count}/{len(devices)} device(s)")
+    
+    return 0 if success_count == len(devices) else 2
+
+
+if __name__ == "__main__":
+    sys.exit(main())
