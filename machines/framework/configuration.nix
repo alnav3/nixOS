@@ -165,8 +165,8 @@
       ipv6.enable = false;
       firewall = {
         enable = true;
-        allowedTCPPorts = [ 80 4200 1338 2300 46899 46898 4096 ];
-        allowedUDPPorts = [ 46898 ];
+        allowedTCPPorts = [ 80 4200 1338 2300 46899 46898 4096 55435];
+        allowedUDPPorts = [ 46898 55435];
       };
       diagnostics = true;
     };
