@@ -230,5 +230,57 @@
   programs.eden.enable = true;
 
   # Extra mjolnir-specific packages
-  environment.systemPackages = [ inputs.system-bridge-nix.packages.x86_64-linux.system-bridge ];
+  environment.systemPackages = [ 
+    inputs.system-bridge-nix.packages.x86_64-linux.system-bridge 
+    (pkgs.python3.withPackages (ps: [ ps.pyserial ]))  # For ESPHome USB reboot
+  ];
+
+  # =============================================================================
+  # ESPHome USB Auto-Reboot
+  # =============================================================================
+
+  # ESPHome reboot script
+  environment.etc."esphome-reboot".source = ./../../scripts/esphome-reboot;
+
+  # udev rules to trigger ESPHome reboot on USB serial device connection
+  # Only triggers for known ESP USB-to-serial chip vendor IDs
+  services.udev.extraRules = ''
+    # CH340/CH341 (common on cheap ESP boards)
+    ACTION=="add", SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", TAG+="systemd", ENV{SYSTEMD_WANTS}+="esphome-reboot@%k.service"
+    ACTION=="add", SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="55d4", TAG+="systemd", ENV{SYSTEMD_WANTS}+="esphome-reboot@%k.service"
+    ACTION=="add", SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="55d3", TAG+="systemd", ENV{SYSTEMD_WANTS}+="esphome-reboot@%k.service"
+
+    # Silicon Labs CP210x (common on quality boards like NodeMCU)
+    ACTION=="add", SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", TAG+="systemd", ENV{SYSTEMD_WANTS}+="esphome-reboot@%k.service"
+
+    # FTDI (used on some ESP boards)
+    ACTION=="add", SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", TAG+="systemd", ENV{SYSTEMD_WANTS}+="esphome-reboot@%k.service"
+    ACTION=="add", SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6015", TAG+="systemd", ENV{SYSTEMD_WANTS}+="esphome-reboot@%k.service"
+
+    # Espressif native USB (ESP32-S2, ESP32-S3, ESP32-C3)
+    ACTION=="add", SUBSYSTEM=="tty", ATTRS{idVendor}=="303a", ATTRS{idProduct}=="1001", TAG+="systemd", ENV{SYSTEMD_WANTS}+="esphome-reboot@%k.service"
+    ACTION=="add", SUBSYSTEM=="tty", ATTRS{idVendor}=="303a", ATTRS{idProduct}=="1002", TAG+="systemd", ENV{SYSTEMD_WANTS}+="esphome-reboot@%k.service"
+    ACTION=="add", SUBSYSTEM=="tty", ATTRS{idVendor}=="303a", ATTRS{idProduct}=="80d0", TAG+="systemd", ENV{SYSTEMD_WANTS}+="esphome-reboot@%k.service"
+  '';
+
+  # Systemd service template for ESPHome reboot
+  # %i is replaced with the device name (e.g., ttyUSB0)
+  systemd.services."esphome-reboot@" = {
+    description = "Reboot ESPHome device on %i";
+    after = [ "dev-%i.device" ];
+    bindsTo = [ "dev-%i.device" ];
+
+    serviceConfig = {
+      Type = "oneshot";
+      # Small delay to ensure device is fully initialized
+      ExecStartPre = "${pkgs.coreutils}/bin/sleep 2";
+      ExecStart = "${pkgs.python3.withPackages (ps: [ ps.pyserial ])}/bin/python3 /etc/esphome-reboot /dev/%i";
+      # Run as root to access serial devices
+      User = "root";
+      # Timeout after 30 seconds
+      TimeoutStartSec = "30";
+      # Don't restart on failure
+      Restart = "no";
+    };
+  };
 }
