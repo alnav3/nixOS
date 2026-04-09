@@ -49,8 +49,8 @@
   # No swap (extend SD card life)
   swapDevices = [ ];
 
-  # Use mainline kernel (recommended for aarch64)
-  boot.kernelPackages = pkgs.linuxPackages;
+  # Use latest kernel for better WiFi support on RPi3
+  boot.kernelPackages = pkgs.linuxPackages_latest;
 
   # Power management (minimal for server use)
   powerManagement.cpuFreqGovernor = lib.mkDefault "ondemand";

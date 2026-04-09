@@ -26,7 +26,6 @@
           "wheel"
           "audio"
           "video"
-          "networkmanager"
           "input"
           "disk"
           "dialout"
@@ -93,13 +92,30 @@
   networking = {
     hostName = "rpi3";
 
-    # Enable NetworkManager for easy WiFi management
-    networkmanager.enable = true;
+    # Use wpa_supplicant instead of NetworkManager (more reliable on RPi)
+    networkmanager.enable = false;
 
     # Enable wireless support (wpa_supplicant)
     wireless = {
-      enable = lib.mkForce false;  # Use NetworkManager instead
+      enable = true;
+      # Configure your WiFi network here:
+      # Option 1: Plain text (not recommended for production)
+      # networks."YourSSID".psk = "YourPassword";
+      
+      # Option 2: Using secrets (recommended)
+      # Uncomment and configure:
+      # secretsFile = "/path/to/secrets";
+      # networks."YourSSID".pskRaw = "ext:psk_network";
     };
+
+    # Use predictable interface names (wlan0 instead of wlp1s0)
+    usePredictableInterfaceNames = false;
+
+    # Enable DHCP on wlan0
+    interfaces.wlan0.useDHCP = true;
+
+    # Disable global DHCP
+    useDHCP = false;
 
     # Firewall (basic security)
     firewall = {
@@ -113,9 +129,21 @@
   # WiFi Configuration
   # =============================================================================
 
-  # Note: Configure WiFi after first boot using:
-  # nmcli device wifi connect "SSID" password "password"
-  # Or pre-configure using sops secrets
+  # WiFi is configured above in networking.wireless section
+  # 
+  # To add a network:
+  # 1. Plain text (quick setup):
+  #    networking.wireless.networks."YourSSID".psk = "YourPassword";
+  #
+  # 2. Using secrets (recommended for production):
+  #    Create a secrets file with:
+  #      psk_network=your_network_password_hash
+  #    Then configure:
+  #      networking.wireless.secretsFile = "/path/to/secrets";
+  #      networking.wireless.networks."YourSSID".pskRaw = "ext:psk_network";
+  #
+  # 3. Generate password hash with:
+  #    wpa_passphrase "SSID" "password"
 
   # =============================================================================
   # Console Configuration
@@ -137,7 +165,7 @@
     # Network utilities
     iw              # WiFi configuration
     wirelesstools   # iwconfig, etc.
-    networkmanagerapplet  # nmcli comes with networkmanager
+    wpa_supplicant  # For manual WiFi configuration
 
     # System monitoring
     htop
