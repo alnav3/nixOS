@@ -152,12 +152,17 @@ def find_esp_devices() -> list[tuple[str, str]]:
 
 def reboot_device(device_path: str, verbose: bool = True) -> bool:
     """
-    Reboot an ESP device by toggling DTR/RTS signals.
+    Reboot an ESP device using DTR/RTS reset sequence.
     
-    This mimics what web.esphome.io does:
-    1. Assert DTR low (pulls EN/reset low)
-    2. Wait briefly
-    3. Deassert DTR (releases reset, device boots)
+    This implements the classic ESP reset circuit:
+    - DTR -> EN (reset pin, active low via inverter)
+    - RTS -> GPIO0 (boot mode pin, active low via inverter)
+    
+    Sequence for normal boot (not bootloader):
+    1. RTS=low, DTR=low: Normal operation
+    2. RTS=low, DTR=high: Assert reset (EN pulled low)
+    3. Wait 100ms
+    4. RTS=low, DTR=low: Release reset, device boots
     """
     try:
         import serial
@@ -166,29 +171,51 @@ def reboot_device(device_path: str, verbose: bool = True) -> bool:
         return False
     
     try:
-        # Open serial port
-        with serial.Serial(device_path, 115200) as ser:
-            if verbose:
-                print(f"  Resetting device...")
-            
-            # Method 1: Toggle DTR (most common reset circuit)
-            ser.dtr = False  # Pull EN low (reset)
-            ser.rts = True   # Keep GPIO0 high (normal boot)
-            time.sleep(0.1)
-            
-            ser.dtr = True   # Release EN (device starts)
+        if verbose:
+            print(f"  Resetting device...")
+        
+        # Open port with explicit control of DTR/RTS
+        ser = serial.Serial(
+            port=device_path,
+            baudrate=115200,
+            timeout=1,
+            # Don't automatically toggle DTR on open
+            dsrdtr=False,
+            rtscts=False
+        )
+        
+        try:
+            # Initial state: both low (normal operation)
+            ser.dtr = False
             ser.rts = False
-            time.sleep(0.1)
-            
-            # Method 2: Also try RTS toggle (some boards wire it differently)
-            ser.rts = True
             time.sleep(0.05)
+            
+            # Assert reset: DTR high = EN low (device in reset)
+            # Keep RTS low = GPIO0 high (normal boot, not bootloader)
+            ser.dtr = True
             ser.rts = False
+            time.sleep(0.2)  # Hold reset for 200ms
+            
+            # Release reset: DTR low = EN high (device starts booting)
+            ser.dtr = False
+            ser.rts = False
+            time.sleep(0.1)
             
             if verbose:
-                print(f"  Device rebooted successfully")
+                print(f"  Reset signal sent")
             
-            return True
+        finally:
+            # Ensure clean state before closing port
+            time.sleep(0.1)  # Let device start booting before we close port
+            ser.dtr = False
+            ser.rts = False
+            time.sleep(0.05)
+            ser.close()
+        
+        if verbose:
+            print(f"  Device rebooted successfully")
+        
+        return True
             
     except serial.SerialException as e:
         print(f"Error: Could not open {device_path}: {e}", file=sys.stderr)

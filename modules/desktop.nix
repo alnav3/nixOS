@@ -269,9 +269,28 @@ in
     (lib.mkIf cfg.apps.browser {
       environment.systemPackages = [
         inputs.zen-browser.packages."${pkgs.stdenv.hostPlatform.system}".default
-        pkgs.ungoogled-chromium
+        (pkgs.ungoogled-chromium.override {
+          commandLineArgs = [
+            "--enable-features=VaapiVideoDecoder"
+            "--enable-remote-extensions"
+          ];
+        })
         pkgs.floorp-bin
       ];
+
+      # Allow extensions via policy
+      environment.etc."chromium/policies/managed/extensions.json".text = builtins.toJSON {
+        ExtensionSettings = {
+          "*" = {
+            allowed_types = ["extension" "theme" "user_script"];
+            blocked_install_message = "Extensions are allowed.";
+            install_sources = ["*"];
+            installation_mode = "allowed";
+          };
+        };
+        ExtensionInstallBlocklist = [];
+        ExtensionInstallAllowlist = ["*"];
+      };
     })
 
     # File manager apps
