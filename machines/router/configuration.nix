@@ -22,6 +22,7 @@
   # - wan.nix: PPPoE and dynamic DNS (DuckDNS + Cloudflare)
   # - vpn-bypass.nix: Selective VPN bypass utility
   # - openvpn-container.nix: Isolated OpenVPN server
+  # - monitoring.nix: Prometheus, Grafana, per-client bandwidth tracking
   # ===========================================================================
 
   imports = [
@@ -34,6 +35,7 @@
     ./modules/vpn-bypass.nix
     ./modules/openvpn-container.nix
     ./modules/users.nix           # User accounts & security hardening
+    ./modules/monitoring.nix      # Prometheus, Grafana, per-client bandwidth
   ];
 
   # ===========================================================================

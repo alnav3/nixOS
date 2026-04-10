@@ -51,6 +51,20 @@
         }
 
         # ---------------------------------------------------------------------
+        # CLIENT_TRAFFIC Chain - Per-Client Bandwidth Accounting
+        # ---------------------------------------------------------------------
+        # This chain is populated dynamically by client-traffic-tracker service
+        # Each client gets TX (saddr) and RX (daddr) counter rules
+        # Rules are added with comments like "tx_10.71.71.100" and "rx_10.71.71.100"
+        # The monitoring module reads these counters for per-client metrics
+        chain CLIENT_TRAFFIC {
+          # Rules are added dynamically by client-traffic-tracker.service
+          # Example rules that get added:
+          # ip saddr 10.71.71.100 counter comment "tx_10.71.71.100"
+          # ip daddr 10.71.71.100 counter comment "rx_10.71.71.100"
+        }
+
+        # ---------------------------------------------------------------------
         # OUTPUT Chain
         # ---------------------------------------------------------------------
         # Controls packets originating from the router itself
@@ -126,6 +140,13 @@
         # This is the most complex chain as it handles all inter-network routing
         chain forward {
           type filter hook forward priority filter; policy drop;
+
+          # -----------------------------------------------------------------
+          # Per-Client Traffic Accounting
+          # -----------------------------------------------------------------
+          # Jump to CLIENT_TRAFFIC chain for bandwidth monitoring
+          # Must be before flow offloading to count all packets
+          jump CLIENT_TRAFFIC
 
           # -----------------------------------------------------------------
           # OpenVPN Container Traffic
