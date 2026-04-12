@@ -1,42 +1,69 @@
 {
-    pkgs,
-    lib,
-    modulesPath,
-    ...
+  pkgs,
+  lib,
+  modulesPath,
+  ...
 }:
 
 {
   imports = [
-    # Import only needed modules for server
-    ./../../modules/hardware/graphics.nix
-    ./../../modules/services/jellyfin.nix
-    ./../../modules/virtualisation.nix
-    ./../../modules/development.nix
-    ./../../modules/media.nix
-    ./../../containers  # Import container modules
+    # Import full module system for consistency
+    ./../../modules
+    
+    # Container modules
+    ./../../containers
+    
+    # LXC container support
     "${modulesPath}/virtualisation/lxc-container.nix"
   ];
 
   # =============================================================================
-  # Module Configuration - All options explicitly enabled
+  # Module Configuration - Server profile (LXC Container)
   # =============================================================================
 
   mymodules = {
-    # Disable desktop module (not needed for server)
+    # Base configuration
+    base = {
+      enable = true;
+      # Disable boot loader for LXC
+      boot.systemdBoot = false;
+      stateVersion = "24.11";
+    };
+
+    # Disable desktop module (server has no GUI)
     desktop.enable = false;
 
-    # Development (minimal for server)
+    # Disable gaming (server)
+    gaming.enable = false;
+
+    # Disable networking module (handled manually for LXC)
+    networking.enable = false;
+
+    # Development (minimal for server management)
     development = {
       enable = true;
       shell = {
-          zsh.enable = true;
-          direnv = true;
+        zsh.enable = true;
+        direnv = true;
       };
       editor.neovim = true;
       git.enable = true;
+      # Disable development tools not needed on server
+      languages = {
+        go = false;
+        nodejs = false;
+        java = false;
+        python = false;
+        nix = false;
+      };
+      infrastructure = {
+        kubernetes = false;
+        dockerTools = false;
+        databases = false;
+      };
     };
 
-    # Virtualisation
+    # Virtualisation (Docker for containers)
     virtualisation = {
       enable = true;
       docker = {
@@ -61,6 +88,39 @@
         enable = true;
         backend = "docker";
       };
+      # Disable desktop virtualization features
+      spice = false;
+      distrobox = false;
+      qemu = false;
+    };
+
+    # Media (minimal - just yt-dlp for downloads)
+    media = {
+      enable = true;
+      youtube.ytdlp = true;
+      # Disable desktop media apps
+      video.mpv = false;
+      video.obs = false;
+      audio.playerctl = false;
+      audio.finamp = false;
+      documents.zathura = false;
+      documents.thorium = false;
+      social.enable = false;
+    };
+
+    # Hardware (Intel GPU for transcoding)
+    hardware = {
+      bluetooth.enable = false;
+      battery.enable = false;
+      graphics = {
+        enable = true;
+        gpu = "intel";
+        intel = {
+          vaapi = true;
+          qsv = true;
+          openclCompute = true;
+        };
+      };
     };
 
     # Services
@@ -78,25 +138,9 @@
         };
         backup.enable = true;
       };
-    };
-
-    # Hardware (Intel GPU for transcoding)
-    hardware = {
-      graphics = {
-        enable = true;
-        gpu = "intel";
-        intel = {
-          vaapi = true;
-          qsv = true;
-          openclCompute = true;
-        };
-      };
-    };
-
-    # Media (just for yt-dlp)
-    media = {
-      enable = true;
-      youtube.ytdlp = true;
+      # Disable services not needed on server
+      syncthing.enable = false;
+      ipMonitor.enable = false;
     };
   };
 
@@ -162,14 +206,14 @@
     extraGroups = [ "transcoding" ];
   };
 
-  # Intel VA-API override
+  # Intel VA-API override for better transcoding support
   nixpkgs.config.packageOverrides = pkgs: {
     vaapiIntel = pkgs.vaapiIntel.override { enableHybridCodec = true; };
   };
 
   nix.settings.trusted-users = [ "root" "@wheel" "alnav" ];
 
-  # Boot configuration (LXC)
+  # Boot configuration (LXC - disable all bootloaders)
   boot = {
     enableContainers = true;
     loader.grub.enable = lib.mkForce false;
@@ -177,12 +221,12 @@
     loader.generic-extlinux-compatible.enable = lib.mkForce false;
   };
 
-  # Networking configuration
+  # Networking configuration (manual for LXC)
   networking = {
     nameservers = [ "10.71.71.1" ];
     hostName = lib.mkForce "node-0";
     networkmanager.enable = true;
-    wireless.enable = lib.mkForce false;  # Disable wpa_supplicant - no WiFi in LXC container
+    wireless.enable = lib.mkForce false;
     useDHCP = false;
 
     interfaces.eth0.ipv4.addresses = [
@@ -208,17 +252,17 @@
     keyMap = "us";
   };
 
-  # Suppress systemd units for LXC
+  # Suppress systemd units that don't work in LXC
   systemd.suppressedSystemUnits = [
     "dev-mqueue.mount"
     "sys-kernel-debug.mount"
     "sys-fs-fuse-connections.mount"
   ];
   
-  # Disable wpa_supplicant service - no WiFi in LXC container
+  # Disable wpa_supplicant - no WiFi in LXC
   systemd.services.wpa_supplicant.enable = lib.mkForce false;
 
-  # Extra node0-specific packages (things not in modules)
+  # Extra packages for server management
   environment.systemPackages = with pkgs; [
     cifs-utils
     nfs-utils

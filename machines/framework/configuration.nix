@@ -321,6 +321,7 @@
     sshuttle            # SSH-based VPN
     transmission_4-gtk  # Torrent client
     openvpn
+    jan
     moonlight-qt
     protonvpn-gui
     wakeonlan

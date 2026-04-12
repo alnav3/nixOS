@@ -12,6 +12,7 @@
   # - LAN (brlan): Main trusted network - 10.71.71.0/24
   # - Guest (brguest): Isolated guest network - 10.71.72.0/24
   # - IoT (briot): Restricted IoT devices - 192.168.6.0/24
+  # - Homelab (brhomelab): Isolated homelab devices - 10.71.74.0/24
   # - Direct (brdirect): Direct WAN access + OpenVPN - 10.71.73.0/24
   #
   # Modules:
