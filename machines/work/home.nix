@@ -186,7 +186,7 @@ in
 
     go-migrate
     bruno
-  ] ++ (lib.optionals (postingPkg != null) [ postingPkg ]) ++ (with pkgs; [
+  ]  ++ (with pkgs; [
 
     # --- Media (from modules/media.nix) ---
     glib.bin
