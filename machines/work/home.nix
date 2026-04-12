@@ -136,8 +136,6 @@ in
     zoxide
     lsof
 
-    # Secret management
-    infisical
 
     # ZSH plugins/tools
     carapace
@@ -171,18 +169,9 @@ in
     python313
     python313Packages.pip
 
-    # Kubernetes
-    kubectl
-    kubernetes-helm
-    helmfile
-    kaf
-
     # Docker CLI
     docker-compose
 
-    # Database tools
-    postgresql
-    turso-cli
     pkgs-stable.dbeaver-bin
 
     # Neovim
@@ -195,18 +184,11 @@ in
     # Work tools
     teams-for-linux
 
-    # Freelance tools
     go-migrate
     bruno
-    love
   ] ++ (lib.optionals (postingPkg != null) [ postingPkg ]) ++ (with pkgs; [
 
     # --- Media (from modules/media.nix) ---
-    obs-studio
-    playerctl
-    zathura
-    thunderbird
-    pika-backup
     glib.bin
     glib.dev
 
@@ -219,11 +201,7 @@ in
     # Work VPN (from machines/work/configuration.nix)
     openconnect
     networkmanager-openconnect
-    gum
 
-    # --- Bluetooth tools (from modules/hardware/bluetooth.nix) ---
-    bluez
-    bluez-tools
     rofi-bluetooth
     alsa-utils
     pavucontrol
@@ -238,8 +216,6 @@ in
 
     # --- Base utilities (from modules/base.nix) ---
     cifs-utils
-    age
-    sops
     killall
   ]);
 
@@ -262,7 +238,6 @@ in
       cl = "clear";
       update = "home-manager switch --flake '/home/alnav/nixOS#alnav@work'";
       clean-disk = "nix profile wipe-history --older-than 1d";
-      rofi-wifi = "${inputs.rofi-wifi}/rofi-wifi-menu.sh";
       update-flake = "nix flake lock --update-input";
       mjolnir = "ssh mjolnir";
       deck = "ssh deck";
@@ -322,24 +297,8 @@ in
   };
 
   # ===========================================================================
-  # Syncthing (user-level service via Home Manager)
-  # ===========================================================================
-
-  services.syncthing.enable = true;
-
-  # ===========================================================================
   # Systemd User Services
   # ===========================================================================
-
-  # MPRIS proxy for Bluetooth headset controls (from hardware/bluetooth.nix)
-  systemd.user.services.mpris-proxy = {
-    Unit = {
-      Description = "Mpris proxy";
-      After = [ "network.target" "sound.target" ];
-    };
-    Install.WantedBy = [ "default.target" ];
-    Service.ExecStart = "${pkgs.bluez}/bin/mpris-proxy";
-  };
 
   # hyprdynamicmonitors prepare (from modules/desktop.nix)
   systemd.user.services.hyprdynamicmonitors-prepare = {
@@ -354,22 +313,5 @@ in
       TimeoutStartSec = "3";
       RemainAfterExit = "yes";
     };
-  };
-
-  # ===========================================================================
-  # Chromium Extension Policy (user-level)
-  # ===========================================================================
-
-  xdg.configFile."chromium/policies/managed/extensions.json".text = builtins.toJSON {
-    ExtensionSettings = {
-      "*" = {
-        allowed_types = [ "extension" "theme" "user_script" ];
-        blocked_install_message = "Extensions are allowed.";
-        install_sources = [ "*" ];
-        installation_mode = "allowed";
-      };
-    };
-    ExtensionInstallBlocklist = [];
-    ExtensionInstallAllowlist = [ "*" ];
   };
 }
