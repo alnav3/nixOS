@@ -328,6 +328,8 @@
     rebuild-remote      # Custom rebuild command
     deploy-all          # Comprehensive deployment script
     deploy-config-setup # Deploy configuration setup helper
+    spotiflac           # Spotify FLAC downloader
+    emudeck             # Emulator configuration tool
   ];
 
   # =============================================================================

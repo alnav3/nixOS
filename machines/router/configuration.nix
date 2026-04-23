@@ -22,6 +22,8 @@
   # - wireguard.nix: WireGuard VPN client
   # - wan.nix: PPPoE and dynamic DNS (DuckDNS + Cloudflare)
   # - vpn-bypass.nix: Selective VPN bypass utility
+  # - vpn-fast.nix: Per-device switch to the fast WireGuard profile (wg1)
+  # - vpn-home.nix: Per-device switch to the home WireGuard profile (wg2)
   # - openvpn-container.nix: Isolated OpenVPN server
   # - monitoring.nix: Prometheus, Grafana, per-client bandwidth tracking
   # ===========================================================================
@@ -34,6 +36,8 @@
     ./modules/wireguard.nix
     ./modules/wan.nix
     ./modules/vpn-bypass.nix
+    ./modules/vpn-fast.nix
+    ./modules/vpn-home.nix
     ./modules/openvpn-container.nix
     ./modules/users.nix           # User accounts & security hardening
     ./modules/monitoring.nix      # Prometheus, Grafana, per-client bandwidth

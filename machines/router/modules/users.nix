@@ -204,4 +204,6 @@ in
   sops.secrets."duckdns.env".mode    = lib.mkForce "0400";
   sops.secrets."cloudflare.env".mode = lib.mkForce "0400";
   sops.secrets."vpn.conf".mode       = lib.mkForce "0400";
+  sops.secrets."vpn.fast.conf".mode  = lib.mkForce "0400";
+  sops.secrets."vpn.home.conf".mode  = lib.mkForce "0400";
 }

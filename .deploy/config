@@ -1,0 +1,36 @@
+# Deploy-all configuration file
+# Generated on Sat Apr 11 10:08:11 AM CEST 2026
+# Similar to ~/.ssh/config but for deployment settings
+#
+# This file contains MAC addresses for Wake-on-LAN and other deployment settings
+
+Host mjolnir
+    MACAddress [2026-04-11 10:08:10] Getting MAC address for mjolnir...
+34:5a:60:13:3a:2b
+    WakeMethod wakeonlan
+    WakeTimeout 60
+    BuildHost true
+    
+Host deck
+    MACAddress [2026-04-11 10:08:10] Getting MAC address for deck...
+e8:8d:a6:e1:33:1a
+    WakeMethod wakeonlan
+    WakeTimeout 30
+    Optional true
+    
+Host node0
+    # Node0 might not need wake-on-LAN if it's always on
+    WakeMethod none
+    
+Host router
+    WakeMethod none
+    ConfirmationTimeout 120
+    # Router rebuilds require confirmation due to network interruption
+    
+# Global settings
+Global
+    LogDirectory /home/alnav/nixOS
+    VerboseByDefault false
+    RepoDirectory /home/alnav/nixOS
+    DefaultWakeMethod wakeonlan
+    DefaultWakeTimeout 60

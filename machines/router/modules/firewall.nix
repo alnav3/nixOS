@@ -53,9 +53,25 @@ in
       # =========================================================================
       table inet filter {
         # ---------------------------------------------------------------------
-        # VPN Bypass Set
+        # VPN Bypass Set (routes traffic via ppp0, bypassing all VPN)
         # ---------------------------------------------------------------------
         set vpn_bypass {
+          type ipv4_addr
+          flags timeout
+        }
+
+        # ---------------------------------------------------------------------
+        # VPN Fast Set (routes traffic via wg1 — the fast VPN profile)
+        # ---------------------------------------------------------------------
+        set vpn_fast {
+          type ipv4_addr
+          flags timeout
+        }
+
+        # ---------------------------------------------------------------------
+        # VPN Home Set (routes traffic via wg2 — the home VPN profile)
+        # ---------------------------------------------------------------------
+        set vpn_home {
           type ipv4_addr
           flags timeout
         }
@@ -65,7 +81,7 @@ in
         # ---------------------------------------------------------------------
         flowtable f {
           hook ingress priority 0;
-          devices = { wg0, ${br.lan}, ${br.guest} };
+          devices = { wg0, wg1, wg2, ${br.lan}, ${br.guest} };
         }
 
         # ---------------------------------------------------------------------
@@ -112,6 +128,8 @@ in
 
           # WireGuard VPN: Allow established/related connections
           iifname "wg0" ct state { established, related } counter accept
+          iifname "wg1" ct state { established, related } counter accept
+          iifname "wg2" ct state { established, related } counter accept
 
           # WAN: Allow OpenVPN to container
           iifname "ppp0" udp dport ${toString ovpn.port} ct state new counter accept comment "Allow OpenVPN to container"
@@ -202,16 +220,36 @@ in
           iifname "${br.lan}" oifname "ppp0" ip saddr 10.71.71.91 drop comment "Block internet for android tv"
 
           # -----------------------------------------------------------------
-          # Default LAN → Internet (via VPN)
+          # Default LAN → Internet (via secure VPN wg0)
           # -----------------------------------------------------------------
           iifname "${br.lan}" oifname "wg0" counter accept
-          iifname "${br.guest}" oifname "wg0" counter accept
+
+          # -----------------------------------------------------------------
+          # Default Other Subnets → Internet (via fast VPN wg1)
+          # -----------------------------------------------------------------
+          iifname { "${br.guest}", "${br.iot}", "${br.homelab}", "${br.direct}" } oifname "wg1" counter accept
+
+
+          # -----------------------------------------------------------------
+          # LAN → Internet (via fast VPN wg1) for devices in vpn_fast set
+          # -----------------------------------------------------------------
+          # Policy routing (set up by the vpn-fast command) sends matched
+          # source IPs to table 201 which routes via wg1. We still need the
+          # forward chain to accept these packets.
+          iifname { "${br.lan}", "${br.guest}" } oifname "wg1" \
+          ip saddr @vpn_fast counter accept comment "LAN/guest → fast VPN"
+
+          # -----------------------------------------------------------------
+          # LAN → Internet (via home VPN wg2) for devices in vpn_home set
+          # -----------------------------------------------------------------
+          iifname { "${br.lan}", "${br.guest}" } oifname "wg2" \
+          ip saddr @vpn_home counter accept comment "LAN/guest → home VPN"
 
           # -----------------------------------------------------------------
           # IoT Network Rules
           # -----------------------------------------------------------------
           # Specific IoT devices allowed to VPN internet
-          iifname "${br.iot}" oifname "wg0" ip saddr 192.168.6.3 counter accept comment "Work laptop internet access"
+          iifname "${br.iot}" oifname "wg1" ip saddr 192.168.6.3 counter accept comment "Work laptop internet access"
 
           # IoT → LAN: Restricted to specific server
           iifname "${br.iot}" oifname "${br.lan}" ip daddr 10.71.71.47 counter accept comment "IoT → 10.71.71.47"
@@ -227,6 +265,12 @@ in
           iifname "wg0" ct state established,related counter accept
           iifname "wg0" oifname "${br.direct}" ct state established,related counter accept
           iifname "${br.lan}" oifname "${br.direct}" ct state established,related counter accept
+
+          # Fast VPN return traffic (wg1 → LAN/guest)
+          iifname "wg1" ct state established,related counter accept
+
+          # Home VPN return traffic (wg2 → LAN/guest)
+          iifname "wg2" ct state established,related counter accept
 
           # -----------------------------------------------------------------
           # OpenVPN Client → LAN Access
@@ -324,6 +368,12 @@ in
 
           # Masquerade container traffic through VPN
           oifname "wg0" ip saddr ${ovpn.containerIp} masquerade comment "Container to VPN masquerade"
+
+          # Masquerade all traffic going through fast VPN (wg1)
+          oifname "wg1" masquerade comment "Fast VPN NAT"
+
+          # Masquerade all traffic going through home VPN (wg2)
+          oifname "wg2" masquerade comment "Home VPN NAT"
 
           # Masquerade all traffic going through WAN
           oifname "ppp0" masquerade
