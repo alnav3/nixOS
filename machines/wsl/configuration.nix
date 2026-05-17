@@ -190,6 +190,12 @@
           llmLs.enable = true;  # Useful for development
         };
       };
+
+      # Git user configuration
+      programs.git = {
+        userName = "alex";
+        userEmail = "anavia@profile.es";
+      };
     };
     backupFileExtension = "bak";
     extraSpecialArgs = {

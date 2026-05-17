@@ -158,8 +158,6 @@ in
         # Screen management
         hyprdynamicmonitors
         shikane
-        # Password manager
-        proton-pass
         # Topbar
         hyprsunset
         # Exit helper

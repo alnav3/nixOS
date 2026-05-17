@@ -1,0 +1,146 @@
+[2026-04-19 15:32:15] Starting deployment process...
+[2026-04-19 15:32:15] Log file: /home/alnav/nixOS/deploy-20260419_153215.log
+[2026-04-19 15:32:15] Verbose mode: false
+[2026-04-19 15:32:15] Configuration file: /home/alnav/nixOS/.deploy/config
+[2026-04-19 15:32:15] Updating flakes...
+[2026-04-19 15:32:15] Executing: nix flake update
+warning: Git tree '/home/alnav/nixOS' is dirty
+warning: unable to download 'https://api.github.com/repos/nix-community/disko/commits/HEAD': HTTP error 403
+
+response body:
+
+{"message":"API rate limit exceeded for 138.199.6.223. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)","documentation_url":"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting"}; using cached version
+unpacking 'github:nix-community/disko/5ad85c82cc52264f4beddc934ba57f3789f28347' into the Git cache...
+warning: unable to download 'https://api.github.com/repos/Daaboulex/eden-nix/commits/HEAD': HTTP error 403
+
+response body:
+
+{"message":"API rate limit exceeded for 138.199.6.223. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)","documentation_url":"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting"}; using cached version
+unpacking 'github:Daaboulex/eden-nix/e565ad431b4a1ed4c019e31c119b6c082950ebea' into the Git cache...
+warning: unable to download 'https://api.github.com/repos/alnav3/emudeck-electron/commits/HEAD': HTTP error 403
+
+response body:
+
+{"message":"API rate limit exceeded for 138.199.6.223. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)","documentation_url":"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting"}; using cached version
+unpacking 'github:alnav3/emudeck-electron/884b47795e1dd147377ea590789dc491de9e6cc8' into the Git cache...
+warning: unable to download 'https://api.github.com/repos/alnav3/ES-DE-flake/commits/HEAD': HTTP error 403
+
+response body:
+
+{"message":"API rate limit exceeded for 138.199.6.223. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)","documentation_url":"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting"}; using cached version
+unpacking 'github:alnav3/ES-DE-flake/28c9e2cb842d2dc0a5a63912f3bfcd04709c9f5a' into the Git cache...
+warning: unable to download 'https://api.github.com/repos/nix-community/home-manager/commits/HEAD': HTTP error 403
+
+response body:
+
+{"message":"API rate limit exceeded for 138.199.6.223. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)","documentation_url":"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting"}; using cached version
+unpacking 'github:nix-community/home-manager/5b56ad02dc643808b8af6d5f3ff179e2ce9593f4' into the Git cache...
+warning: unable to download 'https://api.github.com/repos/fiffeek/hyprdynamicmonitors/commits/HEAD': HTTP error 403
+
+response body:
+
+{"message":"API rate limit exceeded for 138.199.6.223. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)","documentation_url":"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting"}; using cached version
+unpacking 'github:fiffeek/hyprdynamicmonitors/ce4292c0b136c7933eaf3b79ac72e659d81323cb' into the Git cache...
+warning: unable to download 'https://api.github.com/repos/hyprwm/Hyprland/commits/HEAD': HTTP error 403
+
+response body:
+
+{"message":"API rate limit exceeded for 138.199.6.223. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)","documentation_url":"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting"}; using cached version
+unpacking 'github:hyprwm/Hyprland/889ee4f26d77ff0c36f5c4767ef0629371fd2c18' into the Git cache...
+warning: unable to download 'https://api.github.com/repos/Jovian-Experiments/Jovian-NixOS/commits/HEAD': HTTP error 403
+
+response body:
+
+{"message":"API rate limit exceeded for 138.199.6.223. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)","documentation_url":"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting"}; using cached version
+unpacking 'github:Jovian-Experiments/Jovian-NixOS/eac78fc379ca47f7e21be8539c405e5fb489a857' into the Git cache...
+warning: unable to download 'https://api.github.com/repos/pabloaul/lsfg-vk-flake/commits/main': HTTP error 403
+
+response body:
+
+{"message":"API rate limit exceeded for 138.199.6.223. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)","documentation_url":"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting"}; using cached version
+unpacking 'github:pabloaul/lsfg-vk-flake/62aadfc844b2002abe47cbbc9dfd028033376248' into the Git cache...
+warning: unable to download 'https://api.github.com/repos/gmodena/nix-flatpak/commits/v0.6.0': HTTP error 403
+
+response body:
+
+{"message":"API rate limit exceeded for 138.199.6.223. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)","documentation_url":"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting"}; using cached version
+unpacking 'github:gmodena/nix-flatpak/5e54c3ca05a7c7d968ae1ddeabe01d2a9bc1e177' into the Git cache...
+warning: unable to download 'https://api.github.com/repos/NixOS/nixos-hardware/commits/master': HTTP error 403
+
+response body:
+
+{"message":"API rate limit exceeded for 138.199.6.223. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)","documentation_url":"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting"}; using cached version
+unpacking 'github:NixOS/nixos-hardware/c775c2772ba56e906cbeb4e0b2db19079ef11ff7' into the Git cache...
+warning: unable to download 'https://api.github.com/repos/nix-community/NixOS-WSL/commits/main': HTTP error 403
+
+response body:
+
+{"message":"API rate limit exceeded for 138.199.6.223. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)","documentation_url":"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting"}; using cached version
+unpacking 'github:nix-community/NixOS-WSL/9a8c2a85f1ffdcecfb0f9c52c5a73c49ceb43911' into the Git cache...
+warning: unable to download 'https://api.github.com/repos/nixos/nixpkgs/commits/nixos-unstable': HTTP error 403
+
+response body:
+
+{"message":"API rate limit exceeded for 138.199.6.223. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)","documentation_url":"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting"}; using cached version
+unpacking 'github:nixos/nixpkgs/4bd9165a9165d7b5e33ae57f3eecbcb28fb231c9' into the Git cache...
+warning: unable to download 'https://api.github.com/repos/NixOS/nixpkgs/commits/nixos-25.05': HTTP error 403
+
+response body:
+
+{"message":"API rate limit exceeded for 138.199.6.223. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)","documentation_url":"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting"}; using cached version
+unpacking 'github:NixOS/nixpkgs/ac62194c3917d5f474c1a844b6fd6da2db95077d' into the Git cache...
+warning: unable to download 'https://api.github.com/repos/noctalia-dev/noctalia-shell/commits/HEAD': HTTP error 403
+
+response body:
+
+{"message":"API rate limit exceeded for 138.199.6.223. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)","documentation_url":"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting"}; using cached version
+unpacking 'github:noctalia-dev/noctalia-shell/4fa29ff386eda558d4e6a586290eb4600fa972ae' into the Git cache...
+warning: unable to download 'https://api.github.com/repos/jorikvanveen/posting-flake/commits/HEAD': HTTP error 403
+
+response body:
+
+{"message":"API rate limit exceeded for 138.199.6.223. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)","documentation_url":"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting"}; using cached version
+unpacking 'github:jorikvanveen/posting-flake/64d14aed10f90d98eee6383de47d96e9c171f505' into the Git cache...
+warning: input 'posting-flake/utils' has an override for a non-existent input 'nixpkgs'
+warning: unable to download 'https://api.github.com/repos/zbaylin/rofi-wifi-menu/commits/HEAD': HTTP error 403
+
+response body:
+
+{"message":"API rate limit exceeded for 138.199.6.223. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)","documentation_url":"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting"}; using cached version
+unpacking 'github:zbaylin/rofi-wifi-menu/bd5f34f8c079a92bebf1885f2d68bc3a160e3742' into the Git cache...
+unpacking 'github:Mic92/sops-nix/a4c33bfecb93458d90f9eb26f1cf695b47285243' into the Git cache...
+warning: unable to download 'https://api.github.com/repos/danth/stylix/commits/HEAD': HTTP error 403
+
+response body:
+
+{"message":"API rate limit exceeded for 138.199.6.223. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)","documentation_url":"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting"}; using cached version
+unpacking 'github:danth/stylix/e3861617645a43c9bbefde1aa6ac54dd0a44bfa9' into the Git cache...
+warning: unable to download 'https://api.github.com/repos/alnav3/system-bridge-nix/commits/HEAD': HTTP error 403
+
+response body:
+
+{"message":"API rate limit exceeded for 138.199.6.223. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)","documentation_url":"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting"}; using cached version
+unpacking 'github:alnav3/system-bridge-nix/52cca57a9c729522d1997af19d08c98df368876c' into the Git cache...
+warning: unable to download 'https://api.github.com/repos/tmux-plugins/tpm/commits/HEAD': HTTP error 403
+
+response body:
+
+{"message":"API rate limit exceeded for 138.199.6.223. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)","documentation_url":"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting"}; using cached version
+unpacking 'github:tmux-plugins/tpm/99469c4a9b1ccf77fade25842dc7bafbc8ce9946' into the Git cache...
+warning: unable to download 'https://api.github.com/repos/BirdeeHub/nix-wrapper-modules/commits/HEAD': HTTP error 403
+
+response body:
+
+{"message":"API rate limit exceeded for 138.199.6.223. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)","documentation_url":"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting"}; using cached version
+unpacking 'github:BirdeeHub/nix-wrapper-modules/75febede14a0845f4ef429da692a0698bf433600' into the Git cache...
+warning: unable to download 'https://api.github.com/repos/0xc000022070/zen-browser-flake/commits/HEAD': HTTP error 403
+
+response body:
+
+{"message":"API rate limit exceeded for 138.199.6.223. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)","documentation_url":"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting"}; using cached version
+unpacking 'github:0xc000022070/zen-browser-flake/179a2e63531541cb009208c913d7ddf7046ea2b6' into the Git cache...
+[2026-04-19 15:33:32] ✓ Updating flakes completed successfully
+[2026-04-19 15:33:32] Checking if mjolnir is reachable...
+[2026-04-19 15:33:37] ✓ mjolnir is already reachable
+[2026-04-19 15:33:37] Setting up sleep inhibitor on mjolnir...
+duplicate session: deploy_inhibitor

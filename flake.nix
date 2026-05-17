@@ -21,6 +21,18 @@
     # Desktop/Window managers
     hyprland.url = "github:hyprwm/Hyprland";
     hyprdynamicmonitors.url = "github:fiffeek/hyprdynamicmonitors";
+
+    # Hyprland plugins (touch gestures) - used by surface tablet.
+    # NOTE: Hyprspace (workspace overview) is intentionally NOT a flake input
+    # right now: its source targets Hyprland v0.54.2 while hyprgrass needs
+    # current Hyprland. They can't load into the same Hyprland binary.
+    # Revisit when Hyprspace catches up.
+    hyprgrass = {
+      url = "github:horriblename/hyprgrass";
+      inputs.hyprland.follows = "hyprland";
+    };
+
+    emudeck.url = "github:alnav3/emudeck-electron";
     noctalia = {
       url = "github:noctalia-dev/noctalia-shell";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -46,6 +58,10 @@
     };
     eden-nix = {
       url = "github:Daaboulex/eden-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    es-de-flake = {
+      url = "github:alnav3/ES-DE-flake";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -101,7 +117,16 @@
         system = "x86_64-linux";
         desktop = true;
         gaming = true;
+        eden = true;
         hardware = [ inputs.nixos-hardware.nixosModules.framework-13-7040-amd ];
+        extraModules = [ inputs.emudeck.nixosModules.default ];
+      };
+
+      # Surface Pro 8 (Intel)
+      surface = {
+        system = "x86_64-linux";
+        desktop = true;
+        hardware = [ inputs.nixos-hardware.nixosModules.microsoft-surface-pro-intel ];
       };
       # work - moved to Fedora Workstation with standalone Home Manager
       # See machines/work/home.nix and homeConfigurations output below
@@ -159,7 +184,7 @@
     # ===========================================================================
     # Helper Functions
     # ===========================================================================
-    
+
     # Get host attribute with default
     hostAttr = host: attr: default:
       if hosts.${host} ? ${attr} then hosts.${host}.${attr} else default;

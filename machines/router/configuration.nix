@@ -25,6 +25,8 @@
   # - vpn-fast.nix: Per-device switch to the fast WireGuard profile (wg1)
   # - vpn-home.nix: Per-device switch to the home WireGuard profile (wg2)
   # - openvpn-container.nix: Isolated OpenVPN server
+  # - speedtest-tracker-container.nix: Isolated Speedtest Tracker
+  # - tinyproxy-container.nix: Isolated HTTP/HTTPS proxy
   # - monitoring.nix: Prometheus, Grafana, per-client bandwidth tracking
   # ===========================================================================
 
@@ -39,6 +41,8 @@
     ./modules/vpn-fast.nix
     ./modules/vpn-home.nix
     ./modules/openvpn-container.nix
+    ./modules/speedtest-tracker-container.nix
+    ./modules/tinyproxy-container.nix
     ./modules/users.nix           # User accounts & security hardening
     ./modules/monitoring.nix      # Prometheus, Grafana, per-client bandwidth
   ];

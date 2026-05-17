@@ -3,8 +3,10 @@
 # IP Monitor Script
 # Checks if public IP matches expected IP and shows notifications when it doesn't
 
+# Disable exit on error for this script (writeShellApplication adds set -e)
+set +e
+
 # Configuration
-EXPECTED_IP="79.127.184.15"
 NORMAL_INTERVAL=30  # seconds
 UNSAFE_INTERVAL=10  # seconds
 NOTIFICATION_ID=12345  # Persistent notification ID
@@ -14,6 +16,7 @@ SCRIPT_NOTIFICATION_IDS="/tmp/ip-monitor-notification-ids.tmp"  # Track all noti
 
 # State tracking
 STATE_FILE="/tmp/ip-monitor-state.tmp"
+ROUTER_IP_CACHE="/tmp/ip-monitor-router-ip.cache"
 
 # Hyprpanel specific settings
 # HYPRPANEL_NOTIFICATION_TIMEOUT=10  # Hyprpanel typically times out after 10 seconds (unused)
@@ -29,7 +32,7 @@ LOG_FILE="/tmp/ip-monitor.log"
 
 # Function to log messages
 log_message() {
-    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" | tee -a "$LOG_FILE"
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> "$LOG_FILE"
 }
 
 # Function to get current public IP
@@ -38,7 +41,7 @@ get_public_ip() {
 
     # Try multiple services in case one is down
     for service in "curl -s https://ipinfo.io/ip" "curl -s https://icanhazip.com" "curl -s https://ipecho.net/plain" "dig +short myip.opendns.com @resolver1.opendns.com"; do
-        ip=$(eval "$service" 2>/dev/null | tr -d '[:space:]')
+        ip=$(eval "$service" 2>/dev/null | tr -d '[:space:]') || true
 
         # Validate IP format
         if [[ $ip =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
@@ -47,6 +50,27 @@ get_public_ip() {
         fi
     done
 
+    echo ""
+    return 1
+}
+
+# Function to get router's wg0 interface IP
+get_router_wg0_ip() {
+    local ip=""
+    
+    log_message "DEBUG: Attempting to SSH to router and get wg0 IP..."
+    
+    # SSH to router and get IP from wg0 interface via curl (with timeout)
+    ip=$(timeout 10 ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no router "curl -s --max-time 5 --interface wg0 https://ifconfig.me" 2>/dev/null | tr -d '[:space:]')
+    
+    # Validate IP format
+    if [[ $ip =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+        log_message "DEBUG: Successfully retrieved router wg0 IP: $ip"
+        echo "$ip"
+        return 0
+    fi
+    
+    log_message "DEBUG: Failed to retrieve valid router wg0 IP (got: '$ip')"
     echo ""
     return 1
 }
@@ -74,7 +98,7 @@ show_notification() {
     local urgency="$3"
     local persistent="$4"  # "true" for persistent notifications
     local daemon
-    daemon=$(detect_notification_daemon)
+    daemon=$(detect_notification_daemon) || true
 
     # Don't clear automatically - only clear when explicitly requested
 
@@ -106,10 +130,10 @@ show_notification() {
 
         notify_cmd="$notify_cmd \"$title\" \"$message\""
         log_message "DEBUG: Sending notification: $notify_cmd"
-        eval "$notify_cmd"
+        eval "$notify_cmd" || true
 
         # Track the notification ID
-        track_notification_id "$NOTIFICATION_ID"
+        track_notification_id "$NOTIFICATION_ID" || true
 
         # Store notification details for cleanup purposes
         if [[ "$persistent" == "true" ]]; then
@@ -117,16 +141,19 @@ show_notification() {
         fi
     fi
 
-    # Also log to console
+    # Also log to console (always visible)
     case $urgency in
         "critical")
-            echo -e "${RED}[CRITICAL] $title: $message${NC}"
+            echo -e "${RED}[CRITICAL] $title: $message${NC}" >&2
+            log_message "[CRITICAL] $title: $message"
             ;;
         "normal")
             echo -e "${GREEN}[INFO] $title: $message${NC}"
+            log_message "[INFO] $title: $message"
             ;;
         *)
             echo -e "${YELLOW}[WARNING] $title: $message${NC}"
+            log_message "[WARNING] $title: $message"
             ;;
     esac
 }
@@ -157,7 +184,7 @@ clear_all_script_notifications() {
 
 # Function to clear notification (alias for backward compatibility)
 clear_notification() {
-    clear_all_script_notifications
+    clear_all_script_notifications || true
 }
 
 # Function to track notification ID
@@ -180,45 +207,90 @@ save_state() {
     echo "$1" > "$STATE_FILE"
 }
 
+# Function to save router IP to cache
+save_router_ip_cache() {
+    echo "$1" > "$ROUTER_IP_CACHE"
+    log_message "DEBUG: Cached router IP: $1"
+}
+
+# Function to get cached router IP
+get_cached_router_ip() {
+    if [[ -f "$ROUTER_IP_CACHE" ]]; then
+        cat "$ROUTER_IP_CACHE"
+    else
+        echo ""
+    fi
+}
+
 # Function to check IP and handle notifications
 check_ip() {
-    local current_ip
+    local router_ip
+    local local_ip
     local current_state
     local last_state
 
-    current_ip=$(get_public_ip)
-    last_state=$(get_last_state)
+    # Use || true to prevent set -e from exiting on failure
+    last_state=$(get_last_state) || true
+    
+    # Step 1: Get router's wg0 IP (this becomes our expected IP)
+    # Use || true to prevent set -e from exiting on failure
+    router_ip=$(get_router_wg0_ip) || true
+    
+    log_message "DEBUG: Router WG0 IP (fresh): $router_ip, Last state: '$last_state'"
 
-    log_message "DEBUG: Current IP: $current_ip, Last state: '$last_state'"
+    if [[ -z "$router_ip" ]]; then
+        # Failed to get router IP via SSH, try to use cached IP
+        router_ip=$(get_cached_router_ip) || true
+        
+        if [[ -z "$router_ip" ]]; then
+            log_message "ERROR: Could not retrieve router wg0 IP and no cached IP available - expected IP not recovered"
+            # Only show error notification if we weren't already in error state
+            if [[ "$last_state" != "error" ]]; then
+                show_notification "IP Unsafe" "Expected IP not recovered" "critical" "true"
+            fi
+            save_state "error" || true
+            return 2
+        else
+            log_message "WARNING: Using cached router IP: $router_ip (SSH connection failed)"
+        fi
+    else
+        # Successfully got fresh router IP, cache it for future use
+        save_router_ip_cache "$router_ip" || true
+    fi
 
-    if [[ -z "$current_ip" ]]; then
-        log_message "ERROR: Could not retrieve public IP address"
+    # Step 2: Router IP retrieved successfully, now get local public IP
+    # Use || true to prevent set -e from exiting on failure
+    local_ip=$(get_public_ip) || true
+    
+    if [[ -z "$local_ip" ]]; then
+        log_message "ERROR: Could not retrieve local public IP address"
         # Only show error notification if we weren't already in error state
         if [[ "$last_state" != "error" ]]; then
-            show_notification "IP Monitor Error" "Unable to retrieve public IP address" "critical" "true"
+            show_notification "IP Monitor Error" "Unable to retrieve local public IP address" "critical" "true"
         fi
-        save_state "error"
+        save_state "error" || true
         return 2
     fi
 
-    log_message "Current IP: $current_ip | Expected IP: $EXPECTED_IP"
+    log_message "Router WG0 IP: $router_ip | Local IP: $local_ip"
 
-    if [[ "$current_ip" == "$EXPECTED_IP" ]]; then
+    # Step 3: Compare router IP with local IP
+    if [[ "$local_ip" == "$router_ip" ]]; then
         current_state="safe"
 
         # IP is safe
         if [[ "$last_state" != "safe" ]]; then
             # State changed from unsafe/error to safe - clear notifications and show recovery message
             log_message "DEBUG: State change to safe from '$last_state'"
-            clear_notification
+            clear_notification || true
             if [[ "$last_state" == "unsafe" || "$last_state" == "error" ]]; then
-                show_notification "IP Monitor" "IP is now safe: $current_ip" "normal" "false"
-                log_message "INFO: IP is now safe - $current_ip"
+                show_notification "IP Monitor" "IP is now safe: $local_ip" "normal" "false"
+                log_message "INFO: IP is now safe - Local: $local_ip matches Router: $router_ip"
             fi
         fi
         # If already safe, don't show any notification - just log quietly
 
-        save_state "$current_state"
+        save_state "$current_state" || true
         return 0
     else
         current_state="unsafe"
@@ -227,13 +299,12 @@ check_ip() {
         if [[ "$last_state" != "unsafe" ]]; then
             # State changed from safe/error to unsafe - show persistent warning
             log_message "DEBUG: State change to unsafe from '$last_state'"
-            show_notification "IP UNSAFE!" "Current IP: $current_ip (Expected: $EXPECTED_IP)" "critical" "true"
-            log_message "WARNING: IP mismatch detected - Current: $current_ip, Expected: $EXPECTED_IP"
+            show_notification "IP UNSAFE!" "Local IP: $local_ip | Router IP: $router_ip" "critical" "true"
+            log_message "WARNING: IP mismatch detected - Local: $local_ip, Router: $router_ip"
         fi
         # If already unsafe, don't send new notification - the persistent one should still be there
-        # If already unsafe, don't send new notification - the persistent one should still be there
 
-        save_state "$current_state"
+        save_state "$current_state" || true
         return 1
     fi
 }
@@ -258,7 +329,8 @@ trap cleanup SIGTERM SIGINT
 
 # Main monitoring loop
 main() {
-    log_message "Starting IP monitor - Expected IP: $EXPECTED_IP"
+    echo "Starting IP monitor - checking router wg0 interface IP"
+    log_message "Starting IP monitor - checking router wg0 interface IP"
 
     # Check if required commands are available
     if ! command -v curl >/dev/null 2>&1 && ! command -v dig >/dev/null 2>&1; then
@@ -273,14 +345,20 @@ main() {
         case $exit_code in
             0)
                 # IP is safe - check again in 30 seconds
+                echo "IP is safe, checking again in ${NORMAL_INTERVAL}s..."
+                log_message "DEBUG: IP is safe, sleeping for ${NORMAL_INTERVAL}s"
                 sleep "$NORMAL_INTERVAL"
                 ;;
             1)
                 # IP is unsafe - check again in 10 seconds
+                echo "IP is unsafe, checking again in ${UNSAFE_INTERVAL}s..."
+                log_message "DEBUG: IP is unsafe, sleeping for ${UNSAFE_INTERVAL}s"
                 sleep "$UNSAFE_INTERVAL"
                 ;;
             2)
                 # Error retrieving IP - check again in 10 seconds
+                echo "Error state, checking again in ${UNSAFE_INTERVAL}s..."
+                log_message "DEBUG: Error state, sleeping for ${UNSAFE_INTERVAL}s"
                 sleep "$UNSAFE_INTERVAL"
                 ;;
         esac
@@ -294,26 +372,31 @@ IP Monitor Script
 
 Usage: $0 [OPTIONS]
 
-This script monitors your public IP address and shows notifications when it doesn't match the expected IP.
+This script monitors your public IP address by comparing it against your router's wg0 interface IP.
 
 Options:
     -h, --help          Show this help message
-    -e, --expected-ip   Set the expected IP address (default: $EXPECTED_IP)
     -n, --normal        Set normal check interval in seconds (default: $NORMAL_INTERVAL)
     -u, --unsafe        Set unsafe check interval in seconds (default: $UNSAFE_INTERVAL)
     -l, --log           Show log file location and exit
 
 Examples:
     $0                                    # Run with default settings
-    $0 -e 192.168.1.100                 # Set different expected IP
     $0 -n 60 -u 5                       # Check every 60s normally, every 5s when unsafe
 
 The script will:
-- Check your public IP every 30 seconds when it matches the expected IP
-- Check every 10 seconds when the IP doesn't match
+- SSH to router and retrieve wg0 interface IP (via curl --interface wg0)
+- Compare your local public IP against the router's wg0 IP
+- Check every 30 seconds when IPs match (safe state)
+- Check every 10 seconds when IPs don't match (unsafe state)
 - Show notifications only when IP status changes
+- Show "Expected IP not recovered" if unable to retrieve router IP
 - Unsafe notifications persist until manually dismissed
 - Log all activities to $LOG_FILE
+
+Requirements:
+- SSH access to router (configured as 'ssh router')
+- Router must have curl and wg0 interface available
 
 To stop the script, press Ctrl+C
 EOF
@@ -322,10 +405,6 @@ EOF
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
-        -e|--expected-ip)
-            EXPECTED_IP="$2"
-            shift 2
-            ;;
         -n|--normal)
             NORMAL_INTERVAL="$2"
             shift 2

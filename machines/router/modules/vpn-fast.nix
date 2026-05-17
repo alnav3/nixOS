@@ -135,23 +135,6 @@
           ip -4 route replace default dev wg1 table 201
           ip -4 route flush cache
 
-          # Route other subnets via fastvpn by default (priority 50 so it's before wg0 rules)
-          ip -4 rule add iif brguest table fastvpn priority 50 2>/dev/null || true
-          ip -4 rule add iif briot table fastvpn priority 50 2>/dev/null || true
-          ip -4 rule add iif brhomelab table fastvpn priority 50 2>/dev/null || true
-          
-          # For brdirect, we route it to fastvpn, BUT we must exclude OpenVPN (10.71.73.10 and 10.8.0.0/24)
-          # so OpenVPN continues to use wg0. We do this by routing OpenVPN explicitly to wg0's table
-          # at a higher priority (49) than the brdirect rule (50).
-          WG0_MARK=$(wg show wg0 fwmark 2>/dev/null || echo "off")
-          if [ -n "$WG0_MARK" ] && [ "$WG0_MARK" != "off" ]; then
-            WG0_TABLE=$((WG0_MARK))
-            ip -4 rule add from 10.71.73.10 table "$WG0_TABLE" priority 49 2>/dev/null || true
-            ip -4 rule add from 10.8.0.0/24 table "$WG0_TABLE" priority 49 2>/dev/null || true
-          fi
-          ip -4 rule add iif brdirect table fastvpn priority 50 2>/dev/null || true
-
-
           # --------------------------------------------------------------
           # 6. Re-apply any permanent per-IP policy rules.
           # --------------------------------------------------------------
@@ -190,21 +173,8 @@
             RULE=$(ip -4 rule show | awk '/lookup fastvpn/ { print; exit }')
             PRIO=$(echo "$RULE" | awk -F: '{print $1+0}')
             SRC=$(echo "$RULE"  | awk '{for(i=1;i<=NF;i++) if($i=="from") print $(i+1)}')
-            IIF=$(echo "$RULE"  | awk '{for(i=1;i<=NF;i++) if($i=="iif") print $(i+1)}')
-            if [ -n "$SRC" ]; then
-              ip -4 rule del from "$SRC" table fastvpn priority "$PRIO" 2>/dev/null || break
-            elif [ -n "$IIF" ]; then
-              ip -4 rule del iif "$IIF" table fastvpn priority "$PRIO" 2>/dev/null || break
-            else
-              # Fallback if neither from nor iif matches
-              ip -4 rule del priority "$PRIO" 2>/dev/null || break
-            fi
+            ip -4 rule del from "$SRC" table fastvpn priority "$PRIO" 2>/dev/null || break
           done
-
-          # Cleanup OpenVPN bypass rules (priority 49)
-          ip -4 rule del priority 49 2>/dev/null || true
-          ip -4 rule del priority 49 2>/dev/null || true
-
 
           # Flush table 201 and any scheduled cleanup timers.
           ip -4 route flush table 201 2>/dev/null || true

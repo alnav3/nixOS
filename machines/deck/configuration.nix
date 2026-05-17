@@ -112,7 +112,8 @@
       networkManager = true;
       firewall = {
         enable = true;
-        allowedTCPPorts = [ 8384 ];  # syncthing
+        allowedTCPPorts = [ 8384 24872 ];  # syncthing & eden
+        allowedUDPPorts = [ 24872 ];
       };
     };
 

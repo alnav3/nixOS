@@ -9,10 +9,10 @@
   imports = [
     # Import full module system for consistency
     ./../../modules
-    
+
     # Container modules
     ./../../containers
-    
+
     # LXC container support
     "${modulesPath}/virtualisation/lxc-container.nix"
   ];
@@ -172,7 +172,8 @@
     calibre-web.enable = true;
 
     # Photo management
-    immich.enable = true;
+    immich.enable = false;
+    ente.enable = false;
 
     # Communication (Matrix)
     synapse.enable = true;
@@ -183,14 +184,15 @@
     # Utilities
     ntfy.enable = true;
     searx.enable = true;
-    pihole.enable = true;
+    pihole.enable = false;
     syncthing.enable = true;
     etesync.enable = true;
     trmnl.enable = false;
+    koffan.enable = true;
 
     # Development/Infrastructure
-    infisical.enable = true;
-    kasm.enable = true;
+    infisical.enable = false;
+    kasm.enable = false;
   };
 
   # =============================================================================
@@ -258,7 +260,7 @@
     "sys-kernel-debug.mount"
     "sys-fs-fuse-connections.mount"
   ];
-  
+
   # Disable wpa_supplicant - no WiFi in LXC
   systemd.services.wpa_supplicant.enable = lib.mkForce false;
 

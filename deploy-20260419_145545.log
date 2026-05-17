@@ -1,0 +1,111 @@
+[2026-04-19 14:55:45] Starting deployment process...
+[2026-04-19 14:55:45] Log file: /home/alnav/nixOS/deploy-20260419_145545.log
+[2026-04-19 14:55:45] Verbose mode: false
+[2026-04-19 14:55:45] Configuration file: /home/alnav/nixOS/.deploy/config
+[2026-04-19 14:55:45] Updating flakes...
+[2026-04-19 14:55:45] Executing: nix flake update
+warning: Git tree '/home/alnav/nixOS' is dirty
+unpacking 'github:Daaboulex/eden-nix/e565ad431b4a1ed4c019e31c119b6c082950ebea' into the Git cache...
+unpacking 'github:nix-community/home-manager/5b56ad02dc643808b8af6d5f3ff179e2ce9593f4' into the Git cache...
+unpacking 'github:hyprwm/Hyprland/889ee4f26d77ff0c36f5c4767ef0629371fd2c18' into the Git cache...
+unpacking 'github:Jovian-Experiments/Jovian-NixOS/eac78fc379ca47f7e21be8539c405e5fb489a857' into the Git cache...
+unpacking 'github:NixOS/nixos-hardware/c775c2772ba56e906cbeb4e0b2db19079ef11ff7' into the Git cache...
+unpacking 'github:nix-community/NixOS-WSL/9a8c2a85f1ffdcecfb0f9c52c5a73c49ceb43911' into the Git cache...
+unpacking 'github:noctalia-dev/noctalia-shell/4fa29ff386eda558d4e6a586290eb4600fa972ae' into the Git cache...
+warning: input 'posting-flake/utils' has an override for a non-existent input 'nixpkgs'
+unpacking 'github:danth/stylix/e3861617645a43c9bbefde1aa6ac54dd0a44bfa9' into the Git cache...
+unpacking 'github:BirdeeHub/nix-wrapper-modules/75febede14a0845f4ef429da692a0698bf433600' into the Git cache...
+unpacking 'github:0xc000022070/zen-browser-flake/179a2e63531541cb009208c913d7ddf7046ea2b6' into the Git cache...
+warning: updating lock file "/home/alnav/nixOS/flake.lock":
+• Updated input 'eden-nix':
+    'github:Daaboulex/eden-nix/2876b62dc600882b82ae13591778f5218208bb84?narHash=sha256-edip1S1elaBHEg4q6wcDoJSJGmo1T4V1yExuBtvDXdo%3D' (2026-03-29)
+  → 'github:Daaboulex/eden-nix/e565ad431b4a1ed4c019e31c119b6c082950ebea?narHash=sha256-%2B0VtOtVWiidudfkq46N5qC5wDaSVGPWxKMNDVW7B4jU%3D' (2026-04-19)
+• Updated input 'eden-nix/git-hooks':
+    'github:cachix/git-hooks.nix/f799ae951fde0627157f40aec28dec27b22076d0?narHash=sha256-EAtviqz0sEAxdHS4crqu7JGR5oI3BwaqG0mw7CmXkO8%3D' (2026-03-21)
+  → 'github:cachix/git-hooks.nix/580633fa3fe5fc0379905986543fd7495481913d?narHash=sha256-8Psjt%2BTWvE4thRKktJsXfR6PA/fWWsZ04DVaY6PUhr4%3D' (2026-04-07)
+• Updated input 'home-manager':
+    'github:nix-community/home-manager/03bdcf84f092956943dcf9ef164481e463512716?narHash=sha256-MCaiC3iWarAsmu8KJXgJHb1H8lf%2BBD9gymvxkbmNVdc%3D' (2026-04-03)
+  → 'github:nix-community/home-manager/5b56ad02dc643808b8af6d5f3ff179e2ce9593f4?narHash=sha256-Lh5Ns9DI67E%2BlSMOCGK0S%2BmFPy0mz0yOGiJTUXiR9JI%3D' (2026-04-19)
+• Updated input 'hyprland':
+    'github:hyprwm/Hyprland/f25473b21b45ab8ded4a0dbba69eb6b6660d568e?narHash=sha256-Bkb1ha9bB8IiWIBW2Z6shj2Erqx08VH1I9ljYl8zxGU%3D' (2026-04-02)
+  → 'github:hyprwm/Hyprland/889ee4f26d77ff0c36f5c4767ef0629371fd2c18?narHash=sha256-sGZir5sjqKOUv2fywOFXVolUnVJRtI1KvAqt42ql/mI%3D' (2026-04-18)
+• Updated input 'hyprland/aquamarine':
+    'github:hyprwm/aquamarine/f62a4dbfa4e5584f14ad4c62afedf6e4b433cf70?narHash=sha256-sTtAgCCaX8VNNZlQFACd3i1IQ%2BDB0Wf3COgiFS152ds%3D' (2026-03-22)
+  → 'github:hyprwm/aquamarine/7371b669b22aa2af980f913fc312a786d2f1abb2?narHash=sha256-fy95EdPnqQlpbP8%2Brk0yWKclWShCUS5VKs6P7/1MF2c%3D' (2026-04-07)
+• Updated input 'hyprland/hyprgraphics':
+    'github:hyprwm/hyprgraphics/7d63c04b4a2dd5e59ef943b4b143f46e713df804?narHash=sha256-mI6A51do%2BhEUzeJKk9YSWfVHdI/SEEIBi2tp5Whq5mI%3D' (2026-03-02)
+  → 'github:hyprwm/hyprgraphics/cf95d93d17baa18f1d9b016b3afe27f820521a6e?narHash=sha256-Ds759WU03mGWtu3I43J%2B5GF5Ni8TvF%2BGYQUFD%2BfVeMo%3D' (2026-04-06)
+• Updated input 'hyprland/hyprland-guiutils':
+    'github:hyprwm/hyprland-guiutils/5e1c6b9025aaf4d578f3eff7c0eb1f0c197a9507?narHash=sha256-kipyuDBxrZq%2BbeYpZqWzGvFWm4QbayW9agAvi94vDXY%3D' (2026-03-02)
+  → 'github:hyprwm/hyprland-guiutils/0703df899520001209646246bef63358c9881e36?narHash=sha256-p7Rcw13%2BgA4Z9EI3oGYe3neQ3FqyOOfZCleBTfhJ95Q%3D' (2026-03-28)
+• Updated input 'hyprland/hyprutils':
+    'github:hyprwm/hyprutils/cb4e152dc72095a2af422956c6b689590572231a?narHash=sha256-6KNwP4ojUzv3YBlZU5BqCpTrWHcix1Jo01BISsTT0xk%3D' (2026-03-22)
+  → 'github:hyprwm/hyprutils/e6caa3d4d1427eedbdf556cf4ceb70f2d9c0b56d?narHash=sha256-c4YVwO33Mmw%2BFIV8E0u3atJZagHvGTJ9Jai6RtiB8rE%3D' (2026-03-30)
+• Updated input 'hyprland/hyprwire':
+    'github:hyprwm/hyprwire/f68afd0e73687598cc2774804fedad76693046f0?narHash=sha256-qRqYnXiKoJLRTcfaRukn7EifmST2IVBUMZOeZMAc5UA%3D' (2026-03-09)
+  → 'github:hyprwm/hyprwire/86012ee01b0fdd8bf3101ef38816f2efbee42490?narHash=sha256-mDpHnf%2BMkdOxEqIM1TnckYYh9p1SXR8B3KQfNZ12M8s%3D' (2026-04-05)
+• Updated input 'hyprland/nixpkgs':
+    'github:NixOS/nixpkgs/6c9a78c09ff4d6c21d0319114873508a6ec01655?narHash=sha256-US5Tda2sKmjrg2lNHQL3jRQ6p96cgfWh3J1QBliQ8Ws%3D' (2026-03-21)
+  → 'github:NixOS/nixpkgs/68d8aa3d661f0e6bd5862291b5bb263b2a6595c9?narHash=sha256-vPKLpjhIVWdDrfiUM8atW6YkIggCEKdSAlJPzzhkQlw%3D' (2026-04-05)
+• Updated input 'hyprland/pre-commit-hooks':
+    'github:cachix/git-hooks.nix/f799ae951fde0627157f40aec28dec27b22076d0?narHash=sha256-EAtviqz0sEAxdHS4crqu7JGR5oI3BwaqG0mw7CmXkO8%3D' (2026-03-21)
+  → 'github:cachix/git-hooks.nix/4e0eb042b67d863b1b34b3f64d52ceb9cd926735?narHash=sha256-zW0lyy7ZNNT/x8JhzFHBsP2IPx7ATZIPai4FJj12BgU%3D' (2026-04-01)
+• Updated input 'jovian-nixos':
+    'github:Jovian-Experiments/Jovian-NixOS/24f05f5e3b61dd4f5a4bdcbe5f2ecfa488d4109f?narHash=sha256-huln34r9PztWS2OznILgbsIGZD0Y/zJQZXN%2B6MVV6X4%3D' (2026-04-03)
+  → 'github:Jovian-Experiments/Jovian-NixOS/eac78fc379ca47f7e21be8539c405e5fb489a857?narHash=sha256-%2B0SyQglnT2xUiyY07155G%2BO7aUWISELwqtTnfURufRU%3D' (2026-04-17)
+• Updated input 'nixos-hardware':
+    'github:NixOS/nixos-hardware/80afbd13eea0b7c4ac188de949e1711b31c2b5f0?narHash=sha256-6MWaMLXK9QMndI94CIxeiPafi3wuO%2BimCtK9tfhsZdw%3D' (2026-04-03)
+  → 'github:NixOS/nixos-hardware/c775c2772ba56e906cbeb4e0b2db19079ef11ff7?narHash=sha256-2ZBhDNZZwYkRmefK5XLOusCJHnoeKkoN95hoSGgMxWM%3D' (2026-04-06)
+• Updated input 'nixos-wsl':
+    'github:nix-community/NixOS-WSL/d97e078f4788cddb8d11c3c99f72a4bb9ddec221?narHash=sha256-DnLIpFxznohpLkIFs390uZ0gxwkVyhtknhKNu%2BlQJK8%3D' (2026-03-31)
+  → 'github:nix-community/NixOS-WSL/9a8c2a85f1ffdcecfb0f9c52c5a73c49ceb43911?narHash=sha256-LQjlc0VEn55WAT4BiI8sIsokb/2FNlcbBD%2BXr3MTE24%3D' (2026-04-15)
+• Updated input 'nixpkgs':
+    'github:nixos/nixpkgs/6201e203d09599479a3b3450ed24fa81537ebc4e?narHash=sha256-ZojAnPuCdy657PbTq5V0Y%2BAHKhZAIwSIT2cb8UgAz/U%3D' (2026-04-01)
+  → 'github:nixos/nixpkgs/4bd9165a9165d7b5e33ae57f3eecbcb28fb231c9?narHash=sha256-l/iNYDZ4bGOAFQY2q8y5OAfBBtrDAaPuRQqWaFHVRXM%3D' (2026-04-14)
+• Updated input 'noctalia':
+    'github:noctalia-dev/noctalia-shell/759454d2d5bce9be7dea982818700140335ed047?narHash=sha256-tkue0Ed0CufUXjEBb51ojtyWY1ibK9h3ed%2BmVDHFGZA%3D' (2026-04-03)
+  → 'github:noctalia-dev/noctalia-shell/4fa29ff386eda558d4e6a586290eb4600fa972ae?narHash=sha256-yHDAQwZ%2BxswyZWT1heZeu/Rvpwd8hIbT2CMOdlc/IbQ%3D' (2026-04-19)
+• Updated input 'noctalia/noctalia-qs':
+    'github:noctalia-dev/noctalia-qs/e7224b756dcd10eec040df818a4c7a0fda5d6eff?narHash=sha256-79JP2QTdvp1jg7HGxAW%2BxzhzhLnlKUi8yGXq9nDCeH0%3D' (2026-04-02)
+  → 'github:noctalia-dev/noctalia-qs/68e82fe34c68ee839a9c37e3466820e266af0c86?narHash=sha256-d4CVRtAty2GzDYXx4xYQmR%2BnlOjjKovyprQfZhgLckU%3D' (2026-04-12)
+• Updated input 'noctalia/noctalia-qs/treefmt-nix':
+    'github:numtide/treefmt-nix/71b125cd05fbfd78cab3e070b73544abe24c5016?narHash=sha256-6E/yhXP7Oy/NbXtf1ktzmU8SdVqJQ09HC/48ebEGBpk%3D' (2026-03-12)
+  → 'github:numtide/treefmt-nix/790751ff7fd3801feeaf96d7dc416a8d581265ba?narHash=sha256-pc20NRoMdiar8oPQceQT47UUZMBTiMdUuWrYu2obUP0%3D' (2026-04-08)
+• Updated input 'stylix':
+    'github:danth/stylix/6d0502ef7447090abf8b00362b5cda8ac64595b4?narHash=sha256-eVKt8wpQqg6Hq/UdHQkV1izXGloGQxdlE4SSk9/X27s%3D' (2026-04-03)
+  → 'github:danth/stylix/e3861617645a43c9bbefde1aa6ac54dd0a44bfa9?narHash=sha256-Tl1aZVP5EIlT%2Bk0%2BiAKH018GLHJpLz3hhJ0LNQOWxCc%3D' (2026-04-14)
+• Updated input 'wrapper-modules':
+    'github:BirdeeHub/nix-wrapper-modules/74a1aee6476ba8bf1991ae8e51cb0e5b3c0d8e98?narHash=sha256-%2BSHx//By93Q8qDqq6h7YY2mfvokU7To0doHCLF5lFTo%3D' (2026-04-02)
+  → 'github:BirdeeHub/nix-wrapper-modules/75febede14a0845f4ef429da692a0698bf433600?narHash=sha256-XwLFfJDz71vIF7BAhnbLhrzQjmDC2uXdo7N0oHUrYzA%3D' (2026-04-17)
+• Updated input 'wrapper-modules/nixpkgs':
+    'github:NixOS/nixpkgs/832efc09b4caf6b4569fbf9dc01bec3082a00611?narHash=sha256-HaThtroVD9wRdx7KQk0B75JmFcXlMUoEdDFNOMOlsOs%3D' (2026-03-27)
+  → 'github:NixOS/nixpkgs/dfd9566f82a6e1d55c30f861879186440614696e?narHash=sha256-/m3yyS/EnXqoPGBJYVy4jTOsirdgsEZ3JdN2gGkBr14%3D' (2026-04-07)
+• Updated input 'zen-browser':
+    'github:0xc000022070/zen-browser-flake/9968536e8ee4f715554dfc994b5399982bcec9e5?narHash=sha256-gECGt/SbcrGQZjeIYKY6WQtyaoLucOoEV8bpJaDVsEQ%3D' (2026-04-03)
+  → 'github:0xc000022070/zen-browser-flake/179a2e63531541cb009208c913d7ddf7046ea2b6?narHash=sha256-qjo8xO4p/Kn4OrtVwkW8XPH0xaHq5QLu6MMhSf%2BgJ/w%3D' (2026-04-18)
+• Updated input 'zen-browser/home-manager':
+    'github:nix-community/home-manager/f2d3e04e278422c7379e067e323734f3e8c585a7?narHash=sha256-kScKj3qJDIWuN9/6PMmgy5esrTUkYinrO5VvILik/zw%3D' (2026-03-31)
+  → 'github:nix-community/home-manager/3c7524c68348ef79ce48308e0978611a050089b2?narHash=sha256-No6QGBmIv5ChiwKCcbkxjdEQ/RO2ZS1gD7SFy6EZ7rc%3D' (2026-04-14)
+[2026-04-19 14:56:23] ✓ Updating flakes completed successfully
+[2026-04-19 14:56:23] Checking if mjolnir is reachable...
+[2026-04-19 14:56:26] mjolnir is not reachable. Attempting to wake it up...
+[2026-04-19 14:56:26] Attempting to wake up mjolnir...
+[2026-04-19 14:56:26] Using wakeonlan with MAC: [2026-04-11 10:08:10] Getting MAC address for mjolnir...
+Invalid hardware address: [2026-04-11 10:08:10] Getting MAC address for mjolnir...
+Nothing to do!
+Hardware addresses: <total=1, valid=0, invalid=1>
+Magic packets: <sent=0>
+[2026-04-19 14:56:26] Wake signal sent to mjolnir. Waiting for response...
+[2026-04-19 14:56:30] Waiting for mjolnir... (4/60s)
+[2026-04-19 14:56:35] Waiting for mjolnir... (9/60s)
+[2026-04-19 14:56:40] Waiting for mjolnir... (14/60s)
+[2026-04-19 14:56:45] Waiting for mjolnir... (19/60s)
+[2026-04-19 14:56:50] Waiting for mjolnir... (24/60s)
+[2026-04-19 14:56:56] Waiting for mjolnir... (30/60s)
+[2026-04-19 14:57:01] Waiting for mjolnir... (35/60s)
+[2026-04-19 14:57:06] Waiting for mjolnir... (40/60s)
+[2026-04-19 14:57:11] Waiting for mjolnir... (45/60s)
+[2026-04-19 14:57:16] Waiting for mjolnir... (50/60s)
+[2026-04-19 14:57:21] Waiting for mjolnir... (55/60s)
+[2026-04-19 14:57:27] ERROR: mjolnir did not respond within 60 seconds
+[2026-04-19 14:57:27] Please check if mjolnir is available and try again

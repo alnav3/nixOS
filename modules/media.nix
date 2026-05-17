@@ -2,7 +2,7 @@
 
 let
   cfg = config.mymodules.media;
-  grayjay = pkgs.buildFHSEnv {
+  grayjay-fhs = pkgs.buildFHSEnv {
     name = "grayjay";
     targetPkgs = pkgs: with pkgs; [
       libz icu libgbm openssl libX11 libXcomposite libXdamage libXext
@@ -25,6 +25,21 @@ let
       cd "$(dirname "$GRAYJAY_BIN")"
       exec "$GRAYJAY_BIN" "$@"
     '';
+  };
+
+  grayjay-desktop = pkgs.makeDesktopItem {
+    name = "grayjay";
+    desktopName = "Grayjay";
+    comment = "Follow creators, not platforms";
+    exec = "grayjay";
+    icon = "video-x-generic";
+    categories = [ "AudioVideo" "Video" "Network" ];
+    terminal = false;
+  };
+
+  grayjay = pkgs.symlinkJoin {
+    name = "grayjay-with-desktop";
+    paths = [ grayjay-fhs grayjay-desktop ];
   };
 in
 {
@@ -57,13 +72,22 @@ in
       finamp = lib.mkOption {
         type = lib.types.bool;
         default = false;
-        description = "Enable Finamp Jellyfin client";
+        description = "Enable Finamp Jellyfin music client";
       };
 
       playerctl = lib.mkOption {
         type = lib.types.bool;
         default = false;
         description = "Enable playerctl for media controls";
+      };
+    };
+
+    # Jellyfin desktop/media client
+    jellyfin = {
+      mediaPlayer = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Enable jellyfin-media-player desktop client";
       };
     };
 
@@ -246,6 +270,11 @@ in
     # playerctl
     (lib.mkIf cfg.audio.playerctl {
       environment.systemPackages = [ pkgs.playerctl ];
+    })
+
+    # Jellyfin Media Player (desktop)
+    (lib.mkIf cfg.jellyfin.mediaPlayer {
+      environment.systemPackages = [ pkgs.jellyfin-media-player ];
     })
 
     # Grayjay

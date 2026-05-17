@@ -261,9 +261,9 @@ in
         IdleActionSec = "20min";
       };
 
-      # Listen for systemd-logind Lock signal and call noctalia-shell to lock
+      # Listen for systemd-logind Lock signal and call the appropriate lockscreen
       systemd.user.services.logind-lock-handler = {
-        description = "Lock screen via noctalia-shell on systemd Lock signal";
+        description = "Lock screen on systemd Lock signal";
         wantedBy = [ "default.target" ];
         serviceConfig = {
           Type = "simple";
@@ -277,7 +277,7 @@ in
             while read -r line; do
               case "$line" in
                 *"Lock ()"*)
-                  noctalia-shell ipc call lockScreen lock
+                  ~/.config/hypr/scripts/lock.sh
                   ;;
               esac
             done

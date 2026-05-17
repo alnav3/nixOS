@@ -223,12 +223,7 @@ in
           # Default LAN → Internet (via secure VPN wg0)
           # -----------------------------------------------------------------
           iifname "${br.lan}" oifname "wg0" counter accept
-
-          # -----------------------------------------------------------------
-          # Default Other Subnets → Internet (via fast VPN wg1)
-          # -----------------------------------------------------------------
-          iifname { "${br.guest}", "${br.iot}", "${br.homelab}", "${br.direct}" } oifname "wg1" counter accept
-
+          iifname "${br.guest}" oifname "wg0" counter accept
 
           # -----------------------------------------------------------------
           # LAN → Internet (via fast VPN wg1) for devices in vpn_fast set
@@ -249,7 +244,7 @@ in
           # IoT Network Rules
           # -----------------------------------------------------------------
           # Specific IoT devices allowed to VPN internet
-          iifname "${br.iot}" oifname "wg1" ip saddr 192.168.6.3 counter accept comment "Work laptop internet access"
+          iifname "${br.iot}" oifname "wg0" ip saddr 192.168.6.3 counter accept comment "Work laptop internet access"
 
           # IoT → LAN: Restricted to specific server
           iifname "${br.iot}" oifname "${br.lan}" ip daddr 10.71.71.47 counter accept comment "IoT → 10.71.71.47"

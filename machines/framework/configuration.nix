@@ -12,6 +12,10 @@
   # Module Configuration - All options explicitly enabled
   # =============================================================================
 
+  programs.emudeck.enable = true;
+
+  programs.eden.enable = true;
+
   mymodules = {
     # Base system configuration
     base = {
@@ -165,8 +169,8 @@
       ipv6.enable = false;
       firewall = {
         enable = true;
-        allowedTCPPorts = [ 80 4200 1338 2300 46899 46898 4096 55435];
-        allowedUDPPorts = [ 46898 55435];
+        allowedTCPPorts = [ 80 4200 1338 2300 46899 46898 4096 55435 24872];
+        allowedUDPPorts = [ 46898 55435 24872];
       };
       diagnostics = true;
     };
@@ -262,6 +266,16 @@
   # ARM emulation for Duet
   boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
 
+  # AppImage support - automatically run AppImages with appimage-run
+  boot.binfmt.registrations.appimage = {
+    wrapInterpreterInShell = false;
+    interpreter = "${pkgs.appimage-run}/bin/appimage-run";
+    recognitionType = "magic";
+    offset = 0;
+    mask = ''\xff\xff\xff\xff\x00\x00\x00\x00\xff\xff\xff'';
+    magicOrExtension = ''\x7fELF....AI\x02'';
+  };
+
   # AMD GPU early loading
   hardware.amdgpu.initrd.enable = true;
 
@@ -324,12 +338,14 @@
     jan
     moonlight-qt
     protonvpn-gui
+    cage
     wakeonlan
     rebuild-remote      # Custom rebuild command
     deploy-all          # Comprehensive deployment script
     deploy-config-setup # Deploy configuration setup helper
     spotiflac           # Spotify FLAC downloader
-    emudeck             # Emulator configuration tool
+    appimage-run        # AppImage support for NixOS
+    inputs.es-de-flake.packages.${pkgs.system}.default # EmulationStation Desktop Edition
   ];
 
   # =============================================================================

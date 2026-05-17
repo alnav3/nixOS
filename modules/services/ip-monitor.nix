@@ -4,7 +4,7 @@ let
   cfg = config.mymodules.services.ipMonitor;
   ip-monitor-script = pkgs.writeShellApplication {
     name = "ip-monitor";
-    runtimeInputs = with pkgs; [ curl dnsutils libnotify coreutils ];
+    runtimeInputs = with pkgs; [ curl dnsutils libnotify coreutils openssh ];
     text = builtins.readFile ../../scripts/ip-monitor.sh;
   };
 in
@@ -38,6 +38,7 @@ in
       curl
       dnsutils
       libnotify
+      openssh
       ip-monitor-script
     ];
   };
